@@ -1,0 +1,45 @@
+﻿@model StudentDto
+
+@{
+    ViewData["Title"] = "Yeni Öğrenci Ekle";
+}
+
+<div class="container mt-4">
+    <h2>Yeni Öğrenci Ekle</h2>
+    <hr />
+    <form asp-action="Create">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Adı</label>
+                    <input asp-for="Name" class="form-control" />
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Soyadı</label>
+                    <input asp-for="Surname" class="form-control" />
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Öğrenci No</label>
+                    <input asp-for="StudentNo" class="form-control" />
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control" />
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Not Ortalaması (GPA)</label>
+                    <input asp-for="GPA" class="form-control" type="number" step="0.01" />
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Bölüm</label>
+                    <select asp-for="DepartmentId" class="form-control"
+                            asp-items="@(new SelectList(ViewBag.Departments, "Id", "DepartmentName"))">
+                        <option value="">-- Bölüm Seçiniz --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Kaydet</button>
+                <a asp-action="Index" class="btn btn-secondary">İptal</a>
+            </div>
+        </div>
+    </form>
+</div>

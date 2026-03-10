@@ -1,0 +1,131 @@
+﻿@model StajSistemi.Models.ViewModels.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Premium Kayıt";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+<div class="container py-5 techNode-fade-in">
+    <div class="row justify-content-center align-items-center g-5">
+
+        <div class="col-lg-5 d-none d-lg-block text-center">
+            <img src="https://cdni.iconscout.com/illustration/premium/thumb/online-registration-4488061-3738526.png"
+                 alt="Kayıt Ol" class="img-fluid" style="max-height: 450px;">
+            <div class="mt-4">
+                <h2 class="fw-bold" style="color: #2c3e50;">Aramıza Katıl!</h2>
+                <p class="text-muted fs-5">Sinop Üniversitesi Staj Takip Sistemi ile geleceğini inşa etmeye başla.</p>
+            </div>
+        </div>
+
+        <div class="col-lg-6 col-xl-5">
+            <div class="card glass-card p-4 border-0 shadow-lg rounded-4 bg-white">
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold">Yeni Hesap Oluştur</h3>
+                    <p class="text-muted small">Hızlıca kayıt ol ve sürece dahil ol.</p>
+                </div>
+
+                <form asp-action="Register" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label fw-bold small">Ad Soyad</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-0"><i class="fas fa-user text-muted"></i></span>
+                            <input asp-for="FullName" class="form-control premium-input rounded-pill" placeholder="Şevval Cinek" />
+                        </div>
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-bold small">E-posta Adresi</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-0"><i class="fas fa-envelope text-muted"></i></span>
+                            <input asp-for="Email" class="form-control premium-input rounded-pill" placeholder="adiniz@sinop.edu.tr" />
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Role" class="form-label fw-bold small">Kullanıcı Türü</label>
+                        <select asp-for="Role" id="roleSelect" class="form-select premium-input rounded-pill">
+                            <option value="">-- Rol Seçiniz --</option>
+                            <option value="Student">Öğrenci</option>
+                            <option value="Advisor">Danışman (Öğretim Elemanı)</option>
+                            <option value="Admin">Sistem Yöneticisi (Admin)</option>
+                        </select>
+                        <span asp-validation-for="Role" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3" id="studentNoContainer" style="display:none;">
+                        <label asp-for="StudentNo" class="form-label fw-bold small">Öğrenci Numarası</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-0"><i class="fas fa-id-card text-muted"></i></span>
+                            <input asp-for="StudentNo" class="form-control premium-input rounded-pill" placeholder="Örn: 247017025" />
+                        </div>
+                        <span asp-validation-for="StudentNo" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Password" class="form-label fw-bold small">Şifre</label>
+                            <input asp-for="Password" type="password" class="form-control premium-input rounded-pill" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label fw-bold small">Şifre Tekrar</label>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control premium-input rounded-pill" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm" style="background: linear-gradient(to right, #2c3e50, #4ca1af); border: none;">
+                            Kayıt İşlemini Tamamla
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-4 text-center">
+                    <p class="mb-0 small text-muted">Zaten hesabın var mı? <a href="/Account/Login" class="text-primary fw-bold text-decoration-none">Giriş Yap</a></p>
+                    <p class="mt-2"><a href="/" class="text-muted small"><i class="fas fa-arrow-left me-1"></i> Portal Sayfasına Dön</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // 1. Fonksiyon: Rol değiştikçe Öğrenci No alanını göster/gizle
+            function toggleStudentNo() {
+                var selectedRole = $('#roleSelect').val();
+                if (selectedRole === 'Student') {
+                    $('#studentNoContainer').slideDown(); // Yumuşakça aç
+                } else {
+                    $('#studentNoContainer').slideUp();   // Yumuşakça gizle
+                    $('#studentNoContainer input').val(''); // Gizlerken içini temizle
+                }
+            }
+
+            // 2. Portal'dan gelen 'role' parametresini yakala ve seçili getir
+            const urlParams = new URLSearchParams(window.location.search);
+            const roleParam = urlParams.get('role');
+
+            if (roleParam) {
+                $('#roleSelect').val(roleParam);
+            }
+
+            // 3. Sayfa ilk açıldığında ve seçim değiştikçe fonksiyonu çalıştır
+            toggleStudentNo();
+            $('#roleSelect').change(function () {
+                toggleStudentNo();
+            });
+        });
+    </script>
+}

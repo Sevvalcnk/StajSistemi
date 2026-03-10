@@ -1,0 +1,87 @@
+﻿@model StajSistemi.Models.ViewModels.LoginViewModel
+
+@{
+    ViewData["Title"] = "Giriş Yap";
+    // Kimlik kontrolü: Hem Student hem Öğrenci kelimesine bakıyoruz ki hata olmasın
+    bool isStudent = ViewBag.SelectedRole == "Student" || ViewBag.SelectedRole == "Öğrenci";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+<div class="container py-5 techNode-fade-in">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card glass-card p-4 border-0 shadow-lg rounded-4 bg-white">
+                <div class="card-header bg-white border-0 pt-2 text-center">
+                    @* Akıllı Başlık: Role göre dinamik değişir *@
+                    <h3 class="fw-bold" style="color: #2c3e50;">
+                        <i class="fas @(isStudent ? "fa-user-graduate" : "fa-user-tie") me-2"></i>
+                        @(isStudent ? "Öğrenci Girişi" : "Personel Girişi")
+                    </h3>
+                    <p class="text-muted small">Lütfen bilgilerinizi kontrol ederek giriş yapın.</p>
+                </div>
+
+                <div class="card-body">
+                    @* KRİTİK: asp-route-role bilgisi form post edildiğinde rolün kaybolmamasını sağlar *@
+                    <form asp-action="Login" asp-route-role="@ViewBag.SelectedRole" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
+
+                        @* --- 1. ETİKET (LABEL) BURASI: E-posta mı Numara mı? --- *@
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label fw-bold small">
+                                @(isStudent ? "Öğrenci Numarası" : "E-posta Adresi")
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-0">
+                                    <i class="fas @(isStudent ? "fa-id-card" : "fa-envelope") text-muted"></i>
+                                </span>
+                                <input asp-for="Email" class="form-control premium-input rounded-pill"
+                                       placeholder="@(isStudent ? "Örn: 247017025" : "adiniz@sinop.edu.tr")" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        @* --- 2. ETİKET (LABEL) BURASI: Şifre --- *@
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label asp-for="Password" class="form-label fw-bold small">Şifre</label>
+                                @* ŞİFREMİ UNUTTUM: Sayfanın çalışması için controller'daki ForgotPassword şart *@
+                                <a href="/Account/ForgotPassword" class="text-primary small fw-bold text-decoration-none">Şifremi Unuttum?</a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-0"><i class="fas fa-lock text-muted"></i></span>
+                                <input asp-for="Password" type="password" class="form-control premium-input rounded-pill" />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input asp-for="RememberMe" class="form-check-input" />
+                            <label asp-for="RememberMe" class="form-check-label small text-muted">Beni Hatırla (30 Gün)</label>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm"
+                                    style="background: linear-gradient(to right, #2c3e50, #4ca1af); border: none;">
+                                Giriş Yap
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-footer bg-white border-0 py-3 text-center">
+                    <p class="mb-0 small text-muted">Hesabınız yok mu? <a href="/Account/Register" class="text-primary fw-bold text-decoration-none">Hemen Kayıt Ol</a></p>
+                    <a href="/" class="text-muted small text-decoration-none mt-2 d-block">
+                        <i class="fas fa-arrow-left me-1"></i> Portal Sayfasına Dön
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,36 +1,68 @@
+ï»¿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StajSistemi.data;
-// --- YENÝ EKLENEN USÝNG SATIRLARI ---
 using StajSistemi.Repositories.Abstract;
 using StajSistemi.Repositories.Concrete;
 using StajSistemi.Repositories.UnitOfWork;
 using StajSistemi.Mapping;
+using StajSistemi.Models;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using StajSistemi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// --- Standart Servisler ---
 builder.Services.AddControllersWithViews();
 
-// --- Veri Tabaný Baðlantýsý ---
+// --- Veri TabanÄ± BaÄŸlantÄ±sÄ± ---
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// --- ?? YENÝ MÝMARÝ KAYITLARI BURAYA GELÝYOR ---
-
-// 1. Repository Kaydý: Her tablo için tek tek yazmak yerine Generic yapýyý tanýtýyoruz.
+// --- REPOSITORY, UNIT OF WORK VE MAPPING ---
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
-// 2. Unit of Work Kaydý: Tüm iþlemleri yöneten "Müdürü" tanýtýyoruz.
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// 3. AutoMapper Kaydý: DTO dönüþümlerini yapacak motoru tanýtýyoruz.
 builder.Services.AddAutoMapper(typeof(MapProfile));
 
-// ----------------------------------------------
+// --- MAÄ°L SERVÄ°SÄ° KAYDI ---
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+// --- IDENTITY AYARLARI (Hafta 3) ---
+builder.Services.AddIdentity<AppUser, AppRole>(options =>
+{
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireDigit = true;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
+// --- âœ… YENÄ°: POLÄ°TÄ°KA VE CLAIMS TABANLI YETKÄ°LENDÄ°RME (3. HAFTA MÃœHÃœRÃœ) ---
+builder.Services.AddAuthorization(options =>
+{
+    // Sadece 'Student' rolÃ¼ olan ve sisteme 'FullAccess' claim'i ile girenler iÃ§in
+    options.AddPolicy("StudentOnly", policy => policy.RequireRole("Student"));
+
+    // Sadece DanÄ±ÅŸmanlar iÃ§in Ã¶zel kural
+    options.AddPolicy("AdvisorOnly", policy => policy.RequireRole("Advisor"));
+
+    // Sadece Adminler iÃ§in tam yetki
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
+
+// Cookie (Oturum) AyarlarÄ±
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// --- Pipeline AyarlarÄ± ---
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -42,10 +74,27 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Ã–NEMLÄ°: Kimlik doÄŸrulama her zaman yetkilendirmeden Ã¶nce gelmeli!
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// --- HAFTA 3: Rolleri Otomatik OluÅŸturma (Seeding) ---
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
+    string[] roles = { "Student", "Advisor", "Admin" };
+
+    foreach (var roleName in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new AppRole { Name = roleName });
+        }
+    }
+}
 
 app.Run();

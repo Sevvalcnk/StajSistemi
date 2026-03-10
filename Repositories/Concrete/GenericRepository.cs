@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StajSistemi.data; // DbContext'e erişmek için
 using StajSistemi.Repositories.Abstract;
+using System.Linq.Expressions;
 
 namespace StajSistemi.Repositories.Concrete
 {
@@ -24,5 +25,14 @@ namespace StajSistemi.Repositories.Concrete
         public void Update(T entity) => _dbSet.Update(entity);
 
         public void Delete(T entity) => _dbSet.Remove(entity);
+        public async Task<IEnumerable<T>> GetAllIncludingAsync(params Expression<Func<T, object>>[] includeProperties)
+        {
+            IQueryable<T> query = _dbSet;
+            foreach (var includeProperty in includeProperties)
+            {
+                query = query.Include(includeProperty);
+            }
+            return await query.ToListAsync();
+        }
     }
 }

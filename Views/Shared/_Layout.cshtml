@@ -1,10 +1,16 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using Microsoft.AspNetCore.Identity
+@using StajSistemi.Models
+@inject UserManager<AppUser> UserManager
+
+<!DOCTYPE html>
+<html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - StajSistemi</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @* FONT AWESOME: Login ve Register'daki ikonların her yerde çalışması için buraya ekledik *@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/StajSistemi.styles.css" asp-append-version="true" />
 </head>
@@ -12,35 +18,66 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">StajSistemi</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand fw-bold text-primary" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-graduation-cap me-2"></i>StajSistemi
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Ana Sayfa</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            // Giriş yapan kullanıcının veritabanındaki tam profilini çekiyoruz
+                            var user = await UserManager.GetUserAsync(User);
+
+                            <li class="nav-item me-3">
+                                <span class="nav-link text-dark fw-bold">
+                                    <i class="fas fa-user-circle me-1 text-primary"></i>
+                                    @* Numara yerine Ad Soyad mühürledik *@
+                                    Hoş geldin, @(user?.FullName ?? User.Identity.Name)!
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-sign-out-alt me-1"></i>Çıkış Yap
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" href="/Account/Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Giriş Yap
+                                </a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - StajSistemi - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="border-top footer text-muted bg-light">
+        <div class="container text-center py-3">
+            &copy; 2026 - <b>StajSistemi</b> - <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none">Gizlilik Politikası</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

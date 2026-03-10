@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "Yönetici Paneli";
+}
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
+        <div class="text-center mb-4">
+            <i class="fas fa-user-shield fa-4x text-warning mb-3"></i>
+            <h2 class="fw-bold" style="color: #2c3e50;">Sistem Yönetim Merkezi</h2>
+            <p class="text-muted">Hoş geldiniz Sayın Yönetici. Tüm sistemi buradan denetleyebilirsiniz.</p>
+        </div>
+        <hr>
+        <div class="row g-4 mt-2">
+            <div class="col-md-6">
+                <a href="/Student/Index" class="btn btn-outline-primary btn-lg w-100 py-3 rounded-pill shadow-sm">
+                    <i class="fas fa-users-cog me-2"></i>Tüm Öğrencileri Yönet
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="/Department/Index" class="btn btn-outline-secondary btn-lg w-100 py-3 rounded-pill shadow-sm">
+                    <i class="fas fa-university me-2"></i>Bölüm Ayarlarını Yapılandır
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

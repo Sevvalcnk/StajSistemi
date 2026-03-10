@@ -1,12 +1,14 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering; // SelectList için gerekli
+using Microsoft.AspNetCore.Mvc.Rendering;
 using StajSistemi.DTOs;
 using StajSistemi.Models;
 using StajSistemi.Repositories.UnitOfWork;
 
 namespace StajSistemi.Controllers
 {
+    [Authorize]
     public class StudentController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -18,29 +20,29 @@ namespace StajSistemi.Controllers
             _mapper = mapper;
         }
 
-        // 1. Listeleme
+        // 1. Listeleme: Bölüm bilgisini de dahil ederek çekiyoruz
         public async Task<IActionResult> Index()
         {
-            var students = await _unitOfWork.Students.GetAllAsync();
+            // --- KRİTİK DEĞİŞİKLİK BURASI ---
+            // GetAllIncludingAsync kullanarak öğrencinin bağlı olduğu "Department" verisini de yüklüyoruz.
+            var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department);
+            
             var studentDtos = _mapper.Map<List<StudentDto>>(students);
             return View(studentDtos);
         }
 
-        // 2. Ekleme Sayfasını Açan Kısım (GET)
-        // 'async Task' ekledik çünkü bölümleri veritabanından çekeceğiz
+        // 2. Ekleme Sayfası (GET)
+        [Authorize(Roles = "Advisor,Admin")]
         public async Task<IActionResult> Create()
         {
-            // Veritabanındaki tüm bölümleri çekiyoruz
             var departments = await _unitOfWork.Departments.GetAllAsync();
-
-            // Çektiğimiz bölümleri ViewBag ile sayfadaki dropdown'a (açılır liste) gönderiyoruz
             ViewBag.Departments = new SelectList(departments, "Id", "DepartmentName");
-
             return View();
         }
 
-        // 3. Formdan Gelen Veriyi Kaydeden Kısım (POST)
+        // 3. Kayıt İşlemi (POST)
         [HttpPost]
+        [Authorize(Roles = "Advisor,Admin")]
         public async Task<IActionResult> Create(StudentDto studentDto)
         {
             if (ModelState.IsValid)
@@ -51,13 +53,10 @@ namespace StajSistemi.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Eğer formda hata varsa (geçersiz model durumu), 
-            // sayfayı tekrar yüklemeden önce bölümleri yeniden doldurmalıyız 
-            // yoksa yine 'items' hatası alırsın!
             var departments = await _unitOfWork.Departments.GetAllAsync();
             ViewBag.Departments = new SelectList(departments, "Id", "DepartmentName");
-
             return View(studentDto);
+            var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department);
         }
     }
 }

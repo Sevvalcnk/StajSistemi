@@ -20,3 +20,107 @@ html {
 body {
   margin-bottom: 60px;
 }
+/* Portal Arkaplaný */
+.portal-wrapper {
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 40px;
+}
+
+/* Kartlarýn Havada Durma Efekti (Hover) */
+.portal-card {
+    transition: all 0.3s ease-in-out;
+    border: none !important;
+}
+
+    .portal-card:hover {
+        transform: translateY(-12px); /* Kart yukarý zýplar */
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+
+/* Yuvarlak Butonlar */
+.btn-portal {
+    border-radius: 50px;
+    font-weight: 600;
+    padding: 12px;
+}
+/* Premium Arkaplan ve Animasyonlar */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+}
+
+body {
+    background: #f0f2f5;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Technode Tarzý Giriþ Animasyonu */
+.animate-premium {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Glassmorphism Kartlar */
+.premium-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+    .premium-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    }
+/* Öðrenci Baþ Harf Avatarlarý */
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Tablo Satýrlarý Arasý Yumuþak Çizgiler */
+.border-bottom-light {
+    border-bottom: 1px solid #f0f2f5 !important;
+}
+
+/* GPA Ýlerleme Çubuðu Konteynýrý */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Üç Nokta Menü Butonu (Dropdown) */
+.btn-light.rounded-circle {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+    .btn-light.rounded-circle:hover {
+        background-color: #e2e6ea;
+    }

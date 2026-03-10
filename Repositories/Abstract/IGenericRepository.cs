@@ -10,5 +10,7 @@ namespace StajSistemi.Repositories.Abstract
         Task AddAsync(T entity); // Yeni kayıt ekler 
         void Update(T entity); // Var olan kaydı günceller 
         void Delete(T entity); // Kaydı siler 
+        Task<IEnumerable<T>> GetAllIncludingAsync(params Expression<Func<T, object>>[] includeProperties);
     }
+
 }

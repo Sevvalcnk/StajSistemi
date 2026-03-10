@@ -14,6 +14,8 @@ namespace StajSistemi.Mapping
             CreateMap<Department, DepartmentDto>().ReverseMap();
             CreateMap<Advisor, AdvisorDto>().ReverseMap();
             CreateMap<Admin, AdminDto>().ReverseMap();
+            CreateMap<Student, StudentDto>()
+    .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department.DepartmentName));
         }
     }
 }

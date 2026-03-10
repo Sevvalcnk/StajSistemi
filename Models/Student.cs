@@ -8,5 +8,7 @@
         public string? StudentNo { get; set; } // Sonuna ? ekledik
         public double? GPA { get; set; }
         public string? Email { get; set; }
+        public int DepartmentId { get; set; }
+        public virtual Department Department { get; set; } // Bu satır olmadan eşleme yapamazsın!
     }
 }

@@ -2,55 +2,98 @@
 
 @{
     ViewData["Title"] = "Giriş Yap";
-    // Kimlik kontrolü: Hem Student hem Öğrenci kelimesine bakıyoruz ki hata olmasın
+    // Seçili rolü kontrol ediyoruz
     bool isStudent = ViewBag.SelectedRole == "Student" || ViewBag.SelectedRole == "Öğrenci";
 }
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+    }
+
+    .premium-input:focus {
+        border-color: #4ca1af;
+        box-shadow: 0 0 10px rgba(76, 161, 175, 0.2);
+    }
+
+    /* Göz ikonunun olduğu kısmın tasarımı */
+    .input-group-text {
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+        .input-group-text:hover i {
+            color: #4ca1af !important;
+        }
+
+    .techNode-fade-in {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
 <div class="container py-5 techNode-fade-in">
     <div class="row justify-content-center">
         <div class="col-md-5">
-            <div class="card glass-card p-4 border-0 shadow-lg rounded-4 bg-white">
+            <div class="card glass-card p-4 border-0 shadow-lg rounded-4">
                 <div class="card-header bg-white border-0 pt-2 text-center">
-                    @* Akıllı Başlık: Role göre dinamik değişir *@
+                    <div class="mb-3">
+                        <i class="fas @(isStudent ? "fa-user-graduate" : "fa-user-tie") fa-3x text-primary" style="color: #2c3e50 !important;"></i>
+                    </div>
                     <h3 class="fw-bold" style="color: #2c3e50;">
-                        <i class="fas @(isStudent ? "fa-user-graduate" : "fa-user-tie") me-2"></i>
                         @(isStudent ? "Öğrenci Girişi" : "Personel Girişi")
                     </h3>
                     <p class="text-muted small">Lütfen bilgilerinizi kontrol ederek giriş yapın.</p>
                 </div>
 
                 <div class="card-body">
-                    @* KRİTİK: asp-route-role bilgisi form post edildiğinde rolün kaybolmamasını sağlar *@
                     <form asp-action="Login" asp-route-role="@ViewBag.SelectedRole" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
 
-                        @* --- 1. ETİKET (LABEL) BURASI: E-posta mı Numara mı? --- *@
+                        @* KULLANICI ADI / EMAIL ALANI *@
                         <div class="mb-3">
                             <label asp-for="Email" class="form-label fw-bold small">
                                 @(isStudent ? "Öğrenci Numarası" : "E-posta Adresi")
                             </label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white border-0">
+                                <span class="input-group-text bg-white border-end-0" style="border-top-left-radius: 50px; border-bottom-left-radius: 50px;">
                                     <i class="fas @(isStudent ? "fa-id-card" : "fa-envelope") text-muted"></i>
                                 </span>
-                                <input asp-for="Email" class="form-control premium-input rounded-pill"
-                                       placeholder="@(isStudent ? "Örn: 247017025" : "adiniz@sinop.edu.tr")" />
+                                <input asp-for="Email" class="form-control border-start-0 premium-input"
+                                       placeholder="@(isStudent ? "Örn: 247017025" : "adiniz@sinop.edu.tr")"
+                                       style="border-top-right-radius: 50px; border-bottom-right-radius: 50px;" />
                             </div>
                             <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
 
-                        @* --- 2. ETİKET (LABEL) BURASI: Şifre --- *@
+                        @* ŞİFRE ALANI *@
                         <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
                                 <label asp-for="Password" class="form-label fw-bold small">Şifre</label>
-                                @* ŞİFREMİ UNUTTUM: Sayfanın çalışması için controller'daki ForgotPassword şart *@
                                 <a href="/Account/ForgotPassword" class="text-primary small fw-bold text-decoration-none">Şifremi Unuttum?</a>
                             </div>
                             <div class="input-group">
-                                <span class="input-group-text bg-white border-0"><i class="fas fa-lock text-muted"></i></span>
-                                <input asp-for="Password" type="password" class="form-control premium-input rounded-pill" />
+                                <span class="input-group-text bg-white border-end-0" style="border-top-left-radius: 50px; border-bottom-left-radius: 50px;">
+                                    <i class="fas fa-lock text-muted"></i>
+                                </span>
+                                <input asp-for="Password" type="password" id="passInput" class="form-control border-start-0 border-end-0 premium-input" placeholder="******" />
+                                <span class="input-group-text bg-white border-start-0" onclick="togglePassword('passInput', 'toggleIcon')" style="border-top-right-radius: 50px; border-bottom-right-radius: 50px;">
+                                    <i class="fas fa-eye text-muted" id="toggleIcon"></i>
+                                </span>
                             </div>
                             <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
@@ -70,8 +113,34 @@
                 </div>
 
                 <div class="card-footer bg-white border-0 py-3 text-center">
-                    <p class="mb-0 small text-muted">Hesabınız yok mu? <a href="/Account/Register" class="text-primary fw-bold text-decoration-none">Hemen Kayıt Ol</a></p>
-                    <a href="/" class="text-muted small text-decoration-none mt-2 d-block">
+                    @* ✅ MÜHÜR: Rol Kontrolü ile Kayıt Linki Filtreleme *@
+                    @if (isStudent)
+                    {
+                        <p class="mb-0 small text-muted">
+                            Hesabınız yok mu?
+                            <a asp-action="Register" asp-route-role="@ViewBag.SelectedRole" class="text-primary fw-bold text-decoration-none">
+                                <i class="fas fa-user-plus me-1"></i> Hemen Kayıt Ol
+                            </a>
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="p-2 border rounded-pill bg-light text-muted shadow-sm" style="font-size: 0.75rem;">
+                            <i class="fas fa-lock me-1"></i> Personel kayıtları sistem yöneticisi tarafından yapılmaktadır.
+                        </div>
+                    }
+
+                    @* ✅ YENİ MÜHÜR: OTURUM GÜVENLİĞİ ZAMANLAYICI *@
+                    <div class="mt-4">
+                        <div class="d-inline-block px-3 py-1 rounded-pill bg-light border shadow-sm" style="font-size: 0.7rem;">
+                            <span class="text-muted fw-bold">
+                                <i class="fas fa-clock me-1 text-danger"></i>
+                                Oturum Güvenliği: <span id="timer" class="text-dark">05:00</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <a href="/" class="text-muted small text-decoration-none mt-3 d-block">
                         <i class="fas fa-arrow-left me-1"></i> Portal Sayfasına Dön
                     </a>
                 </div>
@@ -84,4 +153,40 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    @* ✅ MÜHÜR: Göz İkonu ve Zamanlayıcıyı Çalıştıran JavaScript *@
+    <script>
+        // Şifre Göster/Gizle
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = "password";
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // ✅ Geri Sayım Motoru (5 Dakika)
+        let timeLeft = 300;
+        const timerElement = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+
+            timerElement.innerHTML = `${minutes}:${seconds}`;
+
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                location.reload(); // Güvenlik için sayfayı tazele
+            }
+            timeLeft--;
+        }, 1000);
+    </script>
 }

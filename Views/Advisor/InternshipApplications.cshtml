@@ -1,0 +1,100 @@
+﻿@using StajSistemi.Models
+@model IEnumerable<InternshipApplication>
+
+@{
+    ViewData["Title"] = "Gelen Staj Başvuruları";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4 p-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0 text-dark">
+                <i class="fas fa-clipboard-list me-2 text-primary"></i>Gelen Staj Başvuruları
+            </h2>
+            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+                Toplam: @Model.Count() Başvuru
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0 ps-4">Öğrenci Bilgisi</th>
+                        <th class="border-0">Staj İlanı</th>
+                        <th class="border-0">Başvuru Tarihi</th>
+                        <th class="border-0">Durum</th>
+                        <th class="border-0 text-center">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                @* ✅ AppUser üzerinden FirstName ve LastName çekiyoruz *@
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">@item.AppUser?.FirstName @item.AppUser?.LastName</span>
+                                    <small class="text-muted">@item.AppUser?.UserName</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-white rounded-pill px-3">
+                                    @item.Internship?.Name
+                                </span>
+                            </td>
+                            <td class="text-muted">@item.ApplicationDate.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                @* ✅ Duruma göre renk değiştiren badge *@
+                                @if (item.Status == "Onaylandı")
+                                {
+                                    <span class="badge bg-success rounded-pill px-3">Onaylandı</span>
+                                }
+                                else if (item.Status == "Reddedildi")
+                                {
+                                    <span class="badge bg-danger rounded-pill px-3">Reddedildi</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark rounded-pill px-3">Beklemede</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group shadow-sm rounded-pill overflow-hidden">
+                                    @* ✅ İNCELE BUTONU *@
+                                    <a asp-controller="Advisor" asp-action="StudentDetails" asp-route-id="@item.AppUserId"
+                                       class="btn btn-sm btn-primary px-3" title="Öğrenci Detayı">
+                                        <i class="fas fa-search"></i>
+                                    </a>
+
+                                    @if (item.Status == "Beklemede")
+                                    {
+                                        @* ✅ ONAYLA FORMU *@
+                                        <form asp-controller="Internship" asp-action="UpdateStatus" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="newStatus" value="Onaylandı" />
+                                            <button type="submit" class="btn btn-sm btn-success px-3" title="Onayla">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+
+                                        @* ✅ REDDET FORMU *@
+                                        <form asp-controller="Internship" asp-action="UpdateStatus" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="newStatus" value="Reddedildi" />
+                                            <button type="submit" class="btn btn-sm btn-danger px-3" title="Reddet">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,148 @@
+﻿@model StajSistemi.Models.Internship
+
+@{
+    ViewData["Title"] = "İlanı Güncelle";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                @* Başlık Kısmı (Gradyan Renkler) *@
+                <div class="card-header text-white text-center py-4" style="background: linear-gradient(to right, #1e3c72, #2a5298) !important;">
+                    <i class="fas fa-edit fa-3x mb-3"></i>
+                    <h2 class="fw-bold mb-0">İlan Bilgilerini Güncelle</h2>
+                    <p class="small mb-0 opacity-75">Mevcut staj ilanını buradan güncelleyebilirsiniz.</p>
+                </div>
+
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <form asp-action="Edit" method="post" id="internshipForm">
+                        @Html.AntiForgeryToken()
+
+                        @* 🛡️ MÜHÜR: Gizli Alanlar *@
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="Status" />
+                        <input type="hidden" asp-for="CreatedDate" />
+                        <input type="hidden" asp-for="IsDeleted" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm small mb-4"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="CompanyName" class="form-label fw-bold text-secondary">Şirket/Kurum Adı</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0"><i class="fas fa-building text-muted"></i></span>
+                                    <input asp-for="CompanyName" class="form-control border-light bg-light" />
+                                </div>
+                                <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                            </div>
+
+                            @* ✅ MÜHÜR: Sektörler Senin Bölümlerinin İş Dünyası Karşılıkları Oldu *@
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="CompanySector" class="form-label fw-bold text-secondary">Faaliyet Sektörü</label>
+                                <select asp-for="CompanySector" class="form-select border-light bg-light">
+                                    <option value="">-- Sektör Seçiniz --</option>
+                                    @* İnternet, Ağ Teknolojileri ve Otomasyon için *@
+                                    <option value="Bilişim ve Yazılım Teknolojileri">Bilişim ve Yazılım Teknolojileri</option>
+                                    <option value="Endüstriyel Otomasyon ve Robotik">Endüstriyel Otomasyon ve Robotik</option>
+
+                                    @* Lojistik ve Dış Ticaret için *@
+                                    <option value="Uluslararası Ticaret ve Lojistik">Uluslararası Ticaret ve Lojistik</option>
+                                    <option value="Gümrük ve Tedarik Zinciri Yönetimi">Gümrük ve Tedarik Zinciri Yönetimi</option>
+
+                                    @* Çocuk Gelişimi için *@
+                                    <option value="Eğitim ve Sosyal Hizmetler">Eğitim ve Sosyal Hizmetler</option>
+
+                                    @* İç Mekan Tasarım için *@
+                                    <option value="Mimarlık ve İç Mekan Tasarımı">Mimarlık ve İç Mekan Tasarımı</option>
+                                    <option value="Mobilya ve Dekorasyon Üretimi">Mobilya ve Dekorasyon Üretimi</option>
+
+                                    @* Ormancılık için *@
+                                    <option value="Orman Endüstrisi ve Çevre Yönetimi">Orman Endüstrisi ve Çevre Yönetimi</option>
+                                </select>
+                                <span asp-validation-for="CompanySector" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary">Hedef Öğrenci Bölümü</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0"><i class="fas fa-graduation-cap text-muted"></i></span>
+                                <select asp-for="DepartmentId" class="form-select border-light bg-light"
+                                        asp-items="@(new SelectList(ViewBag.Departments, "Id", "DepartmentName"))">
+                                </select>
+                            </div>
+                            <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="StartDate" class="form-label fw-bold text-secondary">Başlangıç Tarihi</label>
+                                <input asp-for="StartDate" id="startDate" type="date" class="form-control border-light bg-light" />
+                                <span asp-validation-for="StartDate" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="EndDate" class="form-label fw-bold text-secondary">Bitiş Tarihi</label>
+                                <input asp-for="EndDate" id="endDate" type="date" class="form-control border-light bg-light" />
+                                <span asp-validation-for="EndDate" class="text-danger small"></span>
+                                <small id="dateError" class="text-danger d-none fw-bold mt-1">Staj süresi en az 30 gün olmalıdır!</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Quota" class="form-label fw-bold text-secondary">Öğrenci Kontenjanı</label>
+                            <input asp-for="Quota" type="number" class="form-control border-light bg-light" min="1" />
+                            <span asp-validation-for="Quota" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-bold text-secondary">İş Tanımı ve Detaylar</label>
+                            <textarea asp-for="Description" class="form-control border-light bg-light" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm py-3"
+                                    style="background: linear-gradient(to right, #1e3c72, #2a5298); border: none;">
+                                <i class="fas fa-save me-2"></i> Değişiklikleri Mühürle
+                            </button>
+                            <a asp-action="Index" class="btn btn-link text-muted text-decoration-none small text-center">
+                                <i class="fas fa-times me-1"></i> Vazgeç ve Listeye Dön
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.getElementById("internshipForm").addEventListener("submit", function (e) {
+            const startVal = document.getElementById("startDate").value;
+            const endVal = document.getElementById("endDate").value;
+            const errorElement = document.getElementById("dateError");
+
+            if (!startVal || !endVal) return;
+
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 30) {
+                e.preventDefault();
+                errorElement.classList.remove("d-none");
+                alert("❌ Güncelleme Başarısız: Staj süresi yönetmelik gereği en az 30 gün olmalıdır! (Şu an: " + diffDays + " gün)");
+            } else {
+                errorElement.classList.add("d-none");
+            }
+        });
+    </script>
+}

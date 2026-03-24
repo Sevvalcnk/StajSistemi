@@ -1,54 +1,63 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using StajSistemi.Models;
 
 namespace StajSistemi.data
 {
+    // IdentityUser'ı AppUser, Role'ü AppRole ve ID tipini int olarak mühürledik.
     public class ApplicationDbContext : IdentityDbContext<AppUser, AppRole, int>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options) { }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-        // --- Hafta 1: Ana Tablolar ---
-        public DbSet<Student> Students { get; set; }
+        // ❌ public DbSet<Student> Students { get; set; }  -> BU SATIRI SİLDİK! 
+        // Çünkü artık her şey AspNetUsers (AppUser) tablosunda.
+
         public DbSet<Department> Departments { get; set; }
-        public DbSet<Advisor> Advisors { get; set; }
-        public DbSet<Admin> Admins { get; set; }
+        public DbSet<Internship> Internships { get; set; }
+        public DbSet<InternshipApplication> InternshipApplications { get; set; }
 
-        // --- Hafta 1: Yeni Eklenen Tablolar ---
-        public DbSet<Internship> Internships { get; set; }     // Staj Bilgileri
-        public DbSet<Application> Applications { get; set; }   // Başvuru Kayıtları
-        public DbSet<LoginLog> LoginLogs { get; set; }         // Sisteme Giriş Logları
-
-        // --- ✘ INDEX VE CONSTRAINT TANIMLARI (BURADA TAMAMLANIYOR) ---
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // 1. Student Tablosu Kısıtlamaları
-            modelBuilder.Entity<Student>(entity =>
+            // --- 1. ROLLERİ MÜHÜRLE ---
+            modelBuilder.Entity<AppRole>().HasData(
+                new AppRole { Id = 1, Name = "Admin", NormalizedName = "ADMIN" },
+                new AppRole { Id = 2, Name = "Student", NormalizedName = "STUDENT" },
+                new AppRole { Id = 3, Name = "Advisor", NormalizedName = "ADVISOR" }
+            );
+
+            // --- 2. VARSAYILAN ADMİNİ MÜHÜRLE ---
+            var hasher = new PasswordHasher<AppUser>();
+            modelBuilder.Entity<AppUser>().HasData(new AppUser
             {
-                // Öğrenci Numarası benzersiz (Unique Index) olmalı
-                entity.HasIndex(s => s.StudentNo).IsUnique();
-
-                // Email alanı zorunlu ve maksimum 100 karakter
-                entity.Property(s => s.Email).IsRequired().HasMaxLength(100);
-
-                // Ad ve Soyad zorunlu olsun
-                entity.Property(s => s.Name).IsRequired().HasMaxLength(50);
-                entity.Property(s => s.Surname).IsRequired().HasMaxLength(50);
+                Id = 1,
+                UserName = "admin",
+                NormalizedUserName = "ADMIN",
+                Email = "admin@stajsistemi.com",
+                NormalizedEmail = "ADMIN@STAJSISTEMI.COM",
+                EmailConfirmed = true,
+                FirstName = "Süper",
+                LastName = "Admin",
+                FullName = "Süper Admin",
+                PasswordHash = hasher.HashPassword(null, "Admin123!"),
+                SecurityStamp = Guid.NewGuid().ToString() // Boş string yerine Guid daha güvenlidir
             });
 
-            // 2. Department Tablosu Kısıtlamaları
-            modelBuilder.Entity<Department>()
-                .Property(d => d.DepartmentName)
-                .IsRequired()
-                .HasMaxLength(100);
+            // Admin kullanıcısını Admin rolüne bağla
+            modelBuilder.Entity<IdentityUserRole<int>>().HasData(new IdentityUserRole<int> { RoleId = 1, UserId = 1 });
 
-            // 3. LoginLog Tablosu Kısıtlamaları
-            modelBuilder.Entity<LoginLog>()
-                .Property(l => l.Username)
-                .IsRequired();
+            // --- 3. BÖLÜMLERİ MÜHÜRLE ---
+            modelBuilder.Entity<Department>().HasData(
+                new Department { Id = 1, DepartmentName = "İnternet ve Ağ Teknolojileri" },
+                new Department { Id = 2, DepartmentName = "Çocuk Gelişimi Programı" },
+                new Department { Id = 3, DepartmentName = "Bilgisayar Programcılığı" },
+                new Department { Id = 4, DepartmentName = "Muhasebe ve Vergi Uygulamaları" },
+                new Department { Id = 5, DepartmentName = "Mekatronik" },
+                new Department { Id = 6, DepartmentName = "Grafik Tasarımı" },
+                new Department { Id = 7, DepartmentName = "Lojistik" }
+            );
         }
     }
 }

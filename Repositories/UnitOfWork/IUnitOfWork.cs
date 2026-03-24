@@ -1,17 +1,18 @@
-﻿using StajSistemi.Repositories.Abstract;
-using StajSistemi.Models; // Modellerine erişmek için
+﻿using StajSistemi.Models;
 
-namespace StajSistemi.Repositories.UnitOfWork
+namespace StajSistemi.Repositories.Abstract
 {
     public interface IUnitOfWork : IDisposable
     {
-        // Tüm tabloların depolarına tek merkezden ulaşacağız
-        IGenericRepository<Student> Students { get; }
-        IGenericRepository<Department> Departments { get; }
-        IGenericRepository<Advisor> Advisors { get; }
-        IGenericRepository<Admin> Admins { get; }
+        // 🛡️ Kullanıcı Yönetimi (Hepsi AppUser üzerinden döner)
+        // 'Students' ismini koruyabilirsin ama tipini AppUser yapmalısın.
+        IGenericRepository<AppUser> Students { get; }
 
-        // Her şeyi tek seferde veritabanına kaydetme emri
+        // ✅ Diğer Tablolar
+        IGenericRepository<Department> Departments { get; }
+        IGenericRepository<InternshipApplication> InternshipApplications { get; }
+        IGenericRepository<Internship> Internships { get; }
+
         Task<int> SaveAsync();
     }
 }

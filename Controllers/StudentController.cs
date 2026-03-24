@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using StajSistemi.DTOs;
 using StajSistemi.Models;
-using StajSistemi.Repositories.UnitOfWork;
+using StajSistemi.Repositories.Abstract; // ✅ DÜZELTME: Eski 'UnitOfWork' using'i silindi, 'Abstract' eklendi.
 
 namespace StajSistemi.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Advisor,Admin")]
     public class StudentController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -20,19 +20,20 @@ namespace StajSistemi.Controllers
             _mapper = mapper;
         }
 
-        // 1. Listeleme: Bölüm bilgisini de dahil ederek çekiyoruz
+        // 1. Listeleme: ✅ MÜHÜR: Soft Delete filtresi burada çalışıyor!
         public async Task<IActionResult> Index()
         {
-            // --- KRİTİK DEĞİŞİKLİK BURASI ---
-            // GetAllIncludingAsync kullanarak öğrencinin bağlı olduğu "Department" verisini de yüklüyoruz.
+            // Identity kullandığımız için Students deposu artık AppUser döndürüyor.
             var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department);
-            
-            var studentDtos = _mapper.Map<List<StudentDto>>(students);
+
+            // ✅ KRİTİK FİLTRE: Sadece silinmemiş (IsDeleted == false) olanları alıyoruz.
+            var activeStudents = students.Where(s => !s.IsDeleted).ToList();
+
+            var studentDtos = _mapper.Map<List<StudentDto>>(activeStudents);
             return View(studentDtos);
         }
 
         // 2. Ekleme Sayfası (GET)
-        [Authorize(Roles = "Advisor,Admin")]
         public async Task<IActionResult> Create()
         {
             var departments = await _unitOfWork.Departments.GetAllAsync();
@@ -42,21 +43,26 @@ namespace StajSistemi.Controllers
 
         // 3. Kayıt İşlemi (POST)
         [HttpPost]
-        [Authorize(Roles = "Advisor,Admin")]
+        [ValidateAntiForgeryToken] // ✅ GÜVENLİK MÜHÜRÜ: CSRF saldırılarına karşı eklendi
         public async Task<IActionResult> Create(StudentDto studentDto)
         {
             if (ModelState.IsValid)
             {
-                var student = _mapper.Map<Student>(studentDto);
+                // Identity uyumu için StudentDto'yu AppUser (veya Student) modeline mapliyoruz
+                var student = _mapper.Map<AppUser>(studentDto);
+
+                student.IsDeleted = false;
+
                 await _unitOfWork.Students.AddAsync(student);
                 await _unitOfWork.SaveAsync();
+
+                TempData["SuccessMessage"] = "Yeni öğrenci başarıyla mühürlendi! 🥂";
                 return RedirectToAction(nameof(Index));
             }
 
             var departments = await _unitOfWork.Departments.GetAllAsync();
             ViewBag.Departments = new SelectList(departments, "Id", "DepartmentName");
             return View(studentDto);
-            var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department);
         }
     }
 }

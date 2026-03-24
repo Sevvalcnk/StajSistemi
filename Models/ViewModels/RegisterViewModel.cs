@@ -7,8 +7,10 @@ namespace StajSistemi.Models.ViewModels
         [Required(ErrorMessage = "Ad Soyad alanı zorunludur.")]
         public string FullName { get; set; }
 
-        [Required(ErrorMessage = "Email alanı zorunludur.")]
-        [EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
+        [Required(ErrorMessage = "E-posta adresi boş bırakılamaz.")]
+        // Standart doğrulama yerine "Regex" (Düzenli İfade) kullanarak noktadan sonra uzantı zorunluluğu getiriyoruz
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+    ErrorMessage = "Lütfen geçerli bir e-posta adresi giriniz (Örn: isim@alanadi.com)")]
         public string Email { get; set; }
 
         // Sadece bu kalsın, diğeri fazla olduğu için hata veriyordu
@@ -27,5 +29,6 @@ namespace StajSistemi.Models.ViewModels
 
         [Required(ErrorMessage = "Lütfen bir rol seçiniz.")]
         public string Role { get; set; } // Student, Advisor, Admin
+
     }
 }

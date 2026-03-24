@@ -1,32 +1,40 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StajSistemi.data;
-using StajSistemi.Repositories.Abstract;
-using StajSistemi.Repositories.Concrete;
-using StajSistemi.Repositories.UnitOfWork;
+using StajSistemi.Repositories.Abstract;   // ✅ SADECE BU KALMALI
+using StajSistemi.Repositories.Concrete;   // ✅ SADECE BU KALMALI
 using StajSistemi.Mapping;
 using StajSistemi.Models;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using StajSistemi.Services;
+using StajSistemi.Helpers;
+
+// ❌ 'using StajSistemi.Repositories.UnitOfWork;' SATIRINI SİLDİK! 
+// Çünkü artık dosyalarımız Abstract ve Concrete içinde.
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Standart Servisler ---
 builder.Services.AddControllersWithViews();
 
+// ✅ IP Loglama için Gerekli
+builder.Services.AddHttpContextAccessor();
+
 // --- Veri Tabanı Bağlantısı ---
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// --- REPOSITORY, UNIT OF WORK VE MAPPING ---
+// --- REPOSITORY VE UNIT OF WORK KAYDI ---
+// Burada 'IUnitOfWork' Abstract'tan, 'UnitOfWork' Concrete'ten gelir.
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 builder.Services.AddAutoMapper(typeof(MapProfile));
 
 // --- MAİL SERVİSİ KAYDI ---
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
-// --- IDENTITY AYARLARI (Hafta 3) ---
+// --- IDENTITY AYARLARI ---
 builder.Services.AddIdentity<AppUser, AppRole>(options =>
 {
     options.Password.RequiredLength = 6;
@@ -35,24 +43,22 @@ builder.Services.AddIdentity<AppUser, AppRole>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireDigit = true;
     options.User.RequireUniqueEmail = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+    options.SignIn.RequireConfirmedAccount = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddErrorDescriber<TurkishIdentityErrorDescriber>();
 
-// --- ✅ YENİ: POLİTİKA VE CLAIMS TABANLI YETKİLENDİRME (3. HAFTA MÜHÜRÜ) ---
+// --- YETKİLENDİRME POLİTİKALARI ---
 builder.Services.AddAuthorization(options =>
 {
-    // Sadece 'Student' rolü olan ve sisteme 'FullAccess' claim'i ile girenler için
     options.AddPolicy("StudentOnly", policy => policy.RequireRole("Student"));
-
-    // Sadece Danışmanlar için özel kural
     options.AddPolicy("AdvisorOnly", policy => policy.RequireRole("Advisor"));
-
-    // Sadece Adminler için tam yetki
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 });
 
-// Cookie (Oturum) Ayarları
+// Cookie Ayarları
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -71,10 +77,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 
-// ÖNEMLİ: Kimlik doğrulama her zaman yetkilendirmeden önce gelmeli!
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -82,7 +86,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// --- HAFTA 3: Rolleri Otomatik Oluşturma (Seeding) ---
+// --- ROL SEEDING (Sistem İlk Açıldığında Rolleri Oluşturur) ---
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
@@ -92,7 +96,7 @@ using (var scope = app.Services.CreateScope())
     {
         if (!await roleManager.RoleExistsAsync(roleName))
         {
-            await roleManager.CreateAsync(new AppRole { Name = roleName });
+            await roleManager.CreateAsync(new AppRole { Name = roleName, NormalizedName = roleName.ToUpper() });
         }
     }
 }

@@ -1,20 +1,184 @@
-﻿@{
+﻿@model StajSistemi.DTOs.StudentDto
+
+@{
     ViewData["Title"] = "Öğrenci Paneli";
 }
-<div class="container mt-5">
-    <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
-        <div class="text-center mb-4">
-            <i class="fas fa-user-graduate fa-4x text-primary mb-3"></i>
-            <h2 class="fw-bold" style="color: #2c3e50;">Öğrenci Takip Sistemi</h2>
-            <p class="text-muted">Staj durumunuzu ve akademik verilerinizi anlık takip edin.</p>
+
+<style>
+    /* ✅ Sayfa Tasarım Mühürleri */
+    .card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
+    }
+
+    .profile-avatar {
+        width: 110px;
+        height: 110px;
+        object-fit: cover;
+        border: 4px solid white;
+    }
+
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+    }
+
+    .transition {
+        transition: all 0.3s ease;
+    }
+
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 10px;
+        height: 12px;
+    }
+
+    .skill-badge {
+        font-size: 0.7rem;
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        border: 1px solid #dee2e6;
+    }
+</style>
+
+<div class="container mt-4 pb-5">
+    @* --- 🔔 BİLDİRİM MESAJI --- *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 rounded-4 mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle fa-2x me-3"></i>
+                <div>
+                    <h5 class="alert-heading fw-bold mb-0">İşlem Başarılı!</h5>
+                    <span>@TempData["SuccessMessage"]</span>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        <div class="alert alert-info border-0 rounded-pill ps-4 shadow-sm">
-            <i class="fas fa-info-circle me-2"></i> Şuan aktif bir staj başvurunuz bulunmamaktadır.
+    }
+
+    <div class="row">
+        @* --- 👤 SOL TARAF: KARİYER ODAKLI PROFİL KARTI --- *@
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 bg-white shadow-sm overflow-hidden">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3 mt-2">
+                        <img src="https://ui-avatars.com/api/?name=@(Model.Name)+@(Model.Surname)&background=2c3e50&color=fff&size=128"
+                             class="rounded-circle profile-avatar shadow-sm" alt="Profil">
+                    </div>
+                    <h4 class="fw-bold mb-1">@Model.Name @Model.Surname</h4>
+                    <p class="text-muted small">@Model.Email</p>
+
+                    @* GPA Başarı Barı *@
+                    <div class="px-3 my-4">
+                        <div class="d-flex justify-content-between mb-1 small fw-bold text-muted">
+                            <span>GPA Başarı Oranı</span>
+                            <span>@Model.GPA / 4.0</span>
+                        </div>
+                        <div class="progress">
+                            @{
+                                var progressWidth = Model.GPA != null ? (Model.GPA * 25).ToString().Replace(",", ".") : "0";
+                                var barColor = "bg-danger";
+                                if (Model.GPA >= 3.5) barColor = "bg-success";
+                                else if (Model.GPA >= 2.5) barColor = "bg-info";
+                                else if (Model.GPA >= 2.0) barColor = "bg-warning";
+                            }
+                            <div class="progress-bar @barColor progress-bar-striped progress-bar-animated"
+                                 style="width: @progressWidth%"
+                                 role="progressbar"></div>
+                        </div>
+                    </div>
+
+                    @* ✅ YENİ: EĞİTİM VE YETENEKLER (SENİN İSTEDİĞİN KISIM) *@
+                    <div class="text-start px-2 mb-4">
+                        <div class="mb-3 border-bottom pb-2">
+                            <small class="text-muted d-block text-uppercase fw-bold mb-1" style="font-size: 0.6rem;">Eğitim Durumu</small>
+                            <span class="small fw-bold text-dark">@(Model.EducationSummary ?? "Henüz belirtilmemiş")</span>
+                        </div>
+
+                        <div class="mb-3 border-bottom pb-2">
+                            <small class="text-muted d-block text-uppercase fw-bold mb-1" style="font-size: 0.6rem;">Yetenekler & Eğitimler</small>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                @if (!string.IsNullOrEmpty(Model.PersonalSkills))
+                                {
+                                    foreach (var skill in Model.PersonalSkills.Split(','))
+                                    {
+                                        <span class="badge rounded-pill skill-badge fw-normal">@skill.Trim()</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <small class="text-muted italic">Düzenle kısmından yetenek ekleyin.</small>
+                                }
+                            </div>
+                        </div>
+
+                        @* ✅ DOSYALARIM BUTONLARI *@
+                        <div class="d-grid gap-2">
+                            @if (!string.IsNullOrEmpty(Model.CVPath))
+                            {
+                                <a href="@Model.CVPath" target="_blank" class="btn btn-outline-danger btn-sm rounded-pill fw-bold">
+                                    <i class="fas fa-file-pdf me-2"></i>CV'mi Görüntüle
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.CertificatePath))
+                            {
+                                <a href="@Model.CertificatePath" download class="btn btn-outline-primary btn-sm rounded-pill fw-bold">
+                                    <i class="fas fa-award me-2"></i>Sertifikalarım
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-2">
+                        <a asp-action="EditProfile" class="btn btn-primary rounded-pill fw-bold shadow-sm">
+                            <i class="fas fa-user-edit me-2"></i> Profili Düzenle
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-light border-0 py-3 text-center rounded-bottom-4">
+                    <small class="text-muted">Öğrenci No: <strong>@Model.StudentNo</strong></small>
+                </div>
+            </div>
         </div>
-        <div class="d-grid mt-4">
-            <button class="btn btn-primary btn-lg rounded-pill py-3 fw-bold shadow">
-                <i class="fas fa-plus-circle me-2"></i>Yeni Staj Başvurusu Yap
-            </button>
+
+        @* --- 🚀 SAĞ TARAF: ANA İŞLEM PANELİ --- *@
+        <div class="col-lg-8 mb-4">
+            <div class="card p-5 bg-white h-100 shadow-sm border-0">
+                <div class="text-center mb-5 mt-3">
+                    <i class="fas fa-graduation-cap fa-5x text-primary mb-4"></i>
+                    <h2 class="fw-bold" style="color: #2c3e50;">Hoş Geldin, @Model.Name!</h2>
+                    <p class="text-muted">Sistemi soldaki menüden yönetebilir veya aşağıdaki hızlı işlemleri kullanabilirsin.</p>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <a asp-controller="Internship" asp-action="Index" class="text-decoration-none">
+                            <div class="p-4 border border-2 rounded-4 text-center hover-shadow transition h-100 bg-white">
+                                <i class="fas fa-search fa-3x text-success mb-3"></i>
+                                <h5 class="fw-bold text-dark">Yeni Başvuru</h5>
+                                <p class="small text-muted mb-0">Aktif ilanları gör ve mühürle.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-md-6">
+                        <a asp-controller="Internship" asp-action="MyApplications" class="text-decoration-none">
+                            <div class="p-4 border border-2 rounded-4 text-center hover-shadow transition h-100 bg-white">
+                                <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
+                                <h5 class="fw-bold text-dark">Başvuru Sonuçlarım</h5>
+                                <p class="small text-muted mb-0">Onay ve red durumlarını takip et.</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-5 p-4 bg-light rounded-4 border-start border-5 border-primary">
+                    <h6 class="fw-bold mb-2"><i class="fas fa-bullhorn me-2 text-primary"></i> Önemli Hatırlatma</h6>
+                    <p class="small text-muted mb-0">Eksik belge yüklenen başvurular danışman tarafından reddedilebilir. Lütfen dosyalarınızı profil düzenle kısmından mühürlediğinizden emin olun.</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>

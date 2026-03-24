@@ -1,0 +1,61 @@
+﻿@model IEnumerable<StajSistemi.Models.InternshipApplication>
+
+<div class="container mt-5">
+    <h2 class="fw-bold text-dark mb-4"><i class="fas fa-user-check text-primary"></i> Gelen Staj Başvuruları</h2>
+
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <table class="table table-hover mb-0">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th class="ps-4">Öğrenci</th>
+                    <th>Şirket</th>
+                    <th>Departman</th>
+                    <th>Durum</th>
+                    <th class="text-end pe-4">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        @* Başvuran öğrencinin adı *@
+                        <td class="ps-4 fw-bold">@item.AppUser?.UserName</td>
+
+                        @* Başvurulan ilanın şirket adı *@
+                        <td>@item.Internship?.CompanyName</td>
+
+                        @* İlanın bağlı olduğu bölüm *@
+                        <td>@item.Internship?.Department?.DepartmentName</td>
+
+                        <td>
+                            <span class="badge @(item.Status == "Beklemede" ? "bg-warning" : (item.Status == "Reddedildi" ? "bg-danger" : "bg-success")) text-dark rounded-pill">
+                                @item.Status
+                            </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            @* CV'yi görüntüleme butonu *@
+                            <a href="/uploads/cv/@item.CVPath" target="_blank" class="btn btn-sm btn-outline-info rounded-pill me-1">
+                                <i class="fas fa-file-pdf"></i> CV
+                            </a>
+
+                            @* ✅ SERTİFİKA BUTONU: Sadece dosya varsa görünür *@
+                            @if (!string.IsNullOrEmpty(item.CertificatePath))
+                            {
+                                <a href="/uploads/certificates/@item.CertificatePath" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+                                    <i class="fas fa-certificate"></i> Sertifika
+                                </a>
+                            }
+
+                            @* Onay/Red İşlemleri *@
+                            <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button name="newStatus" value="Onaylandı" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm">Onay</button>
+                                <button name="newStatus" value="Reddedildi" class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm">Red</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

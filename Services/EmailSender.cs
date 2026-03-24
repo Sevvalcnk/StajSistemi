@@ -8,29 +8,32 @@ namespace StajSistemi.Services
     {
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
-            // Gmail SMTP sunucu ayarları
-            var client = new SmtpClient("smtp.gmail.com", 587)
+            try
             {
-                EnableSsl = true,
-                UseDefaultCredentials = false,
-                // KİMLİK DOĞRULAMA: Senin mailin ve Google'dan aldığın 16 haneli özel şifre
-                Credentials = new NetworkCredential("cineksevval52@gmail.com", "pmnh zbrm tlac weae")
-            };
+                var client = new SmtpClient("smtp.gmail.com", 587)
+                {
+                    EnableSsl = true,
+                    UseDefaultCredentials = false,
+                    // Senin güncel şifren ve mailin
+                    Credentials = new NetworkCredential("cineksevval52@gmail.com", "iztu jove babo vdwm")
+                };
 
-            var mailMessage = new MailMessage
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress("cineksevval52@gmail.com", "Sinop Üni Staj Takip"),
+                    Subject = subject,
+                    Body = htmlMessage,
+                    IsBodyHtml = true
+                };
+                mailMessage.To.Add(email);
+
+                await client.SendMailAsync(mailMessage);
+            }
+            catch (Exception ex)
             {
-                // GÖNDEREN: Sistemden mail giderken görünecek olan adres ve isim
-                From = new MailAddress("cineksevval52@gmail.com", "Sinop Üni Staj Takip"),
-                Subject = subject,
-                Body = htmlMessage,
-                IsBodyHtml = true
-            };
-
-            // ALICI: Şifresini unutan kullanıcının mail adresi
-            mailMessage.To.Add(email);
-
-            // POSTACININ YOLA ÇIKMASI
-            await client.SendMailAsync(mailMessage);
+                // Bir hata olursa Visual Studio'nun 'Output' penceresinden görebilirsin.
+                System.Diagnostics.Debug.WriteLine("MAİL HATASI: " + ex.Message);
+            }
         }
     }
 }

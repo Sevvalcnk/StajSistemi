@@ -18,5 +18,7 @@ namespace StajSistemi.Models.ViewModels
         [Compare("Password", ErrorMessage = "Şifreler uyuşmuyor.")]
         [DataType(DataType.Password)]
         public string ConfirmPassword { get; set; }
+
+
     }
 }

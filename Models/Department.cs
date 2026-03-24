@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace StajSistemi.Models
 {
@@ -11,7 +12,8 @@ namespace StajSistemi.Models
         [Display(Name = "Bölüm Adı")]
         public string DepartmentName { get; set; }
 
-        // İlişki: Bir bölümde birden fazla öğrenci olabilir
-        public ICollection<Student>? Students { get; set; }
+        // ✅ DÜZELTME: Artık bölüme bağlı olanlar eski 'Student' değil, 'AppUser' modelidir.
+        // İlişki: Bir bölümde birden fazla kullanıcı (öğrenci) olabilir.
+        public ICollection<AppUser>? Students { get; set; }
     }
 }

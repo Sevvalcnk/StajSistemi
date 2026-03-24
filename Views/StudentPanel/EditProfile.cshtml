@@ -1,0 +1,140 @@
+﻿@model StajSistemi.DTOs.StudentDto
+
+@{
+    ViewData["Title"] = "Profil Bilgilerini Güncelle";
+}
+
+<style>
+    body {
+        background: linear-gradient(rgba(240, 244, 248, 0.8), rgba(240, 244, 248, 0.8)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80');
+        background-size: cover;
+        background-attachment: fixed;
+    }
+
+    .card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+    }
+
+    .input-focus:focus {
+        border-color: #2c3e50 !important;
+        box-shadow: 0 0 10px rgba(44, 62, 80, 0.1) !important;
+    }
+
+    .border-dashed {
+        border-style: dashed !important;
+    }
+</style>
+
+<div class="container py-5 techNode-fade-in">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-dark text-white text-center py-4">
+                    <h3 class="fw-bold mb-0"><i class="fas fa-user-edit me-2"></i>Kariyer Profilini Güncelle</h3>
+                </div>
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <form asp-action="EditProfile" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        @* 🛡️ GİZLİ ALANLAR *@
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="Email" />
+                        <input type="hidden" asp-for="StudentNo" />
+                        @* ✅ DÜZELTME: DepartmentId artık gizli değil, aşağıda SELECT olarak var! *@
+
+                        <div class="mb-4 text-center">
+                            <img src="https://ui-avatars.com/api/?name=@(Model.Name)+@(Model.Surname)&background=2c3e50&color=fff&size=100"
+                                 class="rounded-circle shadow-sm mb-2" alt="Avatar">
+                            <p class="text-muted small mb-0">@Model.Email</p>
+                            <span class="badge bg-light text-dark border">No: @Model.StudentNo</span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Name" class="form-label fw-bold text-muted small text-uppercase">Adınız</label>
+                                <input asp-for="Name" class="form-control rounded-pill border-2 input-focus" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Surname" class="form-label fw-bold text-muted small text-uppercase">Soyadınız</label>
+                                <input asp-for="Surname" class="form-control rounded-pill border-2 input-focus" />
+                                <span asp-validation-for="Surname" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        @* ✅ YENİ: BÖLÜM SEÇİMİ (DROPDOWN) *@
+                        <div class="mb-3">
+                            <label asp-for="DepartmentId" class="form-label fw-bold text-muted small text-uppercase">Okuduğunuz Bölüm</label>
+                            <select asp-for="DepartmentId" class="form-select rounded-pill border-2 input-focus"
+                                    asp-items="@(new SelectList(ViewBag.Departments, "Id", "DepartmentName"))">
+                                <option value="">--- Bölümünüzü Seçiniz ---</option>
+                            </select>
+                            <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PhoneNumber" class="form-label fw-bold text-muted small text-uppercase">Telefon</label>
+                                <input asp-for="PhoneNumber" class="form-control rounded-pill border-2 input-focus" placeholder="05XX..." />
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="GPA" class="form-label fw-bold text-muted small text-uppercase">GPA (Not Ort.)</label>
+                                <input asp-for="GPA" class="form-control rounded-pill border-2 input-focus" placeholder="Örn: 3.50" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="EducationSummary" class="form-label fw-bold text-muted small text-uppercase">Eğitim Özeti</label>
+                            <input asp-for="EducationSummary" class="form-control rounded-pill border-2 input-focus" placeholder="Örn: 3. Sınıf Öğrencisi" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PersonalSkills" class="form-label fw-bold text-muted small text-uppercase">Yetenekler</label>
+                            <textarea asp-for="PersonalSkills" class="form-control rounded-4 border-2 input-focus" rows="3" placeholder="C#, SQL, Office..."></textarea>
+                        </div>
+
+                        <hr class="my-4">
+
+                        @* DOSYA YÜKLEME ALANLARI *@
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="p-3 border-2 border-dashed rounded-4 bg-light text-center h-100 shadow-sm">
+                                    <i class="fas fa-file-pdf text-danger mb-2 fa-2x"></i>
+                                    <label class="d-block fw-bold small text-uppercase mb-2">CV Yükle (PDF)</label>
+                                    <input type="file" name="CVFile" class="form-control form-control-sm rounded-pill" accept=".pdf" />
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="p-3 border-2 border-dashed rounded-4 bg-light text-center h-100 shadow-sm">
+                                    <i class="fas fa-award text-warning mb-2 fa-2x"></i>
+                                    <label class="d-block fw-bold small text-uppercase mb-2">Sertifikalar</label>
+                                    <input type="file" name="CertificateFile" class="form-control form-control-sm rounded-pill" accept=".pdf,.zip,.rar" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow">
+                                <i class="fas fa-save me-2"></i>Değişiklikleri Mühürle
+                            </button>
+                            <a asp-action="Index" class="btn btn-link text-muted mt-2 text-decoration-none text-center">
+                                Vazgeç ve Geri Dön
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

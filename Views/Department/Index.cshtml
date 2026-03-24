@@ -1,0 +1,26 @@
+﻿@model IEnumerable<StajSistemi.Models.Department>
+
+<div class="container mt-4">
+    <h2>Bölüm Ayarları</h2>
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Yeni Bölüm Ekle</a>
+    </p>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Bölüm Adı</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.DepartmentName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <a href="/Admin/Index" class="btn btn-secondary">Admin Paneline Dön</a>
+</div>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using StajSistemi.Models;
 using StajSistemi.Models.ViewModels;
+using StajSistemi.data;
 using System.Security.Claims;
 
 namespace StajSistemi.Controllers
@@ -12,44 +13,50 @@ namespace StajSistemi.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly IEmailSender _emailSender;
+        private readonly ApplicationDbContext _context;
 
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IEmailSender emailSender)
+        public AccountController(
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager,
+            IEmailSender emailSender,
+            ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
+            _context = context;
         }
 
-        // --- GİRİŞ (GET) ---
         [HttpGet]
         public IActionResult Login(string role)
         {
-            ViewBag.SelectedRole = role;
+            if (User.Identity.IsAuthenticated)
+            {
+                TempData["LoginWarning"] = "Zaten aktif bir oturumunuz bulunuyor.";
+                if (User.IsInRole("Admin")) return RedirectToAction("Index", "Admin");
+                if (User.IsInRole("Advisor")) return RedirectToAction("Index", "Advisor");
+                return RedirectToAction("Index", "StudentPanel");
+            }
+            ViewBag.SelectedRole = role ?? "Student";
             return View();
         }
 
-        // --- GİRİŞ (POST) ---
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model, string? role)
         {
             ViewBag.SelectedRole = role;
             if (ModelState.IsValid)
             {
-                // Okul No veya Email ile kullanıcıyı bul
                 var user = model.Email.Contains("@")
                     ? await _userManager.FindByEmailAsync(model.Email)
                     : await _userManager.FindByNameAsync(model.Email);
 
                 if (user != null)
                 {
-                    // IP Kaydı (Hafta 3)
-                    user.IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
-                    await _userManager.UpdateAsync(user);
-
                     var result = await _signInManager.PasswordSignInAsync(user.UserName!, model.Password, model.RememberMe, false);
-
                     if (result.Succeeded)
                     {
+                        TempData.Remove("LoginWarning");
                         var roles = await _userManager.GetRolesAsync(user);
                         if (roles.Contains("Admin")) return RedirectToAction("Index", "Admin");
                         if (roles.Contains("Advisor")) return RedirectToAction("Index", "Advisor");
@@ -61,24 +68,33 @@ namespace StajSistemi.Controllers
             return View(model);
         }
 
-        // --- KAYIT (GET) ---
         [HttpGet]
-        public IActionResult Register() => View();
+        public IActionResult Register(string role)
+        {
+            ViewBag.SelectedRole = role ?? "Student";
+            return View();
+        }
 
-        // --- KAYIT (POST) ---
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
+                // İsim parçalama mantığını AppUser seviyesine çekiyoruz
+                var nameParts = model.FullName.Trim().Split(' ');
+                string firstName = nameParts[0];
+                string lastName = nameParts.Length > 1 ? nameParts[nameParts.Length - 1] : "";
+
                 var user = new AppUser
                 {
-                    // Öğrenciyse UserName = Okul No, Değilse Email
                     UserName = model.Role == "Student" ? model.StudentNo : model.Email,
                     Email = model.Email,
                     FullName = model.FullName,
-                    // SQL'deki StudentNo sütununu dolduruyoruz
-                    StudentNo = model.Role == "Student" ? model.StudentNo : null
+                    FirstName = firstName, // ✅ EKLEDİM: AppUser içindeki FirstName'e yaz
+                    LastName = lastName,   // ✅ EKLEDİM: AppUser içindeki LastName'e yaz
+                    StudentNo = model.Role == "Student" ? model.StudentNo : null,
+                    DepartmentId = model.Role == "Student" ? 1 : (int?)null, // ✅ Varsayılan bölüm (Şimdilik 1)
+                    IsDeleted = false
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -86,60 +102,88 @@ namespace StajSistemi.Controllers
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(user, model.Role);
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("Index", "Home");
-                }
 
+                    // ❌ 'var newStudent = new Student' BLOĞUNU KOMPLE SİLDİK!
+                    // Artık her şey AppUser içinde olduğu için ikinci bir tabloya gerek kalmadı.
+
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+
+                    if (model.Role == "Advisor") return RedirectToAction("Index", "Advisor");
+                    if (model.Role == "Admin") return RedirectToAction("Index", "Admin");
+
+                    return RedirectToAction("Index", "StudentPanel");
+                }
                 foreach (var error in result.Errors) ModelState.AddModelError("", error.Description);
             }
+            ViewBag.SelectedRole = model.Role;
             return View(model);
         }
 
-        // --- ŞİFREMİ UNUTTUM ---
-        [HttpGet]
-        public IActionResult ForgotPassword() => View();
+        // --- Şifre İşlemleri ---
+        [HttpGet] public IActionResult ForgotPassword() => View();
 
         [HttpPost]
         public async Task<IActionResult> ForgotPassword(string email)
         {
-            if (string.IsNullOrEmpty(email)) return View();
+            if (string.IsNullOrEmpty(email))
+            {
+                ModelState.AddModelError("", "E-posta adresi gerekli.");
+                return View();
+            }
+
             var user = await _userManager.FindByEmailAsync(email);
             if (user != null)
             {
-                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var callbackUrl = Url.Action("ResetPassword", "Account", new { email = user.Email, token = token }, protocol: HttpContext.Request.Scheme);
-                await _emailSender.SendEmailAsync(email, "Şifre Sıfırlama", $"Şifrenizi yenilemek için lütfen <a href='{callbackUrl}'>buraya tıklayın</a>.");
+                try
+                {
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    var callbackUrl = Url.Action("ResetPassword", "Account",
+                        new { token = token, email = email }, protocol: Request.Scheme);
+
+                    await _emailSender.SendEmailAsync(email, "Şifre Sıfırlama",
+                        $"Şifrenizi sıfırlamak için lütfen <a href='{callbackUrl}'>buraya tıklayın</a>.");
+
+                    ViewBag.Message = "Şifre sıfırlama bağlantısı başarıyla gönderildi.";
+                }
+                catch (Exception ex)
+                {
+                    ViewBag.Message = "Mail gönderilirken hata oluştu! Detay: " + ex.Message;
+                }
             }
-            return View("ForgotPasswordConfirmation");
+            else
+            {
+                ViewBag.Message = "Eğer bu e-posta adresi sistemde kayıtlı ise bağlantı gönderilecektir.";
+            }
+            return View();
         }
 
         [HttpGet]
-        public IActionResult ForgotPasswordConfirmation() => View();
-
-        // --- ŞİFRE SIFIRLAMA ---
-        [HttpGet]
-        public IActionResult ResetPassword(string email, string token)
+        public IActionResult ResetPassword(string token, string email)
         {
-            if (email == null || token == null) return RedirectToAction("Index", "Home");
-            return View(new ResetPasswordViewModel { Email = email, Token = token });
+            if (token == null || email == null) return RedirectToAction("Index", "Home");
+            ViewBag.Token = token;
+            ViewBag.Email = email;
+            return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        public async Task<IActionResult> ResetPassword(string email, string token, string password)
         {
-            if (!ModelState.IsValid) return View(model);
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await _userManager.FindByEmailAsync(email);
             if (user == null) return RedirectToAction("Index", "Home");
 
-            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
-            if (result.Succeeded) return RedirectToAction("Login", new { role = "Student" });
+            var result = await _userManager.ResetPasswordAsync(user, token, password);
+            if (result.Succeeded)
+            {
+                TempData["SuccessMessage"] = "Şifreniz başarıyla güncellendi! Giriş yapabilirsiniz.";
+                return RedirectToAction("Login", "Account");
+            }
 
             foreach (var error in result.Errors) ModelState.AddModelError("", error.Description);
-            return View(model);
+            ViewBag.Token = token;
+            ViewBag.Email = email;
+            return View();
         }
-
-        [HttpGet]
-        public IActionResult AccessDenied() => View();
 
         [HttpPost]
         public async Task<IActionResult> Logout()
@@ -147,5 +191,7 @@ namespace StajSistemi.Controllers
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
+
+        [HttpGet] public IActionResult AccessDenied() => View();
     }
 }

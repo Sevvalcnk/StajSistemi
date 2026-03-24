@@ -9,78 +9,208 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - StajSistemi</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    @* FONT AWESOME: Login ve Register'daki ikonların her yerde çalışması için buraya ekledik *@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/StajSistemi.styles.css" asp-append-version="true" />
+
+    <style>
+        body {
+            overflow-x: hidden;
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        #wrapper {
+            display: flex;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        #sidebar-wrapper {
+            min-height: 100vh;
+            width: 260px;
+            margin-left: -260px;
+            transition: margin .25s ease-out;
+            background: #2c3e50;
+            color: white;
+            position: fixed;
+            z-index: 1000;
+        }
+
+            #sidebar-wrapper .sidebar-heading {
+                padding: 1.5rem 1.25rem;
+                font-size: 1.3rem;
+                font-weight: bold;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                text-align: center;
+            }
+
+            #sidebar-wrapper .list-group-item {
+                background: transparent;
+                color: rgba(255,255,255,0.7);
+                border: none;
+                padding: 1rem 1.5rem;
+                transition: all 0.3s;
+            }
+
+                #sidebar-wrapper .list-group-item:hover {
+                    background: rgba(255,255,255,0.1);
+                    color: white;
+                    padding-left: 2rem;
+                }
+
+                #sidebar-wrapper .list-group-item i {
+                    width: 25px;
+                }
+
+        #page-content-wrapper {
+            width: 100%;
+            margin-left: 0;
+            transition: margin .25s ease-out;
+        }
+
+        .navbar {
+            background: white;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 0.8rem 1.5rem;
+        }
+
+        @@media (min-width: 768px) {
+            #sidebar-wrapper {
+                margin-left: 0;
+            }
+
+            #page-content-wrapper {
+                margin-left: 260px;
+            }
+
+            body.sb-sidenav-toggled #sidebar-wrapper {
+                margin-left: -260px;
+            }
+
+            body.sb-sidenav-toggled #page-content-wrapper {
+                margin-left: 0;
+            }
+        }
+
+        footer {
+            margin-top: auto;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand fw-bold text-primary" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-graduation-cap me-2"></i>StajSistemi
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Ana Sayfa</a>
-                        </li>
-                    </ul>
 
-                    <ul class="navbar-nav ms-auto align-items-center">
+    <div id="wrapper">
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading">
+                <i class="fas fa-graduation-cap me-2 text-primary"></i>StajSistemi
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <a asp-controller="Home" asp-action="Index" class="list-group-item list-group-item-action">
+                    <i class="fas fa-home me-2"></i> Ana Sayfa
+                </a>
+
+                @if (User.Identity.IsAuthenticated)
+                {
+                    @* ✅ MÜHÜR: Danışman Linkleri Burası! *@
+                    @if (User.IsInRole("Advisor") || User.IsInRole("Admin"))
+                    {
+                        @* 🔔 BİLDİRİM MÜHÜRÜ: Gelen Başvurular yanına sayı baloncuğu eklendi *@
+                        <a asp-controller="Advisor" asp-action="InternshipApplications" class="list-group-item list-group-item-action bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-envelope-open-text me-2 text-warning"></i> Gelen Başvurular</span>
+
+                            @if (ViewBag.NewApplicationsCount > 0)
+                            {
+                                <span class="badge rounded-pill bg-danger shadow-sm" style="font-size: 0.75rem;">
+                                    @ViewBag.NewApplicationsCount
+                                </span>
+                            }
+                        </a>
+
+                        <a asp-controller="Advisor" asp-action="Index" class="list-group-item list-group-item-action">
+                            <i class="fas fa-users me-2 text-danger"></i> Öğrenci Listesi
+                        </a>
+                        <a asp-controller="Internship" asp-action="Create" class="list-group-item list-group-item-action">
+                            <i class="fas fa-plus-circle me-2 text-info"></i> Yeni İlan Ekle
+                        </a>
+                    }
+
+                    <div class="border-top my-2 opacity-25"></div>
+
+                    <a asp-controller="Internship" asp-action="Index" class="list-group-item list-group-item-action">
+                        <i class="fas fa-search me-2 text-success"></i> Staj İlanları
+                    </a>
+                    <a asp-controller="Internship" asp-action="MyApplications" class="list-group-item list-group-item-action">
+                        <i class="fas fa-check-double me-2 text-primary"></i> Başvuru Sonuçlarım
+                    </a>
+                }
+
+                <div class="border-top my-3 opacity-25"></div>
+
+                <a asp-controller="Home" asp-action="About" class="list-group-item list-group-item-action">
+                    <i class="fas fa-info-circle me-2"></i> Hakkımızda
+                </a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper" class="d-flex flex-column">
+            <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top">
+                <div class="container-fluid">
+                    <button class="btn btn-light border shadow-sm" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <div class="ms-auto d-flex align-items-center">
                         @if (User.Identity.IsAuthenticated)
                         {
-                            // Giriş yapan kullanıcının veritabanındaki tam profilini çekiyoruz
                             var user = await UserManager.GetUserAsync(User);
-
-                            <li class="nav-item me-3">
-                                <span class="nav-link text-dark fw-bold">
-                                    <i class="fas fa-user-circle me-1 text-primary"></i>
-                                    @* Numara yerine Ad Soyad mühürledik *@
-                                    Hoş geldin, @(user?.FullName ?? User.Identity.Name)!
-                                </span>
-                            </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
-                                        <i class="fas fa-sign-out-alt me-1"></i>Çıkış Yap
-                                    </button>
-                                </form>
-                            </li>
+                            <span class="me-3 d-none d-md-inline fw-bold text-dark">
+                                <i class="fas fa-user-circle me-1 text-primary"></i>
+                                @(user?.FullName ?? User.Identity.Name)
+                            </span>
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Çıkış
+                                </button>
+                            </form>
                         }
                         else
                         {
-                            <li class="nav-item">
-                                <a class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" href="/Account/Login">
-                                    <i class="fas fa-sign-in-alt me-1"></i>Giriş Yap
-                                </a>
-                            </li>
+                            <a class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" href="/Account/Login">
+                                <i class="fas fa-sign-in-alt me-1"></i>Giriş Yap
+                            </a>
                         }
-                    </ul>
+                    </div>
                 </div>
+            </nav>
+
+            <div class="container-fluid p-4">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
             </div>
-        </nav>
-    </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted bg-light">
-        <div class="container text-center py-3">
-            &copy; 2026 - <b>StajSistemi</b> - <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none">Gizlilik Politikası</a>
+            <footer class="border-top footer text-muted bg-white mt-auto">
+                <div class="container text-center py-3 small">
+                    &copy; 2026 - <b>StajSistemi</b>
+                </div>
+            </footer>
         </div>
-    </footer>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', event => {
+            const sidebarToggle = document.body.querySelector('#sidebarToggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', event => {
+                    event.preventDefault();
+                    document.body.classList.toggle('sb-sidenav-toggled');
+                });
+            }
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

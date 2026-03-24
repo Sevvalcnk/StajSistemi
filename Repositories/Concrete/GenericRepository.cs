@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StajSistemi.data; // DbContext'e erişmek için
+using StajSistemi.data;
+using StajSistemi.Models;
 using StajSistemi.Repositories.Abstract;
 using System.Linq.Expressions;
 
@@ -7,7 +8,7 @@ namespace StajSistemi.Repositories.Concrete
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        protected readonly ApplicationDbContext _context; // Veritabanı köprümüz [cite: 30]
+        protected readonly ApplicationDbContext _context;
         private readonly DbSet<T> _dbSet;
 
         public GenericRepository(ApplicationDbContext context)
@@ -25,6 +26,7 @@ namespace StajSistemi.Repositories.Concrete
         public void Update(T entity) => _dbSet.Update(entity);
 
         public void Delete(T entity) => _dbSet.Remove(entity);
+
         public async Task<IEnumerable<T>> GetAllIncludingAsync(params Expression<Func<T, object>>[] includeProperties)
         {
             IQueryable<T> query = _dbSet;

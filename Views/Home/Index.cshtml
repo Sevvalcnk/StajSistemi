@@ -1,57 +1,213 @@
 ﻿@{
-    ViewData["Title"] = "Staj Portalı";
+    Layout = null;
 }
 
-@* İkonlar için Font Awesome kütüphanesi *@
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Staj Sistemi - Hoş Geldiniz</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-<div class="container text-center py-5 animate__animated animate__fadeIn">
-    <div class="mb-5">
-        <div class="display-4 text-primary mb-3">
-            <i class="fas fa-graduation-cap"></i>
+    <style>
+        body {
+            background: linear-gradient(rgba(44, 62, 80, 0.8), rgba(44, 62, 80, 0.8)), url('https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 0;
+            color: white;
+        }
+
+        .main-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            margin: auto;
+            padding: 50px 20px;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .display-4 {
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        /* --- KARTLAR --- */
+        .actor-card {
+            background: white;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            height: 100%;
+            color: #333;
+        }
+
+            .actor-card:hover {
+                transform: translateY(-15px);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            }
+
+        .strip {
+            padding: 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .strip-student {
+            background-color: #5b8bc3;
+        }
+
+        .strip-advisor {
+            background-color: #6da59c;
+        }
+
+        .strip-admin {
+            background-color: #f3a656;
+        }
+
+        .btn-entry {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #2c3e50;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 12px 25px;
+            transition: all 0.2s;
+            display: block;
+            text-decoration: none;
+        }
+
+            .btn-entry:hover {
+                background-color: #2c3e50;
+                color: white;
+            }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100%;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #f3a656;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <div class="hero-section py-4">
+            <i class="fas fa-graduation-cap fa-5x mb-4 text-white"></i>
+            <h1 class="display-4 mb-3">Staj Süreçlerini <span style="color: #f3a656;">Mühürleyin!</span></h1>
+            <p class="lead opacity-75 fs-4 mx-auto" style="max-width: 800px;">
+                Dijital staj takip sistemi ile kariyerinize profesyonel bir başlangıç yapın.
+            </p>
+
+            @* ✅ CANLI RAKAMLAR BURAYA GELİYOR *@
+            <div class="d-flex justify-content-center gap-4 mt-4">
+                <span class="badge bg-primary px-3 py-2 rounded-pill shadow">@ViewBag.ActiveInternshipsCount Aktif İlan</span>
+                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow">@ViewBag.NewApplicationsCount Bekleyen Başvuru</span>
+            </div>
         </div>
-        <h1 class="fw-bold" style="color: #2c3e50;">Akıllı Staj Başvuru ve Süreç Yönetimi</h1>
-        <p class="text-muted fs-5">Lütfen devam etmek için sistemdeki rolünüzü seçiniz.</p>
+
+        <div class="row g-4 justify-content-center mb-5">
+            @* ÖĞRENCİ KARTI *@
+            <div class="col-md-4">
+                <div class="card actor-card">
+                    <div class="strip strip-student text-center">ÖĞRENCİ PORTALI</div>
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-area fs-1 mb-3" style="color: #5b8bc3;"><i class="fas fa-user-graduate fa-2x"></i></div>
+                        <p class="small text-muted mb-4">İlanlara başvur ve sonuçlarını anlık takip et.</p>
+
+                        @if (User.Identity.IsAuthenticated && User.IsInRole("Student"))
+                        {
+                            <a asp-controller="StudentPanel" asp-action="Index" class="btn btn-entry mb-2 shadow-sm bg-primary text-white border-0">Panele Git</a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" asp-route-role="Student" class="btn btn-entry mb-2 shadow-sm">Giriş Yap</a>
+                            <a asp-controller="Account" asp-action="Register" asp-route-role="Student" class="text-decoration-none small text-secondary">Yeni Hesap Oluştur</a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @* DANIŞMAN KARTI *@
+            <div class="col-md-4">
+                <div class="card actor-card">
+                    <div class="strip strip-advisor text-center">DANIŞMAN PORTALI</div>
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-area fs-1 mb-3" style="color: #6da59c;"><i class="fas fa-chalkboard-teacher fa-2x"></i></div>
+                        <p class="small text-muted mb-4">Başvuruları değerlendir ve stajyerleri mühürle.</p>
+
+                        @if (User.Identity.IsAuthenticated && (User.IsInRole("Advisor") || User.IsInRole("Admin")))
+                        {
+                            <a asp-controller="Advisor" asp-action="Index" class="btn btn-entry mb-2 shadow-sm bg-success text-white border-0">Yönetim Paneli</a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" asp-route-role="Advisor" class="btn btn-entry mb-2 shadow-sm">Yetkili Girişi</a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @* SİSTEM YÖNETİCİSİ *@
+            <div class="col-md-4">
+                <div class="card actor-card">
+                    <div class="strip strip-admin text-center">SİSTEM YÖNETİCİSİ</div>
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-area fs-1 mb-3" style="color: #f3a656;"><i class="fas fa-user-shield fa-2x"></i></div>
+                        <p class="small text-muted mb-4">Bölümleri ve sistem ayarlarını yönet.</p>
+                        <a asp-controller="Account" asp-action="Login" asp-route-role="Admin" class="btn btn-entry mb-2 shadow-sm">Yönetici Paneli</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ALT ÖZELLİKLER *@
+        <div class="row g-4 mt-5 text-center">
+            <div class="col-md-4">
+                <div class="feature-item">
+                    <i class="fas fa-bolt feature-icon"></i>
+                    <h5 class="fw-bold">Hızlı Başvuru</h5>
+                    <p class="small opacity-75 mb-0">Tek tıkla CV ve sertifikalarını sisteme mühürle.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-item">
+                    <i class="fas fa-search-location feature-icon"></i>
+                    <h5 class="fw-bold">Anlık Takip</h5>
+                    <p class="small opacity-75 mb-0">Başvurun hangi aşamada? Anında bildirim al.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-item">
+                    <i class="fas fa-file-contract feature-icon"></i>
+                    <h5 class="fw-bold">Güvenli Arşiv</h5>
+                    <p class="small opacity-75 mb-0">Tüm geçmiş staj belgelerine tek noktadan eriş.</p>
+                </div>
+            </div>
+        </div>
+
+        <p class="mt-5 text-center opacity-50 small">© 2026 StajSistemi | Dijital Süreç Yönetimi</p>
     </div>
 
-    <div class="row g-4 mt-2 justify-content-center">
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm portal-card rounded-4 border-0">
-                <div class="card-body p-5">
-                    <div class="mb-4 text-primary">
-                        <i class="fas fa-user-graduate fa-4x"></i>
-                    </div>
-                    <h3 class="fw-bold">Öğrenci</h3>
-                    <p class="text-muted small">Başvuru yap, staj dosyalarını yükle ve sonuçlarını anlık takip et.</p>
-                    <a href="/Account/Login?role=Öğrenci" class="btn btn-primary btn-portal w-100 mt-3 shadow">Giriş Yap</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm portal-card rounded-4 border-0">
-                <div class="card-body p-5">
-                    <div class="mb-4" style="color: #6da59c;">
-                        <i class="fas fa-chalkboard-teacher fa-4x"></i>
-                    </div>
-                    <h3 class="fw-bold">Danışman</h3>
-                    <p class="text-muted small">Öğrenci başvurularını değerlendir, evrakları onayla ve süreci yönet.</p>
-                    <a href="/Account/Login?role=Danışman" class="btn btn-success btn-portal w-100 mt-3 shadow" style="background-color: #6da59c; border: none;">Giriş Yap</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm portal-card rounded-4 border-0">
-                <div class="card-body p-5">
-                    <div class="mb-4 text-warning">
-                        <i class="fas fa-user-shield fa-4x"></i>
-                    </div>
-                    <h3 class="fw-bold">Yönetici</h3>
-                    <p class="text-muted small">Sistem ayarlarını yapılandır, kullanıcıları ve bölümleri denetle.</p>
-                    <a href="/Account/Login?role=Yönetici" class="btn btn-warning btn-portal w-100 mt-3 shadow text-white">Giriş Yap</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+</body>
+</html>

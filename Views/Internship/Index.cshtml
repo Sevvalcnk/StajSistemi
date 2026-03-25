@@ -58,7 +58,6 @@
                             {
                                 <tr>
                                     <td class="px-4 py-3">
-                                        @* ✅ MÜHÜR: İlan Başlığı (Name) eklendi *@
                                         <div class="fw-bold text-dark">@item.Name</div>
                                         <div class="small text-muted">@item.CompanyName (@item.CompanySector)</div>
                                     </td>
@@ -69,7 +68,6 @@
                                         </span>
                                     </td>
                                     <td class="py-3">
-                                        @* ✅ MÜHÜR: Tarihlerin ekranda düzgün görünmesi *@
                                         <div class="small fw-bold text-secondary">
                                             <i class="far fa-calendar-alt me-1"></i> @item.StartDate.ToString("dd.MM.yyyy")
                                         </div>
@@ -98,7 +96,6 @@
                                         }
                                     </td>
                                     <td class="py-3 text-end px-4">
-                                        @* ✅ MÜHÜR: Öğrenci Butonları *@
                                         @if (User.IsInRole("Student"))
                                         {
                                             if (item.Quota > 0 && item.Status == "Aktif")
@@ -113,15 +110,19 @@
                                             }
                                         }
 
-                                        @* ✅ MÜHÜR: Admin/Danışman Butonları *@
                                         @if (User.IsInRole("Advisor") || User.IsInRole("Admin"))
                                         {
                                             <div class="btn-group shadow-sm rounded-pill overflow-hidden">
-                                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary border-0 px-3">
+                                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary border-0 px-3" title="Düzenle">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <form asp-action="DeleteInternship" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Bu ilanı sistemden kaldırmak üzeresiniz. Emin misiniz?');">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0 px-3">
+
+                                                @* 🛡️ GÜVENLİK MÜHRÜ: 404 Hatasını bitiren POST formu *@
+                                                <form asp-action="DeleteInternship" asp-route-id="@item.Id" method="post"
+                                                      onsubmit="return confirm('Bu ilanı sistemden kaldırmak üzeresiniz. Emin misiniz?');"
+                                                      style="display: contents;">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0 px-3" title="Sil">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
@@ -139,7 +140,6 @@
 </div>
 
 <style>
-    /* Daha kurumsal görünüm için badge stilleri */
     .bg-soft-info {
         background-color: #e0f7fa;
     }
@@ -147,5 +147,11 @@
     .table-hover tbody tr:hover {
         background-color: #f8f9fa;
         transition: 0.3s;
+    }
+
+    /* Silme butonunun hizasını korumak için */
+    .btn-group form {
+        margin: 0;
+        padding: 0;
     }
 </style>

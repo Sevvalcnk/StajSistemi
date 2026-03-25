@@ -60,11 +60,25 @@
                     <p class="text-muted small">Lütfen bilgilerinizi kontrol ederek giriş yapın.</p>
                 </div>
 
-                <div class="card-body">
+                @* 🛡️ GÜVENLİK KİLİDİ MÜHRÜ *@
+                <div class="px-3 mb-2">
+                    <div class="alert alert-dark border-0 shadow-sm rounded-4 p-3" style="background-color: #2c3e50; color: #ecf0f1;">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-shield fa-2x me-3 text-warning"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1" style="color: #f1c40f; font-size: 0.9rem;">Güvenlik Kilidi Aktif!</h6>
+                                <p class="small mb-0" style="font-size: 0.75rem; line-height: 1.3;">
+                                    Yetkisiz erişim engellenmiş olur. Yani bilgisayar başında biri oturumu açık bırakıp gitse bile, süre dolunca sistem kendini dış dünyaya kapatır. 🛡️
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body pt-0">
                     <form asp-action="Login" asp-route-role="@ViewBag.SelectedRole" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
 
-                        @* KULLANICI ADI / EMAIL ALANI *@
                         <div class="mb-3">
                             <label asp-for="Email" class="form-label fw-bold small">
                                 @(isStudent ? "Öğrenci Numarası" : "E-posta Adresi")
@@ -80,7 +94,6 @@
                             <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
 
-                        @* ŞİFRE ALANI *@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <label asp-for="Password" class="form-label fw-bold small">Şifre</label>
@@ -113,7 +126,6 @@
                 </div>
 
                 <div class="card-footer bg-white border-0 py-3 text-center">
-                    @* ✅ MÜHÜR: Rol Kontrolü ile Kayıt Linki Filtreleme *@
                     @if (isStudent)
                     {
                         <p class="mb-0 small text-muted">
@@ -130,7 +142,7 @@
                         </div>
                     }
 
-                    @* ✅ YENİ MÜHÜR: OTURUM GÜVENLİĞİ ZAMANLAYICI *@
+                    @* OTURUM GÜVENLİĞİ ZAMANLAYICI *@
                     <div class="mt-4">
                         <div class="d-inline-block px-3 py-1 rounded-pill bg-light border shadow-sm" style="font-size: 0.7rem;">
                             <span class="text-muted fw-bold">
@@ -154,7 +166,6 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 
-    @* ✅ MÜHÜR: Göz İkonu ve Zamanlayıcıyı Çalıştıran JavaScript *@
     <script>
         // Şifre Göster/Gizle
         function togglePassword(inputId, iconId) {
@@ -169,7 +180,7 @@
             }
         }
 
-        // ✅ Geri Sayım Motoru (5 Dakika)
+        // ✅ Gelişmiş Geri Sayım Motoru (Sert Kilit Modu)
         let timeLeft = 300;
         const timerElement = document.getElementById('timer');
 
@@ -184,7 +195,20 @@
 
             if (timeLeft <= 0) {
                 clearInterval(countdown);
-                location.reload(); // Güvenlik için sayfayı tazele
+
+                // 🔒 SERT KİLİT MÜHRÜ: Ekranı karartır ve SS alabileceğin o uyarıyı basar
+                document.body.innerHTML = `
+                    <div style="height:100vh; display:flex; align-items:center; justify-content:center; background:#1a1a1a; color:white; text-align:center; font-family:sans-serif; position:fixed; top:0; left:0; width:100%; z-index:9999;">
+                        <div>
+                            <i class="fas fa-user-lock fa-5x text-danger mb-4"></i>
+                            <h1 style="font-weight:bold; font-size: 2.5rem; margin-bottom: 15px;">OTURUM SÜRESİ DOLDU!</h1>
+                            <p style="font-size: 1.2rem; opacity: 0.8;">Güvenlik kilidi devreye girdi. Yetkisiz erişim engellendi. 🛡️</p>
+                            <a href="/Account/Login" class="btn btn-warning rounded-pill px-5 py-3 mt-4 fw-bold shadow-lg" style="text-decoration:none; color:#1a1a1a; background-color:#f1c40f; border:none; display:inline-block;">
+                                <i class="fas fa-sync-alt me-2"></i> Yeniden Giriş Yap
+                            </a>
+                        </div>
+                    </div>
+                `;
             }
             timeLeft--;
         }, 1000);

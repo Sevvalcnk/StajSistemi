@@ -38,7 +38,7 @@
                                 <i class="fas fa-file-pdf"></i> CV
                             </a>
 
-                            @* ✅ SERTİFİKA BUTONU: Sadece dosya varsa görünür *@
+                            @* SERTİFİKA BUTONU: Sadece dosya varsa görünür *@
                             @if (!string.IsNullOrEmpty(item.CertificatePath))
                             {
                                 <a href="/uploads/certificates/@item.CertificatePath" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill me-1">
@@ -46,11 +46,22 @@
                                 </a>
                             }
 
-                            @* Onay/Red İşlemleri *@
+                            @* 🛡️ MÜHÜR: Onay ve Red İşlemleri için Kesin Çözüm *@
+
+                            @* --- ONAY FORMU --- *@
                             <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
-                                <button name="newStatus" value="Onaylandı" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm">Onay</button>
-                                <button name="newStatus" value="Reddedildi" class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm">Red</button>
+                                <input type="hidden" name="status" value="Onaylandı" />
+                                <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm">Onay</button>
+                            </form>
+
+                            @* --- RED FORMU --- *@
+                            <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="status" value="Reddedildi" />
+                                <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm">Red</button>
                             </form>
                         </td>
                     </tr>

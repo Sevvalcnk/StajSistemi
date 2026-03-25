@@ -19,8 +19,9 @@
                     <form asp-action="Edit" method="post" id="internshipForm">
                         @Html.AntiForgeryToken()
 
-                        @* 🛡️ MÜHÜR: Gizli Alanlar *@
+                        @* 🛡️ MÜHÜR: Gizli Alanlar (Hata Çözücü Kısım Burası) *@
                         <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="Name" /> @* <-- İŞTE O SİNSİ HATAYI ÇÖZEN MÜHÜR BU! *@
                         <input type="hidden" asp-for="Status" />
                         <input type="hidden" asp-for="CreatedDate" />
                         <input type="hidden" asp-for="IsDeleted" />
@@ -37,27 +38,17 @@
                                 <span asp-validation-for="CompanyName" class="text-danger small"></span>
                             </div>
 
-                            @* ✅ MÜHÜR: Sektörler Senin Bölümlerinin İş Dünyası Karşılıkları Oldu *@
                             <div class="col-md-6 mb-4">
                                 <label asp-for="CompanySector" class="form-label fw-bold text-secondary">Faaliyet Sektörü</label>
                                 <select asp-for="CompanySector" class="form-select border-light bg-light">
                                     <option value="">-- Sektör Seçiniz --</option>
-                                    @* İnternet, Ağ Teknolojileri ve Otomasyon için *@
                                     <option value="Bilişim ve Yazılım Teknolojileri">Bilişim ve Yazılım Teknolojileri</option>
                                     <option value="Endüstriyel Otomasyon ve Robotik">Endüstriyel Otomasyon ve Robotik</option>
-
-                                    @* Lojistik ve Dış Ticaret için *@
                                     <option value="Uluslararası Ticaret ve Lojistik">Uluslararası Ticaret ve Lojistik</option>
                                     <option value="Gümrük ve Tedarik Zinciri Yönetimi">Gümrük ve Tedarik Zinciri Yönetimi</option>
-
-                                    @* Çocuk Gelişimi için *@
                                     <option value="Eğitim ve Sosyal Hizmetler">Eğitim ve Sosyal Hizmetler</option>
-
-                                    @* İç Mekan Tasarım için *@
                                     <option value="Mimarlık ve İç Mekan Tasarımı">Mimarlık ve İç Mekan Tasarımı</option>
                                     <option value="Mobilya ve Dekorasyon Üretimi">Mobilya ve Dekorasyon Üretimi</option>
-
-                                    @* Ormancılık için *@
                                     <option value="Orman Endüstrisi ve Çevre Yönetimi">Orman Endüstrisi ve Çevre Yönetimi</option>
                                 </select>
                                 <span asp-validation-for="CompanySector" class="text-danger small"></span>

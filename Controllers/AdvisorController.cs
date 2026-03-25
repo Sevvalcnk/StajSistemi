@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StajSistemi.DTOs;
 using StajSistemi.Models;
-using StajSistemi.Repositories.Abstract; // ✅ HomeController ile aynı yaptık
+using StajSistemi.Repositories.Abstract;
 
 namespace StajSistemi.Controllers
 {
-    [Authorize(Roles = "Advisor,Admin")] // Admin de görebilsin diye esnettik
+    [Authorize(Roles = "Advisor,Admin")]
     public class AdvisorController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -20,17 +20,34 @@ namespace StajSistemi.Controllers
             _mapper = mapper;
         }
 
-        // --- 1. ÖĞRENCİ LİSTESİ ---
+        // --- ✅ 1. ÖĞRENCİ LİSTESİ (Geliştirilmiş ve Bağlanmış Versiyon) ---
         public async Task<IActionResult> Index()
         {
-            var allStudents = await _unitOfWork.Students.GetAllAsync();
+            // 1. Tüm öğrencileri ve tüm başvuruları aynı anda çekiyoruz
+            var allStudents = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department);
+            var allApps = await _unitOfWork.InternshipApplications.GetAllAsync();
+
             var activeStudents = allStudents.Where(s => s.IsDeleted == false).ToList();
 
-            // ✅ BİLDİRİM: Sol menüdeki rakamın güncel kalması için
-            var apps = await _unitOfWork.InternshipApplications.GetAllAsync();
-            ViewBag.NewApplicationsCount = apps.Count(a => a.Status == "Beklemede" && !a.IsDeleted);
+            // 2. Bildirim sayısını ViewBag'e mühürle
+            ViewBag.NewApplicationsCount = allApps.Count(a => a.Status == "Beklemede" && !a.IsDeleted);
 
+            // 3. Öğrencileri DTO'ya çevir
             var studentDtos = _mapper.Map<List<StudentDto>>(activeStudents);
+
+            // 🔥 KRİTİK ADIM: Her öğrencinin staj durumunu başvurular tablosundan bulup DTO'ya mühürlüyoruz
+            foreach (var student in studentDtos)
+            {
+                // Bu öğrenciye ait en son (ve silinmemiş) başvuruyu bul
+                var lastApp = allApps
+                    .Where(a => a.AppUserId == student.Id && !a.IsDeleted)
+                    .OrderByDescending(a => a.ApplicationDate)
+                    .FirstOrDefault();
+
+                // Eğer başvurusu varsa durumunu yaz, yoksa "Başvuru Yok" de
+                student.InternshipStatus = lastApp != null ? lastApp.Status : "Başvuru Yok";
+            }
+
             return View(studentDtos);
         }
 
@@ -59,12 +76,12 @@ namespace StajSistemi.Controllers
                 student.IsDeleted = true;
                 _unitOfWork.Students.Update(student);
                 await _unitOfWork.SaveAsync();
-                TempData["SuccessMessage"] = "Kayıt başarıyla arşive kaldırıldı. 🥂";
+                TempData["SuccessMessage"] = "Öğrenci kaydı başarıyla arşive kaldırıldı. 🥂";
             }
             return RedirectToAction(nameof(Index));
         }
 
-        // --- 4. STAJ BAŞVURULARI LİSTELEME (ONAY/RED EKRANI) ---
+        // --- 4. STAJ BAŞVURULARI (Onay/Red Ekranı) ---
         public async Task<IActionResult> InternshipApplications()
         {
             var applications = await _unitOfWork.InternshipApplications
@@ -75,7 +92,6 @@ namespace StajSistemi.Controllers
                 .OrderByDescending(a => a.ApplicationDate)
                 .ToList();
 
-            // ✅ BİLDİRİM: Sayfayı yenileyince baloncuğun güncellenmesi için
             ViewBag.NewApplicationsCount = activeApplications.Count(a => a.Status == "Beklemede");
 
             return View(activeApplications);

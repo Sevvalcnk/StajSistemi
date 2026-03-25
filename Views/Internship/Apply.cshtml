@@ -4,7 +4,6 @@
     ViewData["Title"] = "Staj Başvurusu";
 }
 
-@* FontAwesome İkon Paketi *@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
 <div class="container py-5">
@@ -12,7 +11,6 @@
         <div class="col-md-6 col-lg-5">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
 
-                @* Başlık Kısmı - Sleek Tasarım *@
                 <div class="card-header text-white text-center py-4" style="background: linear-gradient(to right, #11998e, #38ef7d) !important;">
                     <i class="fas fa-file-upload fa-3x mb-3"></i>
                     <h3 class="fw-bold mb-0">Yeni Staj Başvurusu</h3>
@@ -20,36 +18,39 @@
                 </div>
 
                 <div class="card-body p-4 p-md-5 bg-white">
-                    @* Hata Mesajları *@
+
+                    @* 🚩 YENİ MÜHÜR: Controller'dan gelen hata mesajını burada gösteriyoruz *@
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger border-0 shadow-sm small mb-4 techNode-shake">
+                            <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
+                        </div>
+                    }
+
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm small mb-4"></div>
 
-                    @* ⚠️ KRİTİK: enctype="multipart/form-data" DOSYA YÜKLEMEK İÇİN ŞART *@
-                    <form asp-action="Apply" method="post" enctype="multipart/form-data">
+                    <form asp-action="Apply" method="post" enctype="multipart/form-data" id="applyForm">
 
-                        @* Gizli Alan: Hangi ilana başvurulduğunu Controller'a taşır *@
                         <input type="hidden" asp-for="InternshipId" />
 
-                        @* CV Yükleme Alanı *@
                         <div class="mb-4">
                             <label class="form-label fw-bold text-secondary">CV Dosyanız (PDF/Word)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0"><i class="fas fa-file-pdf text-muted"></i></span>
-                                <input type="file" name="cvFile" class="form-control border-light bg-light" accept=".pdf,.doc,.docx" required />
+                                <input type="file" name="cvFile" id="cvFile" class="form-control border-light bg-light" accept=".pdf,.doc,.docx" required />
                             </div>
                             <div class="form-text small mt-1 text-muted">Maksimum 5MB (PDF tercih edilir).</div>
                         </div>
 
-                        @* Sertifika Yükleme Alanı (Opsiyonel) *@
                         <div class="mb-4">
                             <label class="form-label fw-bold text-secondary">Sertifika / Ek Belge (Opsiyonel)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0"><i class="fas fa-certificate text-muted"></i></span>
-                                <input type="file" name="certFile" class="form-control border-light bg-light" accept=".pdf,.jpg,.png" />
+                                <input type="file" name="certFile" id="certFile" class="form-control border-light bg-light" accept=".pdf,.jpg,.png" />
                             </div>
                             <div class="form-text small mt-1 text-muted">Varsa sertifikalarınızı yükleyebilirsiniz.</div>
                         </div>
 
-                        @* Butonlar *@
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-success btn-lg rounded-pill fw-bold shadow-sm py-3 border-0"
                                     style="background: linear-gradient(to right, #11998e, #38ef7d);">
@@ -70,4 +71,46 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    @* 🛡️ GÜVENLİK RADARI: Hatalı dosyayı daha gitmeden kapıda yakalar *@
+    <script>
+        document.getElementById('applyForm').onsubmit = function (e) {
+            const cvExtensions = /(\.pdf|\.doc|\.docx)$/i;
+            const certExtensions = /(\.pdf|\.jpg|\.jpeg|\.png)$/i;
+            const maxSize = 5 * 1024 * 1024; // 5MB sınırı
+
+            const cvFile = document.getElementById('cvFile').files[0];
+            const certFile = document.getElementById('certFile').files[0];
+
+            // 1. CV Uzantı ve Boyut Kontrolü
+            if (cvFile) {
+                if (!cvExtensions.exec(cvFile.name)) {
+                    alert('❌ Hata: CV sadece PDF veya Word formatında olabilir!');
+                    e.preventDefault();
+                    return false;
+                }
+                if (cvFile.size > maxSize) {
+                    alert('❌ Hata: CV dosyası 5MB\'dan büyük olamaz!');
+                    e.preventDefault();
+                    return false;
+                }
+            }
+
+            // 2. Sertifika Uzantı ve Boyut Kontrolü (Senin Cisco dosyasını yakalayan yer)
+            if (certFile) {
+                if (!certExtensions.exec(certFile.name)) {
+                    alert('❌ Hop! Cisco dosyası (.pkt) veya geçersiz format yükleyemezsin. Lütfen PDF veya Görsel mühürle.');
+                    e.preventDefault();
+                    return false;
+                }
+                if (certFile.size > maxSize) {
+                    alert('❌ Hata: Sertifika dosyası 5MB\'dan büyük olamaz!');
+                    e.preventDefault();
+                    return false;
+                }
+            }
+
+            return true;
+        };
+    </script>
 }

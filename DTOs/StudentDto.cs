@@ -9,15 +9,15 @@
         public string? Email { get; set; }
         public double? GPA { get; set; }
         public int? DepartmentId { get; set; }
-
-        // ✅ Index sayfasındaki ve hoca panelindeki eşleşme için kritik
         public string? DepartmentName { get; set; }
 
-        // 🔥 YENİ KARİYER MÜHÜRLERİ (Controller'daki hataları silen kısım)
-        public string? PhoneNumber { get; set; }      // İletişim bilgisi
-        public string? PersonalSkills { get; set; }   // C#, SQL gibi yetenekler
-        public string? EducationSummary { get; set; } // Eğitim özeti (2. Sınıf vb.)
-        public string? CVPath { get; set; }           // Kaydedilen CV'nin adresi
-        public string? CertificatePath { get; set; }  // Kaydedilen Sertifikanın adresi
+        // 🔥 KRİTİK EKLEME: SQL'deki "Onaylandı" bilgisini buraya mühürleyeceğiz
+        public string? InternshipStatus { get; set; }
+
+        public string? PhoneNumber { get; set; }
+        public string? PersonalSkills { get; set; }
+        public string? EducationSummary { get; set; }
+        public string? CVPath { get; set; }
+        public string? CertificatePath { get; set; }
     }
 }

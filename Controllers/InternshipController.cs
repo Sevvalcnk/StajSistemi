@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using StajSistemi.data;
 using StajSistemi.Models;
 using System.IO;
+using System.Linq; // 🛡️ Bunu ekledik, dosya uzantılarını kontrol etmek için şart.
 
 namespace StajSistemi.Controllers
 {
@@ -123,7 +124,27 @@ namespace StajSistemi.Controllers
             return View(model);
         }
 
-        // --- ✅ 4. BAŞVURU YAPMA (GET) - HATAYI ÇÖZEN KISIM ---
+        // --- 🛡️ 3. İLAN SİLME (YENİ EKLENDİ - 404 HATASINI ÇÖZER) ---
+        [Authorize(Roles = "Admin,Advisor")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteInternship(int id)
+        {
+            var internship = await _context.Internships.FindAsync(id);
+            if (internship == null) return NotFound();
+
+            // Güvenlik: Tamamen silmek yerine arşivliyoruz (IsDeleted)
+            internship.IsDeleted = true;
+            internship.Status = "Silindi";
+
+            _context.Update(internship);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "İlan başarıyla mühürlenerek silindi! 🥂";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // --- 4. BAŞVURU YAPMA (GET) ---
         [Authorize(Roles = "Student")]
         [HttpGet]
         public async Task<IActionResult> Apply(int id)
@@ -134,19 +155,41 @@ namespace StajSistemi.Controllers
 
             if (internship == null) return NotFound();
 
-            // İlan bilgisini sayfada göstermek için ViewBag kullanıyoruz
             ViewBag.Internship = internship;
 
             var model = new InternshipApplication { InternshipId = id };
             return View(model);
         }
 
-        // --- 4. BAŞVURU YAPMA (POST) ---
+        // --- 🚀 4. BAŞVURU YAPMA (POST) ---
         [Authorize(Roles = "Student")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Apply(int internshipId, IFormFile cvFile, IFormFile certFile)
         {
+            string[] allowedExtensions = { ".pdf", ".jpg", ".png", ".doc", ".docx" };
+            long maxFileSize = 5 * 1024 * 1024; // 5MB
+
+            if (cvFile != null)
+            {
+                var ext = Path.GetExtension(cvFile.FileName).ToLower();
+                if (!allowedExtensions.Contains(ext) || cvFile.Length > maxFileSize)
+                {
+                    TempData["ErrorMessage"] = "CV formatı geçersiz veya 5MB'dan büyük! 🛡️";
+                    return RedirectToAction("Apply", new { id = internshipId });
+                }
+            }
+
+            if (certFile != null)
+            {
+                var ext = Path.GetExtension(certFile.FileName).ToLower();
+                if (!allowedExtensions.Contains(ext) || certFile.Length > maxFileSize)
+                {
+                    TempData["ErrorMessage"] = "Sertifika formatı geçersiz (Sadece PDF/Görsel) veya 5MB'dan büyük! 🛡️";
+                    return RedirectToAction("Apply", new { id = internshipId });
+                }
+            }
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
@@ -187,6 +230,49 @@ namespace StajSistemi.Controllers
 
             TempData["SuccessMessage"] = "Başvurunuz başarıyla mühürlendi! 🥂🔥";
             return RedirectToAction(nameof(Index));
+        }
+
+        // --- ✅ 5. BAŞVURU DURUMU GÜNCELLEME (ONAY/RED) ---
+        [Authorize(Roles = "Admin,Advisor")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(int id, string status)
+        {
+            if (string.IsNullOrEmpty(status))
+            {
+                TempData["ErrorMessage"] = "Hata: Durum bilgisi mühürlenemedi!";
+                return RedirectToAction(nameof(Applications));
+            }
+
+            var application = await _context.InternshipApplications
+                .Include(a => a.Internship)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (application == null) return NotFound();
+
+            if (status == "Reddedildi" && application.Status != "Reddedildi")
+            {
+                application.Internship.Quota += 1;
+            }
+            else if (status == "Onaylandı" && application.Status == "Reddedildi")
+            {
+                if (application.Internship.Quota > 0)
+                {
+                    application.Internship.Quota -= 1;
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Kontenjan dolduğu için bu başvuru onaylanamıyor!";
+                    return RedirectToAction(nameof(Applications));
+                }
+            }
+
+            application.Status = status;
+            _context.Update(application);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Başvuru durumu '{status}' olarak mühürlendi! 🥂";
+            return RedirectToAction(nameof(Applications));
         }
 
         // --- DİĞER LİSTELEME METOTLARI ---

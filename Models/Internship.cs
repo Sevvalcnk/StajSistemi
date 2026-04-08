@@ -8,20 +8,20 @@ namespace StajSistemi.Models
     {
         public int Id { get; set; }
 
-        // ✅ MÜHÜR: Eğer formda başlık alanı kullanmayacaksan bunu nullable (?) yapmalısın.
-        // Ya da Controller tarafında bunu otomatik dolduracağız.
         [Required(ErrorMessage = "İlan başlığı zorunludur.")]
         public string Name { get; set; }
 
         public string? CompanyName { get; set; }
-        public string? City { get; set; }
+
+        // ✅ MÜHÜR: Çakışma olmaması için ismini 'CityName' yaptık. 
+        // Gerçek şehir verisi aşağıdaki CityId'den gelecek.
+        public string? CityName { get; set; }
+
         public string? CompanySector { get; set; }
 
         [Range(1, 100, ErrorMessage = "Kontenjan 1-100 arasında olmalıdır.")]
         public int Quota { get; set; }
 
-        // ✅ NOT: View'da @item.Department.DepartmentName kullanacağımız için bu alana teknik olarak gerek yok, 
-        // ama veritabanında dursun diyorsan kalabilir.
         public string? DepartmentName { get; set; }
 
         [Required(ErrorMessage = "Lütfen bir bölüm seçiniz.")]
@@ -42,11 +42,18 @@ namespace StajSistemi.Models
         public string? Status { get; set; } = "Aktif";
         public bool IsDeleted { get; set; } = false;
 
-        // ✅ IDENTITY MÜHRÜ: Senin AppUser modelinde Id 'int' ise burası 'int?' kalmalı.
-        // Eğer Identity varsayılan (string) kullanıyorsa burayı 'string?' yapmalısın.
         public int? AppUserId { get; set; }
 
         [ForeignKey("AppUserId")]
         public virtual AppUser? AppUser { get; set; }
+
+        // 🚀 HAFTA 6: AKILLI FİLTRELEME ALANLARI
+        public decimal MinGPA { get; set; } // Gereken Min. Ortalama
+
+        public int? CityId { get; set; }    // Şehir Kimliği (Nullable yaptık ki hata vermesin)
+
+        [ForeignKey("CityId")]
+        public virtual City? City { get; set; }  // Şehir Tablosuyla Bağlantı
+        
     }
 }

@@ -1,21 +1,35 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StajSistemi.data;
-using StajSistemi.Repositories.Abstract;   // ✅ SADECE BU KALMALI
-using StajSistemi.Repositories.Concrete;   // ✅ SADECE BU KALMALI
+using StajSistemi.Repositories.Abstract;
+using StajSistemi.Repositories.Concrete;
 using StajSistemi.Mapping;
 using StajSistemi.Models;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using StajSistemi.Services;
 using StajSistemi.Helpers;
+using StajSistemi.Hubs;
+// ✅ MÜHÜR: Hub'lara ulaşabilmek için namespace ekledik
 
-// ❌ 'using StajSistemi.Repositories.UnitOfWork;' SATIRINI SİLDİK! 
-// Çünkü artık dosyalarımız Abstract ve Concrete içinde.
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Standart Servisler ---
 builder.Services.AddControllersWithViews();
+
+// 🚀 CANLI YAYIN MÜHÜRÜ: SignalR servisini sisteme kaydediyoruz
+builder.Services.AddSignalR();
+
+// 🔥 KRİTİK MÜHÜR: Memory Cache Motoru
+builder.Services.AddMemoryCache();
+
+// ✅ HAFTA 3 MÜHÜRÜ: Session (Oturum) Motoru Kaydı
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 // ✅ IP Loglama için Gerekli
 builder.Services.AddHttpContextAccessor();
@@ -25,7 +39,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // --- REPOSITORY VE UNIT OF WORK KAYDI ---
-// Burada 'IUnitOfWork' Abstract'tan, 'UnitOfWork' Concrete'ten gelir.
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -77,16 +90,24 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
+
+// ✅ KRİTİK MÜHÜR: Session özelliğini aktifleştiriyoruz
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 🚀 CANLI YAYIN KANALI: ChatHub yolunu mühürlüyoruz
+// ÖNEMLİ: MapControllerRoute'dan önce gelmesi daha sağlıklıdır.
+app.MapHub<ChatHub>("/chatHub");
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// --- ROL SEEDING (Sistem İlk Açıldığında Rolleri Oluşturur) ---
+// --- ROL SEEDING ---
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();

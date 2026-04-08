@@ -14,12 +14,19 @@ namespace StajSistemi.Mapping
                 .ForMember(dest => dest.Surname, opt => opt.MapFrom(src => src.LastName))
                 .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src =>
                     src.Department != null ? src.Department.DepartmentName : "Bölüm Belirtilmemiş"))
+
+                // Şehir ismini bağlayan mühür
+                .ForMember(dest => dest.CityName, opt => opt.MapFrom(src =>
+                    src.City != null ? src.City.Name : "Belirtilmemiş"))
+
+                // ✅ EKLEME: AdvisorId zaten iki tarafta da aynı isimde olduğu için otomatik eşleşir 
+                // ama biz buraya görünmez bir mühür daha bastık.
+
                 .ReverseMap()
                 .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.Surname));
 
             // ✅ 2. DANIŞMAN MÜHÜRÜ: AppUser -> AdvisorDto
-            // Artık Advisor modeli yok, her şey AppUser üzerinden eşleşiyor
             CreateMap<AppUser, AdvisorDto>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FirstName))
                 .ForMember(dest => dest.Surname, opt => opt.MapFrom(src => src.LastName))
@@ -37,6 +44,10 @@ namespace StajSistemi.Mapping
 
             // ✅ 4. DİĞER TABLOLAR
             CreateMap<Department, DepartmentDto>().ReverseMap();
+            CreateMap<City, CityDto>().ReverseMap();
+
+            // ✅ Mesajlaşma için ChatMessage eşleşmesi gerekebilir (Gelecek hafta lazım olacak)
+            // CreateMap<ChatMessage, ChatMessageDto>().ReverseMap(); 
         }
     }
 }

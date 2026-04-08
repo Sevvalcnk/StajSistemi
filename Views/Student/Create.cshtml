@@ -1,44 +1,78 @@
-﻿@model StudentDto
+﻿@using StajSistemi.DTOs
+@model StudentDto
 
 @{
     ViewData["Title"] = "Yeni Öğrenci Ekle";
 }
 
-<div class="container mt-4">
-    <h2>Yeni Öğrenci Ekle</h2>
+<div class="container mt-4 techNode-fade-in">
+    @* Başlık ve ikonlar senin tasarımındaki gibi korundu *@
+    <h2 class="fw-bold text-dark">
+        <i class="fas fa-user-plus me-2 text-primary"></i>Yeni Öğrenci Ekle
+    </h2>
+    <p class="text-muted small">Lütfen öğrenci bilgilerini eksiksiz mühürleyiniz. 🛡️</p>
     <hr />
-    <form asp-action="Create">
+
+    <form asp-action="Create" method="post">
+        @* ✅ Model hatalarını görmek için bu alan şart *@
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
         <div class="row">
             <div class="col-md-6">
+                @* --- ADI (Gizlilik Mühürlü) --- *@
                 <div class="form-group mb-3">
-                    <label class="form-label">Adı</label>
-                    <input asp-for="Name" class="form-control" />
+                    <label asp-for="Name" class="form-label fw-bold">Adı</label>
+                    <input asp-for="Name" class="form-control rounded-3 shadow-sm" placeholder="Öğrencinin adını yazınız" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
                 </div>
+
+                @* --- SOYADI (Gizlilik Mühürlü) --- *@
                 <div class="form-group mb-3">
-                    <label class="form-label">Soyadı</label>
-                    <input asp-for="Surname" class="form-control" />
+                    <label asp-for="Surname" class="form-label fw-bold">Soyadı</label>
+                    <input asp-for="Surname" class="form-control rounded-3 shadow-sm" placeholder="Öğrencinin soyadını yazınız" />
+                    <span asp-validation-for="Surname" class="text-danger small"></span>
                 </div>
+
+                @* --- ÖĞRENCİ NO (UserName Yerine Geçecek) --- *@
                 <div class="form-group mb-3">
-                    <label class="form-label">Öğrenci No</label>
-                    <input asp-for="StudentNo" class="form-control" />
+                    <label asp-for="StudentNo" class="form-label fw-bold">Öğrenci No</label>
+                    <input asp-for="StudentNo" class="form-control rounded-3 shadow-sm" placeholder="Örn: 202600001" />
+                    <span asp-validation-for="StudentNo" class="text-danger small"></span>
                 </div>
+
+                @* --- E-POSTA --- *@
                 <div class="form-group mb-3">
-                    <label class="form-label">Email</label>
-                    <input asp-for="Email" class="form-control" />
+                    <label asp-for="Email" class="form-label fw-bold">E-Posta</label>
+                    <input asp-for="Email" class="form-control rounded-3 shadow-sm" type="email" placeholder="mail@kurum.edu.tr" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
                 </div>
+
+                @* --- GPA --- *@
                 <div class="form-group mb-3">
-                    <label class="form-label">Not Ortalaması (GPA)</label>
-                    <input asp-for="GPA" class="form-control" type="number" step="0.01" />
+                    <label asp-for="GPA" class="form-label fw-bold">Not Ortalaması (GPA)</label>
+                    <input asp-for="GPA" class="form-control rounded-3 shadow-sm" type="number" step="0.01" min="0" max="4" placeholder="0.00" />
+                    <span asp-validation-for="GPA" class="text-danger small"></span>
                 </div>
+
+                @* --- BÖLÜM SEÇİMİ --- *@
                 <div class="form-group mb-3">
-                    <label class="form-label">Bölüm</label>
-                    <select asp-for="DepartmentId" class="form-control"
-                            asp-items="@(new SelectList(ViewBag.Departments, "Id", "DepartmentName"))">
+                    <label asp-for="DepartmentId" class="form-label fw-bold">Bölüm</label>
+                    <select asp-for="DepartmentId" class="form-select rounded-3 shadow-sm"
+                            asp-items="ViewBag.DepartmentsList">
                         <option value="">-- Bölüm Seçiniz --</option>
                     </select>
+                    <span asp-validation-for="DepartmentId" class="text-danger small"></span>
                 </div>
-                <button type="submit" class="btn btn-success">Kaydet</button>
-                <a asp-action="Index" class="btn btn-secondary">İptal</a>
+
+                @* --- AKSİYON BUTONLARI --- *@
+                <div class="mt-4 pt-2">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm transition hover-up">
+                        <i class="fas fa-save me-1"></i> Kaydet ve Mühürle
+                    </button>
+                    <a asp-action="Index" class="btn btn-light border rounded-pill px-4 ms-2">
+                        <i class="fas fa-arrow-left me-1"></i> İptal
+                    </a>
+                </div>
             </div>
         </div>
     </form>

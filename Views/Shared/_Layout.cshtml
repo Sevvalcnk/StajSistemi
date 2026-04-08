@@ -10,6 +10,10 @@
     <title>@ViewData["Title"] - StajSistemi</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+    @* ✅ PROFESYONEL TOAST BİLDİRİMİ İÇİN (SweetAlert2) *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     <style>
         body {
@@ -61,6 +65,14 @@
                     width: 25px;
                 }
 
+        .badge-notify {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 50px;
+            box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+            font-weight: bold;
+        }
+
         #page-content-wrapper {
             width: 100%;
             margin-left: 0;
@@ -90,14 +102,9 @@
                 margin-left: 0;
             }
         }
-
-        footer {
-            margin-top: auto;
-        }
     </style>
 </head>
 <body>
-
     <div id="wrapper">
         <div id="sidebar-wrapper">
             <div class="sidebar-heading">
@@ -105,100 +112,90 @@
             </div>
             <div class="list-group list-group-flush mt-3">
                 <a asp-controller="Home" asp-action="Index" class="list-group-item list-group-item-action">
-                    <i class="fas fa-home me-2"></i> Ana Sayfa
+                    <i class="fas fa-home me-2 text-secondary"></i> Ana Sayfa
                 </a>
 
                 @if (User.Identity.IsAuthenticated)
                 {
-                    @* ✅ MÜHÜR: Danışman Linkleri Burası! *@
-                    @if (User.IsInRole("Advisor") || User.IsInRole("Admin"))
+                    @* --- 🛡️ HOCA/ADMİN ÖZEL MENÜSÜ --- *@
+                    if (User.IsInRole("Advisor") || User.IsInRole("Admin"))
                     {
-                        @* 🔔 BİLDİRİM MÜHÜRÜ: Gelen Başvurular yanına sayı baloncuğu eklendi *@
                         <a asp-controller="Advisor" asp-action="InternshipApplications" class="list-group-item list-group-item-action bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
                             <span><i class="fas fa-envelope-open-text me-2 text-warning"></i> Gelen Başvurular</span>
-
-                            @if (ViewBag.NewApplicationsCount > 0)
+                            @if (ViewBag.NewApplicationsCount != null && (int)ViewBag.NewApplicationsCount > 0)
                             {
-                                <span class="badge rounded-pill bg-danger shadow-sm" style="font-size: 0.75rem;">
-                                    @ViewBag.NewApplicationsCount
-                                </span>
+                                <span class="badge rounded-pill bg-danger shadow-sm">@ViewBag.NewApplicationsCount</span>
                             }
                         </a>
+
+                        @* ✅ BURADAKİ ESKİ "GELEN MESAJLAR" LİNKİNİ SİLDİM, ÇÜNKÜ VIEWCOMPONENT İÇİNDE VAR *@
 
                         <a asp-controller="Advisor" asp-action="Index" class="list-group-item list-group-item-action">
                             <i class="fas fa-users me-2 text-danger"></i> Öğrenci Listesi
                         </a>
-                        <a asp-controller="Internship" asp-action="Create" class="list-group-item list-group-item-action">
-                            <i class="fas fa-plus-circle me-2 text-info"></i> Yeni İlan Ekle
+                    }
+
+                    @* --- 🎓 ÖĞRENCİ ÖZEL MENÜSÜ --- *@
+                    if (User.IsInRole("Student"))
+                    {
+                        <a asp-controller="StudentPanel" asp-action="Index" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user-graduate me-2 text-primary"></i> Kariyer Panelim
+                        </a>
+
+                        <a asp-controller="StudentPanel" asp-action="Applications" class="list-group-item list-group-item-action">
+                            <i class="fas fa-file-signature me-2 text-warning"></i> Başvurularım
+                        </a>
+
+                        <a asp-controller="StudentPanel" asp-action="Results" class="list-group-item list-group-item-action">
+                            <i class="fas fa-poll me-2 text-info"></i> Staj Sonuçlarım
+                        </a>
+
+                        <a asp-controller="StudentPanel" asp-action="Documents" class="list-group-item list-group-item-action">
+                            <i class="fas fa-folder-open me-2 text-success"></i> Belgelerim
                         </a>
                     }
 
-                    <div class="border-top my-2 opacity-25"></div>
+                    @* 🔥 AKILLI BİLDİRİM MÜHÜRÜ BURADA *@
+                    @* Bu satır, hem hoca hem öğrenci için doğru mesaj linkini ve CANLI sayıyı getirir *@
+                    @await Component.InvokeAsync("Sidebar")
 
+                    <div class="border-top my-2 opacity-25"></div>
                     <a asp-controller="Internship" asp-action="Index" class="list-group-item list-group-item-action">
                         <i class="fas fa-search me-2 text-success"></i> Staj İlanları
                     </a>
-                    <a asp-controller="Internship" asp-action="MyApplications" class="list-group-item list-group-item-action">
-                        <i class="fas fa-check-double me-2 text-primary"></i> Başvuru Sonuçlarım
-                    </a>
                 }
-
-                <div class="border-top my-3 opacity-25"></div>
-
-                <a asp-controller="Home" asp-action="About" class="list-group-item list-group-item-action">
-                    <i class="fas fa-info-circle me-2"></i> Hakkımızda
-                </a>
             </div>
         </div>
 
         <div id="page-content-wrapper" class="d-flex flex-column">
             <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top">
                 <div class="container-fluid">
-                    <button class="btn btn-light border shadow-sm" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-
+                    <button class="btn btn-light border shadow-sm" id="sidebarToggle"><i class="fas fa-bars"></i></button>
                     <div class="ms-auto d-flex align-items-center">
                         @if (User.Identity.IsAuthenticated)
                         {
                             var user = await UserManager.GetUserAsync(User);
                             <span class="me-3 d-none d-md-inline fw-bold text-dark">
-                                <i class="fas fa-user-circle me-1 text-primary"></i>
-                                @(user?.FullName ?? User.Identity.Name)
+                                <i class="fas fa-user-circle me-1 text-primary"></i> @(user?.FullName ?? User.Identity.Name)
                             </span>
                             <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
-                                    <i class="fas fa-sign-out-alt me-1"></i>Çıkış
-                                </button>
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">Çıkış</button>
                             </form>
-                        }
-                        else
-                        {
-                            <a class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" href="/Account/Login">
-                                <i class="fas fa-sign-in-alt me-1"></i>Giriş Yap
-                            </a>
                         }
                     </div>
                 </div>
             </nav>
 
             <div class="container-fluid p-4">
-                <main role="main" class="pb-3">
-                    @RenderBody()
-                </main>
+                <main role="main" class="pb-3">@RenderBody()</main>
             </div>
-
-            <footer class="border-top footer text-muted bg-white mt-auto">
-                <div class="container text-center py-3 small">
-                    &copy; 2026 - <b>StajSistemi</b>
-                </div>
-            </footer>
         </div>
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         window.addEventListener('DOMContentLoaded', event => {
@@ -210,7 +207,45 @@
                 });
             }
         });
+
+        // ✅ CANLI BİLDİRİM MOTORU
+        const connectionGlobal = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connectionGlobal.start().catch(err => console.error(err.toString()));
+
+        connectionGlobal.on("ReceiveNewMessage", function (senderId, content) {
+            // Sidebar Sayaçlarını Canlı Artır
+            const badges = ["unread-badge-advisor", "unread-badge-student"];
+            badges.forEach(id => {
+                let badge = document.getElementById(id);
+                if (badge) {
+                    let currentCount = parseInt(badge.innerText) || 0;
+                    badge.innerText = currentCount + 1;
+                    badge.classList.remove("d-none");
+                }
+            });
+
+            // Ses ve Toast Bildirimi
+            let audio = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3');
+            audio.play().catch(e => {});
+
+            Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true
+            }).fire({
+                icon: 'info',
+                title: 'Yeni Mesaj!',
+                text: content.length > 40 ? content.substring(0, 40) + "..." : content
+            });
+        });
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,125 +1,136 @@
 ﻿@model StajSistemi.DTOs.StudentDto
 
 @{
-    ViewData["Title"] = "Öğrenci Kariyer Dosyası";
+    ViewData["Title"] = "Öğrenci Detay Profili";
 }
 
-<div class="container py-4 techNode-fade-in">
-    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
-        @* --- 🛡️ ÜST BANT: KURUMSAL GÖRÜNÜM --- *@
-        <div class="card-header bg-dark p-4 border-0 d-flex justify-content-between align-items-center">
-            <h4 class="fw-bold text-white mb-0">
-                <i class="fas fa-user-shield me-2 text-info"></i>Öğrenci Kariyer Analizi
-            </h4>
-            <a href="javascript:history.back()" class="btn btn-outline-light btn-sm rounded-pill px-3">
-                <i class="fas fa-arrow-left me-1"></i> Geri Dön
-            </a>
+<div class="container py-5">
+    <div class="glass-card p-5 shadow-lg border-0 rounded-4 bg-white mx-auto" style="max-width: 900px;">
+
+        <div class="text-center mb-5">
+            <div class="mb-3">
+                <img src="https://ui-avatars.com/api/?name=@(Model.Name)+@(Model.Surname)&background=2c3e50&color=fff&size=128"
+                     class="rounded-circle shadow-sm border border-4 border-white" style="width: 120px;" alt="Profil">
+            </div>
+            <h2 class="fw-bold text-dark mb-1">@Model.Name @Model.Surname</h2>
+            <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2 border">Öğrenci No: @(Model.StudentNo ?? "247018019")</span>
         </div>
 
-        <div class="card-body p-5 bg-white">
-            <div class="row">
-                @* --- 👤 SOL SÜTUN: KİMLİK VE İLETİŞİM --- *@
-                <div class="col-md-4 text-center border-end">
-                    <img src="https://ui-avatars.com/api/?name=@Model.Name+@Model.Surname&size=150&background=2c3e50&color=fff"
-                         class="rounded-circle mb-3 shadow-sm border border-4 border-white" alt="Profil">
-                    <h3 class="fw-bold text-dark">@Model.Name @Model.Surname</h3>
-                    <span class="badge bg-primary rounded-pill px-3 py-2 mb-3">@Model.DepartmentName</span>
-
-                    <div class="text-start mt-4 px-3">
-                        <div class="mb-3">
-                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Öğrenci No</small>
-                            <span class="text-dark fw-bold">@Model.StudentNo</span>
-                        </div>
-                        <div class="mb-3 border-top pt-2">
-                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">E-posta</small>
-                            <span class="text-dark">@Model.Email</span>
-                        </div>
-                        <div class="mb-3 border-top pt-2">
-                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Telefon</small>
-                            <span class="text-dark">@(Model.PhoneNumber ?? "Girilmemiş")</span>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="p-4 bg-light rounded-4 h-100">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3"><i class="fas fa-graduation-cap me-2"></i>Akademik Bilgi</h6>
+                    <div class="mb-2">
+                        <small class="d-block text-muted">Bölüm / Program</small>
+                        <span class="fw-bold text-dark">@(Model.EducationSummary ?? "İnternet ve Ağ Teknolojileri")</span>
+                    </div>
+                    <div class="mt-3">
+                        <small class="d-block text-muted">GPA Başarı Oranı</small>
+                        <div class="d-flex align-items-center gap-2">
+                            <h4 class="fw-bold text-primary mb-0">@Model.GPA</h4>
+                            <span class="text-muted small">/ 4.0</span>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                @* --- 🚀 SAĞ SÜTUN: AKADEMİK VE BELGELER --- *@
-                <div class="col-md-8 ps-md-5">
-                    <h5 class="fw-bold text-dark mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Akademik Performans</h5>
-                    <div class="progress mb-4" style="height: 25px; border-radius: 15px;">
-                        @{
-                            var barColor = Model.GPA >= 3.0 ? "bg-success" : (Model.GPA >= 2.0 ? "bg-info" : "bg-warning");
-                        }
-                        <div class="progress-bar @barColor progress-bar-striped progress-bar-animated fw-bold"
-                             style="width: @(Model.GPA * 25)%">
-                            GPA: @Model.GPA / 4.0
-                        </div>
-                    </div>
-
-                    <h5 class="fw-bold text-dark mb-3 mt-4"><i class="fas fa-lightbulb me-2 text-warning"></i>Yetenekler & Uzmanlıklar</h5>
-                    <div class="d-flex flex-wrap gap-2 mb-4">
+            <div class="col-md-6">
+                <div class="p-4 bg-light rounded-4 h-100">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3"><i class="fas fa-tools me-2"></i>Yetenekler & Beceriler</h6>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
                         @if (!string.IsNullOrEmpty(Model.PersonalSkills))
                         {
                             foreach (var skill in Model.PersonalSkills.Split(','))
                             {
-                                <span class="badge bg-light text-dark border rounded-pill px-3 py-2">@skill.Trim()</span>
+                                <span class="badge bg-white text-dark border rounded-pill fw-normal px-3 py-2 shadow-sm">@skill.Trim()</span>
                             }
                         }
                         else
                         {
-                            <span class="text-muted small italic">Öğrenci henüz yetenek bilgisi girmedi.</span>
+                            <span class="text-muted small italic">Henüz yetenek girişi yapılmamış.</span>
                         }
                     </div>
+                </div>
+            </div>
 
-                    <h5 class="fw-bold text-dark mb-3 mt-4"><i class="fas fa-folder-open me-2 text-danger"></i>Mühürlü Belgeler</h5>
+            <div class="col-12">
+                <div class="p-4 border border-primary border-opacity-25 rounded-4 bg-light bg-opacity-10">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-4"><i class="fas fa-folder-open me-2 text-primary"></i>Öğrenci Belgeleri</h6>
                     <div class="row g-3">
-                        @* CV İNCELEME BUTONU *@
                         <div class="col-md-6">
                             @if (!string.IsNullOrEmpty(Model.CVPath))
                             {
-                                <a href="@Model.CVPath" target="_blank" class="btn btn-danger w-100 rounded-pill shadow-sm py-2 fw-bold">
-                                    <i class="fas fa-file-pdf me-2"></i>CV'yi Görüntüle
+                                <a href="@Model.CVPath" target="_blank" class="btn btn-white border shadow-sm w-100 py-3 rounded-4 transition hover-up">
+                                    <div class="d-flex align-items-center px-2">
+                                        <i class="fas fa-file-pdf fa-2x text-danger me-3"></i>
+                                        <div class="text-start">
+                                            <div class="fw-bold text-dark">Özgeçmiş (CV)</div>
+                                            <small class="text-muted">Görüntülemek için tıkla</small>
+                                        </div>
+                                    </div>
                                 </a>
                             }
                             else
                             {
-                                <button class="btn btn-secondary w-100 rounded-pill disabled py-2 opacity-50">CV Yüklenmemiş</button>
+                                <div class="p-3 border border-dashed rounded-4 text-center opacity-50">
+                                    <small class="text-muted">Öğrenci CV yüklememiş.</small>
+                                </div>
                             }
                         </div>
 
-                        @* SERTİFİKA LİSTESİ (ÇOKLU SEÇİM DESTEKLİ) *@
                         <div class="col-md-6">
                             @if (!string.IsNullOrEmpty(Model.CertificatePath))
                             {
-                                var certs = Model.CertificatePath.Split(';');
-                                <div class="dropdown">
-                                    <button class="btn btn-primary w-100 rounded-pill dropdown-toggle shadow-sm py-2 fw-bold" type="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-award me-2"></i>Sertifikalar (@certs.Length)
-                                    </button>
-                                    <ul class="dropdown-menu w-100 rounded-4 shadow border-0 mt-2">
-                                        @{
-                                            int i = 1;
-                                        }
-                                        @foreach (var cert in certs)
-                                        {
-                                            <li><a class="dropdown-item py-2" href="@cert" download><i class="fas fa-download me-2 text-muted"></i> Sertifika @i</a></li>
-                                            i++;
-                                        }
-                                    </ul>
-                                </div>
+                                <a href="@Model.CertificatePath" target="_blank" class="btn btn-white border shadow-sm w-100 py-3 rounded-4 transition hover-up">
+                                    <div class="d-flex align-items-center px-2">
+                                        <i class="fas fa-certificate fa-2x text-warning me-3"></i>
+                                        <div class="text-start">
+                                            <div class="fw-bold text-dark">Eğitim Sertifikası</div>
+                                            <small class="text-muted">Görüntülemek için tıkla</small>
+                                        </div>
+                                    </div>
+                                </a>
                             }
                             else
                             {
-                                <button class="btn btn-secondary w-100 rounded-pill disabled py-2 opacity-50">Sertifika Yok</button>
+                                <div class="p-3 border border-dashed rounded-4 text-center opacity-50">
+                                    <small class="text-muted">Öğrenci sertifika yüklememiş.</small>
+                                </div>
                             }
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    @* EĞİTİM ÖZETİ *@
-                    <div class="mt-5 p-4 bg-light rounded-4 border-start border-5 border-info">
-                        <h6 class="fw-bold mb-1">Eğitim Özeti:</h6>
-                        <p class="mb-0 small">@(Model.EducationSummary ?? "Belirtilmemiş")</p>
+            <div class="col-12">
+                <div class="p-4 border rounded-4">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3"><i class="fas fa-envelope me-2"></i>İletişim Bilgileri</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <small class="text-muted">E-Posta Adresi</small>
+                            <p class="fw-bold text-dark">@Model.Email</p>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <small class="text-muted">Telefon</small>
+                            <p class="fw-bold text-dark">@(Model.PhoneNumber ?? "Belirtilmemiş")</p>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+            <a href="javascript:history.back()" class="btn btn-light rounded-pill px-4">
+                <i class="fas fa-arrow-left me-2"></i> Geri Dön
+            </a>
+
+            @* ✅ DÜĞME ARTIK AKILLI LİNK OLDU *@
+            <a asp-controller="Chat"
+               asp-action="Index"
+               asp-route-receiverId="@Model.Id"
+               class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-comment-dots me-2"></i> Öğrenciye Mesaj At
+            </a>
         </div>
     </div>
 </div>

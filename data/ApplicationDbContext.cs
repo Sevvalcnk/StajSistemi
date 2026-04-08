@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.EntityFrameworkCore;
 using StajSistemi.Models;
 
@@ -10,12 +11,18 @@ namespace StajSistemi.data
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-        // ❌ public DbSet<Student> Students { get; set; }  -> BU SATIRI SİLDİK! 
-        // Çünkü artık her şey AspNetUsers (AppUser) tablosunda.
-
+        // --- 📋 ANA TABLOLARIMIZ ---
         public DbSet<Department> Departments { get; set; }
         public DbSet<Internship> Internships { get; set; }
         public DbSet<InternshipApplication> InternshipApplications { get; set; }
+        public DbSet<City> Cities { get; set; }
+
+        // --- 💬 SOHBET SİSTEMİ TABLOSU (Hafta 9-10) ---
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+
+        // --- 🛡️ GÜVENLİK VE LOG TABLOLARI (Hafta 3-5) ---
+        public DbSet<LoginLog> LoginLogs { get; set; } // Giriş IP kayıtları
+        public DbSet<FileLog> FileLogs { get; set; }   // Dosya yükleme kayıtları
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -42,7 +49,7 @@ namespace StajSistemi.data
                 LastName = "Admin",
                 FullName = "Süper Admin",
                 PasswordHash = hasher.HashPassword(null, "Admin123!"),
-                SecurityStamp = Guid.NewGuid().ToString() // Boş string yerine Guid daha güvenlidir
+                SecurityStamp = Guid.NewGuid().ToString()
             });
 
             // Admin kullanıcısını Admin rolüne bağla
@@ -58,6 +65,24 @@ namespace StajSistemi.data
                 new Department { Id = 6, DepartmentName = "Grafik Tasarımı" },
                 new Department { Id = 7, DepartmentName = "Lojistik" }
             );
+
+            // --- 💬 4. SOHBET İLİŞKİLERİ (Multiple Cascade Paths Çözümü) ---
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.Receiver)
+                .WithMany()
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- 🔥 5. TRIGGER KORUMASI (Hafta 1) ---
+            // SQL tarafında trigger olsa bile EF Core'un hata vermemesi için bu mühür şart!
+            modelBuilder.Entity<InternshipApplication>()
+                .ToTable(tb => tb.HasTrigger("trg_ApplicationLog"));
         }
     }
 }

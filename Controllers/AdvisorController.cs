@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using StajSistemi.DTOs;
 using StajSistemi.Models;
@@ -20,41 +21,49 @@ namespace StajSistemi.Controllers
             _mapper = mapper;
         }
 
-        // --- ✅ 1. ÖĞRENCİ LİSTESİ (Geliştirilmiş ve Bağlanmış Versiyon) ---
-        public async Task<IActionResult> Index()
+        // --- ✅ 1. ÖĞRENCİ LİSTESİ (Dokunulmadı, Filtreleme Doğru) ---
+        public async Task<IActionResult> Index(int? cityId, int? departmentId, double? minGpa)
         {
-            // 1. Tüm öğrencileri ve tüm başvuruları aynı anda çekiyoruz
-            var allStudents = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department);
+            var allStudents = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
             var allApps = await _unitOfWork.InternshipApplications.GetAllAsync();
 
-            var activeStudents = allStudents.Where(s => s.IsDeleted == false).ToList();
+            var studentQuery = allStudents.Where(s => s.IsDeleted == false);
 
-            // 2. Bildirim sayısını ViewBag'e mühürle
+            if (cityId.HasValue) studentQuery = studentQuery.Where(s => s.CityId == cityId);
+            if (departmentId.HasValue) studentQuery = studentQuery.Where(s => s.DepartmentId == departmentId);
+            if (minGpa.HasValue) studentQuery = studentQuery.Where(s => s.GPA >= minGpa);
+
+            var filteredStudents = studentQuery.OrderByDescending(s => s.GPA).ToList();
+
             ViewBag.NewApplicationsCount = allApps.Count(a => a.Status == "Beklemede" && !a.IsDeleted);
 
-            // 3. Öğrencileri DTO'ya çevir
-            var studentDtos = _mapper.Map<List<StudentDto>>(activeStudents);
+            var cities = await _unitOfWork.Cities.GetAllAsync();
+            var departments = await _unitOfWork.Departments.GetAllAsync();
+            ViewBag.Cities = new SelectList(cities.OrderBy(c => c.Name), "Id", "Name", cityId);
+            ViewBag.Departments = new SelectList(departments.OrderBy(d => d.DepartmentName), "Id", "DepartmentName", departmentId);
 
-            // 🔥 KRİTİK ADIM: Her öğrencinin staj durumunu başvurular tablosundan bulup DTO'ya mühürlüyoruz
+            var studentDtos = _mapper.Map<List<StudentDto>>(filteredStudents);
+
             foreach (var student in studentDtos)
             {
-                // Bu öğrenciye ait en son (ve silinmemiş) başvuruyu bul
                 var lastApp = allApps
                     .Where(a => a.AppUserId == student.Id && !a.IsDeleted)
                     .OrderByDescending(a => a.ApplicationDate)
                     .FirstOrDefault();
 
-                // Eğer başvurusu varsa durumunu yaz, yoksa "Başvuru Yok" de
                 student.InternshipStatus = lastApp != null ? lastApp.Status : "Başvuru Yok";
             }
 
             return View(studentDtos);
         }
 
-        // --- 2. ÖĞRENCİ DETAYI ---
+        // --- ✅ 2. ÖĞRENCİ DETAYI (Düzenlendi: İlişkili Tablolar Eklendi) ---
         public async Task<IActionResult> StudentDetails(int id)
         {
-            var student = await _unitOfWork.Students.GetByIdAsync(id);
+            // Mühür: Detay sayfasında bölüm ve şehir adının görünmesi için Include ekledik
+            var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
+            var student = students.FirstOrDefault(s => s.Id == id);
+
             if (student == null || student.IsDeleted)
             {
                 TempData["ErrorMessage"] = "Öğrenci bulunamadı!";
@@ -65,7 +74,7 @@ namespace StajSistemi.Controllers
             return View(studentDto);
         }
 
-        // --- 3. SOFT DELETE ---
+        // --- ✅ 3. SOFT DELETE (Dokunulmadı) ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -76,12 +85,12 @@ namespace StajSistemi.Controllers
                 student.IsDeleted = true;
                 _unitOfWork.Students.Update(student);
                 await _unitOfWork.SaveAsync();
-                TempData["SuccessMessage"] = "Öğrenci kaydı başarıyla arşive kaldırıldı. 🥂";
+                TempData["SuccessMessage"] = "Öğrenci kaydı arşive kaldırıldı. 🥂";
             }
             return RedirectToAction(nameof(Index));
         }
 
-        // --- 4. STAJ BAŞVURULARI (Onay/Red Ekranı) ---
+        // --- ✅ 4. STAJ BAŞVURULARI LİSTESİ (Dokunulmadı) ---
         public async Task<IActionResult> InternshipApplications()
         {
             var applications = await _unitOfWork.InternshipApplications
@@ -95,6 +104,26 @@ namespace StajSistemi.Controllers
             ViewBag.NewApplicationsCount = activeApplications.Count(a => a.Status == "Beklemede");
 
             return View(activeApplications);
+        }
+
+        // --- 🔥 5. YENİ MÜHÜR: BAŞVURU DURUMUNU GÜNCELLE (Onay/Red) ---
+        // Bu metot, hocanın butona bastığında başvuruyu onaylamasını sağlar.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateApplicationStatus(int id, string status)
+        {
+            var app = await _unitOfWork.InternshipApplications.GetByIdAsync(id);
+            if (app == null) return NotFound();
+
+            app.Status = status; // "Onaylandı" veya "Reddedildi"
+
+            _unitOfWork.InternshipApplications.Update(app);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = $"Başvuru '{status}' olarak mühürlendi! ✨";
+
+            // İşlem bitince listeye geri dön
+            return RedirectToAction(nameof(InternshipApplications));
         }
     }
 }

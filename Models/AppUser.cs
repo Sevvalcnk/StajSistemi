@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic; // ✅ ICollection ve List işlemleri için şart
 
 namespace StajSistemi.Models
 {
@@ -8,20 +9,24 @@ namespace StajSistemi.Models
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
 
-        // ✅ FullName alanı: Ad ve Soyadı birleştirmek için kullanılabilir.
+        // ✅ DÜZELTME MÜHRÜ: 
+        // Bunu { get; set; } yaptık ki AccountController veya SeedData 
+        // buraya isim yazmaya çalıştığında proje hata vermesin, "şak" diye çalışsın.
         public string? FullName { get; set; }
 
         public string? StudentNo { get; set; }
         public string? IPAddress { get; set; }
 
-        // 🚀 ÖĞRENCİ PANELİ HATALARINI BİTİREN YENİ ALANLAR:
-        // Sistem "GPA nerede? CVPath nerede?" diye ağlıyordu, işte buradalar:
-
-        public double? GPA { get; set; }             // Not Ortalaması
+        // 🚀 ÖĞRENCİ PANELİ ALANLARI:
+        public double? GPA { get; set; }               // Not Ortalaması
         public string? PersonalSkills { get; set; }   // Kişisel Yetenekler
         public string? EducationSummary { get; set; } // Eğitim Özeti
-        public string? CVPath { get; set; }           // CV Dosyasının Yolu (/uploads/cvs/...)
+        public string? CVPath { get; set; }           // CV Dosyasının Yolu
         public string? CertificatePath { get; set; }  // Sertifika Dosyasının Yolu
+
+        // ✅ AKILLI FİLTRELEME İÇİN EKLENEN ŞEHİR ALANLARI (HAFTA 6):
+        public int? CityId { get; set; }              // Şehir Kimliği
+        public City? City { get; set; }               // Şehir Tablosuyla Mühürleme
 
         // ✅ Soft Delete Kontrolü
         public bool IsDeleted { get; set; } = false;
@@ -29,5 +34,11 @@ namespace StajSistemi.Models
         // Bölüm İlişkisi
         public int? DepartmentId { get; set; }
         public Department? Department { get; set; }
+
+        // ✅ KRİTİK EKLEME: DANIŞMAN MÜHÜRÜ
+        public int? AdvisorId { get; set; }
+
+        // ✅ Kullanıcının yaptığı başvuruları da burada görebilmeliyiz (İlişki için)
+        public ICollection<Application>? Applications { get; set; }
     }
 }

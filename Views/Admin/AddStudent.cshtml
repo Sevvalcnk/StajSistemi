@@ -1,0 +1,79 @@
+﻿@model StajSistemi.Models.AppUser
+@{
+    ViewData["Title"] = "Yeni Öğrenci Kaydı";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            @* --- FORM KARTI --- *@
+            <div class="card shadow-lg border-0 rounded-4 animate__animated animate__fadeInUp">
+                <div class="card-header bg-primary text-white text-center py-4 border-0">
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-user-plus me-2"></i>Yeni Öğrenci Mühürle</h4>
+                    <p class="small mb-0 opacity-75">Sisteme kayıt olan öğrenciye giriş bilgileri otomatik mail atılacaktır.</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="AddStudent" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        @* 1. OKUL NUMARASI (UserName) *@
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Okul Numarası</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-id-card text-primary"></i></span>
+                                <input asp-for="UserName" class="form-control border-start-0 bg-light" placeholder="Örn: 221030001" required />
+                            </div>
+                            <span asp-validation-for="UserName" class="text-danger small"></span>
+                        </div>
+
+                        @* 2. AD SOYAD (FullName) *@
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Ad Soyad</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-primary"></i></span>
+                                <input asp-for="FullName" class="form-control border-start-0 bg-light" placeholder="Örn: Yağız Cinek" required />
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        @* 3. E-POSTA ADRESİ (Email) *@
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">E-Posta Adresi</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-envelope text-primary"></i></span>
+                                <input asp-for="Email" type="email" class="form-control border-start-0 bg-light" placeholder="Örn: ogrenci@gmail.com" required />
+                            </div>
+                            <small class="text-muted" style="font-size: 11px;">Şifre bu adrese gönderilecektir.</small>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        @* --- BUTONLAR --- *@
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm fw-bold">
+                                <i class="fas fa-paper-plane me-2"></i>Öğrenciyi Kaydet ve Bilgilendir
+                            </button>
+                            <a asp-action="Index" class="btn btn-link text-secondary text-decoration-none small">
+                                <i class="fas fa-arrow-left me-1"></i>Listeye Geri Dön
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @* --- BİLGİLENDİRME NOTU --- *@
+            <div class="text-center mt-4">
+                <div class="alert alert-info border-0 shadow-sm rounded-4 py-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Bilgi:</strong> Kayıt sonrası sistem 8 haneli rastgele bir şifre üretir ve öğrenciye mühürlü mail gönderir.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

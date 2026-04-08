@@ -1,0 +1,191 @@
+﻿@model List<StajSistemi.Models.ChatMessage>
+@{
+    ViewData["Title"] = "Mesajlaşma Paneli";
+    var receiver = ViewBag.Receiver as StajSistemi.Models.AppUser;
+    var recentContacts = ViewBag.RecentContacts as List<StajSistemi.Models.AppUser>;
+
+    // ✅ Kimlik karmaşasını önleyen garanti mühür
+    var currentUserId = ViewBag.CurrentUserId?.ToString() ?? "0";
+}
+
+<div class="container py-4">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden d-flex flex-row" style="height: 700px;">
+
+        @* --- SOL TARAF: SOHBET LİSTESİ --- *@
+        <div class="bg-light border-end d-flex flex-column" style="width: 320px; min-width: 320px;">
+            <div class="p-3 bg-white border-bottom shadow-sm">
+                <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-users me-2 text-primary"></i>Sohbetler</h6>
+            </div>
+
+            <div class="overflow-auto flex-grow-1" style="scrollbar-width: thin;">
+                @if (recentContacts != null && recentContacts.Any())
+                {
+                    foreach (var contact in recentContacts)
+                    {
+                        <a asp-action="Index" asp-route-receiverId="@contact.Id"
+                           class="d-flex align-items-center p-3 text-decoration-none border-bottom transition @(receiver?.Id == contact.Id ? "bg-white border-start border-4 border-primary shadow-sm" : "text-dark hover-bg-light")">
+
+                            <div class="avatar-sm bg-secondary rounded-circle me-3 text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:45px; height:45px; flex-shrink: 0;">
+                                @(contact.FirstName?.Length > 0 ? contact.FirstName[0].ToString() : "?")@(contact.LastName?.Length > 0 ? contact.LastName[0].ToString() : "")
+                            </div>
+
+                            <div class="text-truncate">
+                                <div class="fw-bold small text-dark">@contact.FirstName @contact.LastName</div>
+                                <small class="text-muted d-block text-truncate">Sohbeti görüntüle...</small>
+                            </div>
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+
+        @* --- SAĞ TARAF: MESAJLAŞMA ALANI --- *@
+        <div class="flex-grow-1 d-flex flex-column bg-white">
+            @if (receiver != null)
+            {
+                <div class="p-3 border-bottom d-flex align-items-center bg-white shadow-sm" style="z-index: 5;">
+                    <div class="avatar-sm bg-primary rounded-circle me-2 text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:38px; height:38px;">
+                        @(receiver.FirstName?.Length > 0 ? receiver.FirstName[0].ToString() : "?")@(receiver.LastName?.Length > 0 ? receiver.LastName[0].ToString() : "")
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark">@receiver.FirstName @receiver.LastName</h6>
+                        <small class="text-success small fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> Aktif Sohbet</small>
+                    </div>
+                </div>
+
+                @* ✅ ARKA PLAN: Beyaz kutuların patlaması için koyulaştırıldı *@
+                <div class="chat-box p-4 flex-grow-1" id="chatArea" style="overflow-y: auto; background-color: #e5e7eb;">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var msg in Model)
+                        {
+                            bool isMe = msg.SenderId.ToString() == currentUserId;
+
+                            <div class="d-flex mb-3 @(isMe ? "justify-content-end" : "justify-content-start")" id="msg-@msg.Id">
+
+                                @* ✅ KUTU DİZAYNI: Gölge ve kenarlık eklendi *@
+                                <div class="p-3 shadow position-relative @(isMe ? "bg-primary text-white" : "bg-white text-dark border border-secondary-subtle")"
+                                     style="max-width: 75%; border-radius: @(isMe ? "15px 15px 0 15px" : "15px 15px 15px 0") !important;">
+
+                                    <p class="mb-1 small">@msg.Content</p>
+
+                                    <div class="d-flex align-items-center justify-content-end gap-1 @(isMe ? "text-white-50" : "text-muted")" style="font-size: 9px;">
+                                        <i class="fas fa-trash-alt me-1 cursor-pointer hover-danger" onclick="mesajSil(@msg.Id)" style="cursor:pointer;" title="Mesajı Sil"></i>
+                                        <i class="far fa-clock me-1"></i>@msg.SentDate.ToString("HH:mm")
+
+                                        @* 🚀 HER İKİ TARAF İÇİN TİK MÜHÜRÜ (isMe kontrolü kaldırıldı) *@
+                                        @if (msg.IsRead)
+                                        {
+                                            @* Mesaj okunduysa: Çift Mavi Tik *@
+                                            <i class="fas fa-check-double text-info" title="Okundu" style="color: #00d2ff !important;"></i>
+                                        }
+                                        else
+                                        {
+                                            @* Mesaj henüz okunmadıysa: Tek Gri Tik *@
+                                            <i class="fas fa-check" title="Gönderildi"></i>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div class="p-3 border-top bg-light">
+                    <form asp-action="SendMessage" method="post" class="d-flex gap-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="receiverId" value="@receiver.Id" />
+                        <input type="text" name="content" class="form-control rounded-pill px-4 border-0 shadow-sm"
+                               style="height: 45px;" placeholder="Mesajınızı buraya mühürleyin..." required autocomplete="off">
+                        <button type="submit" class="btn btn-primary rounded-circle shadow d-flex align-items-center justify-content-center"
+                                style="width:45px; height:45px; min-width: 45px;">
+                            <i class="fas fa-paper-plane text-white"></i>
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div class="h-100 d-flex flex-column align-items-center justify-content-center text-muted opacity-50 bg-light bg-opacity-50">
+                    <div class="p-4 bg-white rounded-circle shadow-sm mb-3">
+                        <i class="fas fa-comments fa-4x text-primary opacity-25"></i>
+                    </div>
+                    <h5 class="fw-bold">Sohbet Seçilmedi</h5>
+                    <p class="small">Mesajlaşmak için sol menüden birini seç kardaşım!</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-bg-light:hover {
+        background-color: rgba(0,0,0,0.03);
+    }
+
+    .transition {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .chat-box::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .chat-box::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 10px;
+    }
+
+    .hover-danger:hover {
+        color: #ff4d4d !important;
+    }
+</style>
+
+@* --- 🚀 CANLI YAYIN MOTORU (SIGNALR) --- *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/chatHub")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.start().then(function () {
+        console.log("Canlı Yayın Mühürlendi! ✅");
+    }).catch(err => console.error(err.toString()));
+
+    // "OKUNDU" sinyali geldiğinde tüm gri tikleri çift mavi tik yap
+    connection.on("ReceiveReadReceipt", function (readerId) {
+        $(".fa-check").removeClass("fa-check")
+                      .addClass("fa-check-double text-info")
+                      .attr("title", "Okundu")
+                      .css("color", "#00d2ff");
+    });
+
+    // Yeni mesaj gelince sayfayı yenile
+    connection.on("ReceiveNewMessage", function (senderId, content) {
+        location.reload();
+    });
+
+    var chatBox = document.getElementById("chatArea");
+    if (chatBox) { chatBox.scrollTop = chatBox.scrollHeight; }
+
+    function mesajSil(mesajId) {
+        if (confirm("Bu mesajı silmek istediğine emin misin kardaşım?")) {
+            $.ajax({
+                url: '/Chat/DeleteMessage',
+                type: 'POST',
+                data: { id: mesajId },
+                success: function (response) {
+                    if (response.success) {
+                        $("#msg-" + mesajId).fadeOut(300, function() { $(this).remove(); });
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () { alert("Hata oluştu kardaşım!"); }
+            });
+        }
+    }
+</script>

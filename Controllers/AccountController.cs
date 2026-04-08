@@ -5,6 +5,7 @@ using StajSistemi.Models;
 using StajSistemi.Models.ViewModels;
 using StajSistemi.data;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http; // ✅ Session işlemleri için mühürlü
 
 namespace StajSistemi.Controllers
 {
@@ -56,8 +57,28 @@ namespace StajSistemi.Controllers
                     var result = await _signInManager.PasswordSignInAsync(user.UserName!, model.Password, model.RememberMe, false);
                     if (result.Succeeded)
                     {
+                        // --- ✅ HAFTA 3 MÜHÜRÜ: IP ADRESİ VE LOG KAYDI ---
+                        string remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+
+                        // 1. Session'a Mühürle (Hızlı Erişim)
+                        HttpContext.Session.SetString("UserIP", remoteIp);
+                        HttpContext.Session.SetString("UserEmail", user.Email ?? "");
+
+                        // 2. Veritabanına Mühürle (Kalıcı Kayıt - LoginLogs)
+                        // Senin LoginLog modelindeki isimlere (Username, LoginTime) göre ayarladık
+                        var log = new LoginLog
+                        {
+                            Username = user.UserName,
+                            IpAddress = remoteIp,
+                            LoginTime = DateTime.Now
+                        };
+                        _context.LoginLogs.Add(log);
+                        await _context.SaveChangesAsync();
+                        // ------------------------------------------------
+
                         TempData.Remove("LoginWarning");
                         var roles = await _userManager.GetRolesAsync(user);
+
                         if (roles.Contains("Admin")) return RedirectToAction("Index", "Admin");
                         if (roles.Contains("Advisor")) return RedirectToAction("Index", "Advisor");
                         return RedirectToAction("Index", "StudentPanel");
@@ -80,7 +101,6 @@ namespace StajSistemi.Controllers
         {
             if (ModelState.IsValid)
             {
-                // İsim parçalama mantığını AppUser seviyesine çekiyoruz
                 var nameParts = model.FullName.Trim().Split(' ');
                 string firstName = nameParts[0];
                 string lastName = nameParts.Length > 1 ? nameParts[nameParts.Length - 1] : "";
@@ -90,10 +110,10 @@ namespace StajSistemi.Controllers
                     UserName = model.Role == "Student" ? model.StudentNo : model.Email,
                     Email = model.Email,
                     FullName = model.FullName,
-                    FirstName = firstName, // ✅ EKLEDİM: AppUser içindeki FirstName'e yaz
-                    LastName = lastName,   // ✅ EKLEDİM: AppUser içindeki LastName'e yaz
+                    FirstName = firstName,
+                    LastName = lastName,
                     StudentNo = model.Role == "Student" ? model.StudentNo : null,
-                    DepartmentId = model.Role == "Student" ? 1 : (int?)null, // ✅ Varsayılan bölüm (Şimdilik 1)
+                    DepartmentId = model.Role == "Student" ? 1 : (int?)null,
                     IsDeleted = false
                 };
 
@@ -102,10 +122,6 @@ namespace StajSistemi.Controllers
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(user, model.Role);
-
-                    // ❌ 'var newStudent = new Student' BLOĞUNU KOMPLE SİLDİK!
-                    // Artık her şey AppUser içinde olduğu için ikinci bir tabloya gerek kalmadı.
-
                     await _signInManager.SignInAsync(user, isPersistent: false);
 
                     if (model.Role == "Advisor") return RedirectToAction("Index", "Advisor");
@@ -119,7 +135,7 @@ namespace StajSistemi.Controllers
             return View(model);
         }
 
-        // --- Şifre İşlemleri ---
+        // --- Şifre İşlemleri (Dokunulmadı) ---
         [HttpGet] public IActionResult ForgotPassword() => View();
 
         [HttpPost]
@@ -188,6 +204,7 @@ namespace StajSistemi.Controllers
         [HttpPost]
         public async Task<IActionResult> Logout()
         {
+            HttpContext.Session.Clear();
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }

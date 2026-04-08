@@ -2,9 +2,8 @@
 
 @{
     ViewData["Title"] = "Yeni Kayıt";
-    // ✅ MÜHÜR: Sadece öğrenci rolü seçiliyse kayıt izni veriyoruz
-    var selectedRole = ViewBag.SelectedRole as string ?? "Student";
-    bool canRegister = selectedRole == "Student" || selectedRole == "Öğrenci";
+    // ✅ MÜHÜR: Tüm kilitleri kaldırdık, hoca ne seçerse o!
+    bool canRegister = true;
 }
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -30,6 +29,11 @@
             background-color: #f8f9fa !important;
             color: #4ca1af !important;
         }
+
+    /* ✅ AKILLI GEÇİŞ EFEKTİ */
+    #studentNoArea {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
 </style>
 
 <div class="container py-5">
@@ -48,100 +52,101 @@
         @* SAĞ TARAF: KAYIT FORMU *@
         <div class="col-lg-6 col-xl-5">
             <div class="card glass-card p-4 border-0 shadow-lg rounded-4">
-                <div class="text-center mb-4">
-                    <h3 class="fw-bold">
-                        @(canRegister ? "Yeni Öğrenci Kaydı" : "Yetki Kısıtlı")
-                    </h3>
-                    <p class="text-muted small">
-                        @(canRegister ? "Lütfen bilgilerinizi eksiksiz doldurun." : "Güvenlik protokolü gereği bu sayfaya erişiminiz kısıtlanmıştır.")
-                    </p>
+
+                @* 🛡️ MÜHÜR: 5 DAKİKALIK GÜVENLİK PROTOKOLÜ UYARISI *@
+                <div class="alert alert-dark border-0 rounded-4 mb-4" style="background-color: #2c3e50; color: white;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-shield-alt fa-2x me-3 text-warning"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Güvenlik Protokolü Aktif!</h6>
+                            <p class="small mb-0 opacity-75">Sistem güvenliği için oturumunuz 5 dakika içinde mühürlenecektir. 🛡️</p>
+                        </div>
+                    </div>
                 </div>
 
-                @if (canRegister)
-                {
-                    @* ✅ SADECE ÖĞRENCİLER İÇİN ÇALIŞAN FORM *@
-                    <form asp-action="Register" method="post">
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
-                        <input type="hidden" asp-for="Role" value="Student" />
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold">Yeni Kullanıcı Kaydı</h3>
+                    <p class="text-muted small">Lütfen bilgilerinizi eksiksiz doldurun.</p>
+                </div>
 
-                        <div class="mb-3">
-                            <label asp-for="FullName" class="form-label fw-bold small">Ad Soyad</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-user text-muted"></i></span>
-                                <input asp-for="FullName" class="form-control border-start-0 premium-input" placeholder="Adınız Soyadınız" />
-                            </div>
-                            <span asp-validation-for="FullName" class="text-danger small"></span>
-                        </div>
+                <form asp-action="Register" method="post" id="registerForm">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
 
-                        <div class="mb-3">
-                            <label asp-for="StudentNo" class="form-label fw-bold small">Öğrenci Numarası</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-id-card text-muted"></i></span>
-                                <input asp-for="StudentNo" class="form-control border-start-0 premium-input" placeholder="Örn: 247017029" />
-                            </div>
-                            <span asp-validation-for="StudentNo" class="text-danger small"></span>
+                    @* ✅ ROL SEÇİMİ *@
+                    <div class="mb-3">
+                        <label asp-for="Role" class="form-label fw-bold small">Kayıt Tipi (Yetki)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-user-tag text-muted"></i></span>
+                            <select asp-for="Role" id="roleSelect" class="form-select border-start-0 premium-input">
+                                <option value="Student">Öğrenci</option>
+                                <option value="Advisor">Danışman (Hoca)</option>
+                                <option value="Admin">Admin (Yönetici)</option>
+                            </select>
                         </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Email" class="form-label fw-bold small">E-posta Adresi</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-envelope text-muted"></i></span>
-                                <input asp-for="Email" class="form-control border-start-0 premium-input" placeholder="ornek@sinop.edu.tr" />
-                            </div>
-                            <span asp-validation-for="Email" class="text-danger small"></span>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Password" class="form-label fw-bold small">Şifre</label>
-                                <div class="input-group">
-                                    <input asp-for="Password" type="password" id="passInput" class="form-control premium-input border-end-0 rounded-start" placeholder="******" />
-                                    <span class="input-group-text bg-white border-start-0" onclick="togglePassword('passInput', 'toggleIcon')">
-                                        <i class="fas fa-eye text-muted" id="toggleIcon"></i>
-                                    </span>
-                                </div>
-                                <span asp-validation-for="Password" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="ConfirmPassword" class="form-label fw-bold small">Şifre Tekrar</label>
-                                <div class="input-group">
-                                    <input asp-for="ConfirmPassword" type="password" id="confirmPassInput" class="form-control premium-input border-end-0 rounded-start" placeholder="******" />
-                                    <span class="input-group-text bg-white border-start-0" onclick="togglePassword('confirmPassInput', 'confirmToggleIcon')">
-                                        <i class="fas fa-eye text-muted" id="confirmToggleIcon"></i>
-                                    </span>
-                                </div>
-                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm"
-                                    style="background: linear-gradient(to right, #2c3e50, #4ca1af); border: none;">
-                                Kayıt Ol
-                            </button>
-                        </div>
-                    </form>
-                }
-                else
-                {
-                    @* ✅ PERSONEL VEYA ADMIN İÇİN GÖRÜNEN GÜVENLİK DUVARI *@
-                    <div class="text-center py-5">
-                        <i class="fas fa-user-shield fa-5x text-danger opacity-25 mb-4"></i>
-                        <h5 class="fw-bold text-dark">Erişim Engellendi</h5>
-                        <p class="text-muted small px-3">
-                            Personel (Admin/Danışman) kayıtları, sistem güvenliği nedeniyle sadece yetkili yöneticiler tarafından panel üzerinden gerçekleştirilmektedir.
-                        </p>
-                        <a href="/Account/Login?role=@selectedRole" class="btn btn-outline-primary rounded-pill px-5 mt-4 fw-bold shadow-sm">
-                            <i class="fas fa-arrow-left me-2"></i> Giriş Sayfasına Dön
-                        </a>
+                        <span asp-validation-for="Role" class="text-danger small"></span>
                     </div>
-                }
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label fw-bold small">Ad Soyad</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-user text-muted"></i></span>
+                            <input asp-for="FullName" class="form-control border-start-0 premium-input" placeholder="Adınız Soyadınız" />
+                        </div>
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    @* ✅ AKILLI ALAN: Sadece Öğrenci seçiliyse görünecek *@
+                    <div class="mb-3" id="studentNoArea">
+                        <label asp-for="StudentNo" class="form-label fw-bold small">Öğrenci Numarası</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-id-card text-muted"></i></span>
+                            <input asp-for="StudentNo" id="studentNoInput" class="form-control border-start-0 premium-input" placeholder="Örn: 247017029" />
+                        </div>
+                        <span asp-validation-for="StudentNo" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-bold small">E-posta Adresi</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-envelope text-muted"></i></span>
+                            <input asp-for="Email" class="form-control border-start-0 premium-input" placeholder="ornek@sinop.edu.tr" />
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Password" class="form-label fw-bold small">Şifre</label>
+                            <div class="input-group">
+                                <input asp-for="Password" type="password" id="passInput" class="form-control premium-input border-end-0 rounded-start" placeholder="******" />
+                                <span class="input-group-text bg-white border-start-0" onclick="togglePassword('passInput', 'toggleIcon')">
+                                    <i class="fas fa-eye text-muted" id="toggleIcon"></i>
+                                </span>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label fw-bold small">Şifre Tekrar</label>
+                            <div class="input-group">
+                                <input asp-for="ConfirmPassword" type="password" id="confirmPassInput" class="form-control premium-input border-end-0 rounded-start" placeholder="******" />
+                                <span class="input-group-text bg-white border-start-0" onclick="togglePassword('confirmPassInput', 'confirmToggleIcon')">
+                                    <i class="fas fa-eye text-muted" id="confirmToggleIcon"></i>
+                                </span>
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm"
+                                style="background: linear-gradient(to right, #2c3e50, #4ca1af); border: none;">
+                            <i class="fas fa-user-plus me-2"></i> Kaydı Tamamla
+                        </button>
+                    </div>
+                </form>
 
                 <div class="mt-4 text-center">
-                    @if (canRegister)
-                    {
-                        <p class="mb-0 small text-muted">Zaten hesabın var mı? <a href="/Account/Login?role=@selectedRole" class="text-primary fw-bold text-decoration-none">Giriş Yap</a></p>
-                    }
+                    <p class="mb-0 small text-muted">Zaten hesabın var mı? <a href="/Account/Login" class="text-primary fw-bold text-decoration-none">Giriş Yap</a></p>
                     <a href="/" class="text-muted small text-decoration-none mt-3 d-block">
                         <i class="fas fa-home me-1"></i> Ana Sayfaya Dön
                     </a>
@@ -168,5 +173,25 @@
                 icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         }
+
+        // ✅ AKILLI GİZLEME MOTORU
+        const roleSelect = document.getElementById('roleSelect');
+        const studentNoArea = document.getElementById('studentNoArea');
+        const studentNoInput = document.getElementById('studentNoInput');
+
+        function updateFormFields() {
+            if (roleSelect.value === 'Student') {
+                studentNoArea.style.display = 'block';
+                // Animasyon için küçük bir gecikme
+                setTimeout(() => { studentNoArea.style.opacity = '1'; }, 10);
+            } else {
+                studentNoArea.style.opacity = '0';
+                studentNoArea.style.display = 'none';
+                studentNoInput.value = ""; // Admin/Hoca ise bu alanı boşalt
+            }
+        }
+
+        roleSelect.addEventListener('change', updateFormFields);
+        window.addEventListener('load', updateFormFields); // Sayfa açıldığında kontrol et
     </script>
 }

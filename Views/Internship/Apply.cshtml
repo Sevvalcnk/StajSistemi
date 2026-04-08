@@ -11,15 +11,16 @@
         <div class="col-md-6 col-lg-5">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
 
+                @* ÜST PANEL: Tasarımın aynen korundu *@
                 <div class="card-header text-white text-center py-4" style="background: linear-gradient(to right, #11998e, #38ef7d) !important;">
                     <i class="fas fa-file-upload fa-3x mb-3"></i>
                     <h3 class="fw-bold mb-0">Yeni Staj Başvurusu</h3>
-                    <p class="small mb-0 opacity-75">Hafta 5: Güvenli Dosya ve IP Mühürleme</p>
+                    <p class="small mb-0 opacity-75">Hafta 5: Güvenli Dosya ve Akıllı Yönlendirme</p>
                 </div>
 
                 <div class="card-body p-4 p-md-5 bg-white">
 
-                    @* 🚩 YENİ MÜHÜR: Controller'dan gelen hata mesajını burada gösteriyoruz *@
+                    @* 🚩 Standart Hata Mesajı *@
                     @if (TempData["ErrorMessage"] != null)
                     {
                         <div class="alert alert-danger border-0 shadow-sm small mb-4 techNode-shake">
@@ -33,22 +34,24 @@
 
                         <input type="hidden" asp-for="InternshipId" />
 
+                        @* CV YÜKLEME ALANI *@
                         <div class="mb-4">
                             <label class="form-label fw-bold text-secondary">CV Dosyanız (PDF/Word)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0"><i class="fas fa-file-pdf text-muted"></i></span>
                                 <input type="file" name="cvFile" id="cvFile" class="form-control border-light bg-light" accept=".pdf,.doc,.docx" required />
                             </div>
-                            <div class="form-text small mt-1 text-muted">Maksimum 5MB (PDF tercih edilir).</div>
+                            <div class="form-text small mt-1 text-muted">Maksimum 5MB (PDF veya Word seçiniz).</div>
                         </div>
 
+                        @* SERTİFİKA YÜKLEME ALANI *@
                         <div class="mb-4">
                             <label class="form-label fw-bold text-secondary">Sertifika / Ek Belge (Opsiyonel)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0"><i class="fas fa-certificate text-muted"></i></span>
-                                <input type="file" name="certFile" id="certFile" class="form-control border-light bg-light" accept=".pdf,.jpg,.png" />
+                                <input type="file" name="certFile" id="certFile" class="form-control border-light bg-light" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                             </div>
-                            <div class="form-text small mt-1 text-muted">Varsa sertifikalarınızı yükleyebilirsiniz.</div>
+                            <div class="form-text small mt-1 text-muted">PDF, Word veya Görsel (JPG/PNG) mühürleyin.</div>
                         </div>
 
                         <div class="d-grid gap-2">
@@ -72,44 +75,66 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 
-    @* 🛡️ GÜVENLİK RADARI: Hatalı dosyayı daha gitmeden kapıda yakalar *@
+    @* 🛡️ PROFESYONEL BİLDİRİM VE GÜVENLİK MOTORU *@
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
+        // ✅ 1. BÖLÜM: Akıllı Tavsiye Kontrolü (Kurumsal Dil ile Güncellendi)
+        @if (TempData["WrongDepartment"] != null)
+        {
+            <text>
+                    Swal.fire({
+                        title: 'Bölüm Uyumluluğu Kısıtlaması 🛡️',
+                        text: 'Seçtiğiniz ilan mevcut akademik programınız ile eşleşmemektedir. Sistemimiz profilinize en uygun ilanları sizin için belirledi.',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonColor: '#11998e',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: '✅ Uygun İlanları Görüntüle',
+                        cancelButtonText: 'Kapat',
+                        backdrop: `rgba(0,0,123,0.2)`
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '@Url.Action("Index", "Internship")?departmentId=@TempData["UserDeptId"]';
+                        }
+                    });
+            </text>
+        }
+
+        // ✅ 2. BÖLÜM: Dosya Güvenlik Radarı (Senin 5MB mühürün, bozulmadı)
         document.getElementById('applyForm').onsubmit = function (e) {
-            const cvExtensions = /(\.pdf|\.doc|\.docx)$/i;
-            const certExtensions = /(\.pdf|\.jpg|\.jpeg|\.png)$/i;
-            const maxSize = 5 * 1024 * 1024; // 5MB sınırı
+            const docExtensions = /(\.pdf|\.doc|\.docx)$/i;
+            const certExtensions = /(\.pdf|\.doc|\.docx|\.jpg|\.jpeg|\.png)$/i;
+            const maxSize = 5 * 1024 * 1024; // 5MB
 
             const cvFile = document.getElementById('cvFile').files[0];
             const certFile = document.getElementById('certFile').files[0];
 
-            // 1. CV Uzantı ve Boyut Kontrolü
             if (cvFile) {
-                if (!cvExtensions.exec(cvFile.name)) {
-                    alert('❌ Hata: CV sadece PDF veya Word formatında olabilir!');
+                if (!docExtensions.exec(cvFile.name)) {
+                    alert('❌ Hata: CV için sadece PDF veya Word belgesi seçiniz.');
                     e.preventDefault();
                     return false;
                 }
                 if (cvFile.size > maxSize) {
-                    alert('❌ Hata: CV dosyası 5MB\'dan büyük olamaz!');
+                    alert('❌ Hata: Dosya boyutu 5MB sınırını aşamaz!');
                     e.preventDefault();
                     return false;
                 }
             }
 
-            // 2. Sertifika Uzantı ve Boyut Kontrolü (Senin Cisco dosyasını yakalayan yer)
             if (certFile) {
                 if (!certExtensions.exec(certFile.name)) {
-                    alert('❌ Hop! Cisco dosyası (.pkt) veya geçersiz format yükleyemezsin. Lütfen PDF veya Görsel mühürle.');
+                    alert('❌ Hata: Sertifika için PDF, Word veya Resim kullanınız.');
                     e.preventDefault();
                     return false;
                 }
                 if (certFile.size > maxSize) {
-                    alert('❌ Hata: Sertifika dosyası 5MB\'dan büyük olamaz!');
+                    alert('❌ Hata: Sertifika dosyası 5MB sınırını aşamaz!');
                     e.preventDefault();
                     return false;
                 }
             }
-
             return true;
         };
     </script>

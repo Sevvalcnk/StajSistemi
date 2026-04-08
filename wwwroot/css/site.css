@@ -1,9 +1,9 @@
-/* 1. DEÐÝÞKENLER VE TEMEL AYARLAR */
+ï»¿/* 1. DEÄžÄ°ÅžKENLER VE TEMEL AYARLAR */
 :root {
     --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --glass-bg: rgba(255, 255, 255, 0.9);
     --university-blue: #258cfb;
-    --soft-bg: rgba(245, 247, 250, 0.9); /* Dashboard için beyaz maske */
+    --soft-bg: #f8faff; /* Dashboard iÃ§in tertemiz, Ã§ok hafif mavi-beyaz */
 }
 
 html {
@@ -22,56 +22,65 @@ body {
     margin-bottom: 60px;
     font-family: 'Poppins', 'Segoe UI', sans-serif;
     min-height: 100vh;
-    /* ? DÜZELTME: O en alttaki görüntüyü buraya, profesyonel bir maskeyle yerleþtirdik. 
-       Böylece hem resim görünecek hem de üzerindeki yazýlar cam gibi okunacak. */
-    background: linear-gradient(var(--soft-bg), var(--soft-bg)), url('/images/bg-dashboard.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+    /* âœ… DÃœZELTME: Mutfak/BuzdolabÄ± resmini kÃ¶kten sildik. 
+       Resim yerine profesyonel bir "Grid" ve hafif bir derinlik bÄ±raktÄ±k. */
+    background-color: var(--soft-bg) !important;
+    background-image: radial-gradient(at 0% 0%, rgba(37, 140, 251, 0.05) 0, transparent 50%), radial-gradient(at 100% 100%, rgba(118, 75, 162, 0.05) 0, transparent 50%), radial-gradient(#d1d8e0 0.5px, transparent 0.5px) !important;
+    background-size: 100% 100%, 100% 100%, 30px 30px !important;
+    background-attachment: fixed !important;
 }
 
-/* 2. GÝRÝÞ (LANDING) SAYFASI ÖZEL ARKA PLANI */
+/* 2. GÄ°RÄ°Åž (LANDING) SAYFASI Ã–ZEL ARKA PLANI */
 .landing-bg {
-    background: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('/images/office-bg.jpg') !important;
-    background-size: cover !important;
-    background-position: center !important;
-    background-attachment: fixed !important;
+    /* Buradaki office-bg.jpg de buzdolabÄ± iÃ§erebilir, o yÃ¼zden resim tamamen kaldÄ±rÄ±ldÄ± */
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+    background-image: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
     min-height: 100vh;
 }
 
-/* 3. BÝLEÞEN TASARIMLARI (KARTLAR VE BUTONLAR) */
-
+/* 3. BÄ°LEÅžEN TASARIMLARI (KARTLAR VE BUTONLAR) */
 .portal-card, .role-card, .premium-card {
     background: white !important;
-    border-radius: 20px !important;
-    border: none !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(0,0,0,0.05) !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
     backdrop-filter: blur(10px);
 }
 
-    /* Kartlarýn Havada Durma Efekti */
+    /* KartlarÄ±n Havada Durma Efekti */
     .portal-card:hover, .role-card:hover, .premium-card:hover {
-        transform: translateY(-12px) scale(1.02);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.12) !important;
+        transform: translateY(-8px) scale(1.01);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+        border-color: var(--university-blue) !important;
     }
 
 /* Butonlar */
 .btn-portal {
-    border-radius: 50px;
+    border-radius: 10px;
     font-weight: 600;
     padding: 12px 25px;
     transition: 0.3s;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
 }
+
+    .btn-portal:hover {
+        filter: brightness(1.1);
+        transform: scale(1.05);
+    }
 
 .btn:focus, .form-control:focus {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--university-blue);
 }
 
-/* 4. ÖZEL UI ELEMANLARI */
+/* 4. Ã–ZEL UI ELEMANLARI */
 .avatar-circle {
     width: 40px;
     height: 40px;
+    background: var(--primary-gradient);
+    color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -87,7 +96,7 @@ body {
     overflow: hidden;
 }
 
-/* 5. ANÝMASYONLAR */
+/* 5. ANÄ°MASYONLAR */
 .animate-premium {
     animation: fadeInUp 0.8s ease-out;
 }

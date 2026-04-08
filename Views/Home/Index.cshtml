@@ -1,4 +1,6 @@
-﻿@{
+﻿@model List<StajSistemi.Models.Internship>
+
+@{
     Layout = null;
 }
 
@@ -12,6 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
     <style>
+        /* ✅ Tasarım Mühürlerin Aynen Korundu */
         body {
             background: linear-gradient(rgba(44, 62, 80, 0.8), rgba(44, 62, 80, 0.8)), url('https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80');
             background-size: cover;
@@ -35,26 +38,19 @@
             margin-bottom: 60px;
         }
 
-        .display-4 {
-            font-weight: 800;
-            letter-spacing: -1px;
-        }
-
-        /* --- KARTLAR --- */
         .actor-card {
             background: white;
             border: none;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.2);
             transition: all 0.3s ease;
-            overflow: hidden;
-            height: 100%;
             color: #333;
+            height: 100%;
+            overflow: hidden;
         }
 
             .actor-card:hover {
                 transform: translateY(-15px);
-                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             }
 
         .strip {
@@ -62,6 +58,7 @@
             color: white;
             font-weight: bold;
             font-size: 1.1rem;
+            text-align: center;
         }
 
         .strip-student {
@@ -82,10 +79,12 @@
             color: #2c3e50;
             font-weight: 700;
             border-radius: 12px;
-            padding: 12px 25px;
-            transition: all 0.2s;
+            padding: 10px 20px;
             display: block;
             text-decoration: none;
+            transition: 0.2s;
+            margin: 10px auto;
+            width: 85%;
         }
 
             .btn-entry:hover {
@@ -93,19 +92,96 @@
                 color: white;
             }
 
-        .feature-item {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            height: 100%;
+        .intern-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            color: #2c3e50;
+            border: none;
+            transition: 0.4s;
+            position: relative;
         }
 
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
+            .intern-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 25px 50px rgba(0,0,0,0.4) !important;
+            }
+
+        .live-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.65rem;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            background: #2ecc71;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse-green 1.5s infinite;
+        }
+
+        .map-radar-link {
+            color: #6c757d;
+            text-decoration: none;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            transition: 0.3s;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+            .map-radar-link:hover {
+                background: #e74c3c;
+                color: #fff !important;
+            }
+
+        .starred-company {
+            color: #2c3e50;
+            font-weight: 800;
+        }
+
+        .star-box {
             color: #f3a656;
+            letter-spacing: 2px;
+            font-size: 1.1rem;
+        }
+
+        .carousel-control-prev {
+            left: -80px;
+            width: 50px;
+        }
+
+        .carousel-control-next {
+            right: -80px;
+            width: 50px;
+        }
+
+        .carousel-icon-box {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            padding: 15px;
+            transition: 0.3s;
+        }
+
+        @@keyframes pulse-green {
+            0%, 100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
         }
     </style>
 </head>
@@ -115,99 +191,118 @@
         <div class="hero-section py-4">
             <i class="fas fa-graduation-cap fa-5x mb-4 text-white"></i>
             <h1 class="display-4 mb-3">Staj Süreçlerini <span style="color: #f3a656;">Mühürleyin!</span></h1>
-            <p class="lead opacity-75 fs-4 mx-auto" style="max-width: 800px;">
-                Dijital staj takip sistemi ile kariyerinize profesyonel bir başlangıç yapın.
-            </p>
-
-            @* ✅ CANLI RAKAMLAR BURAYA GELİYOR *@
-            <div class="d-flex justify-content-center gap-4 mt-4">
-                <span class="badge bg-primary px-3 py-2 rounded-pill shadow">@ViewBag.ActiveInternshipsCount Aktif İlan</span>
-                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow">@ViewBag.NewApplicationsCount Bekleyen Başvuru</span>
-            </div>
+            <p class="lead opacity-75 fs-4 mx-auto" style="max-width: 800px;">Dijital staj takip sistemi ile kariyerinize profesyonel bir başlangıç yapın.</p>
         </div>
 
+        @* --- 🛡️ 3'LÜ PORTAL KARTLARI --- *@
         <div class="row g-4 justify-content-center mb-5">
-            @* ÖĞRENCİ KARTI *@
             <div class="col-md-4">
                 <div class="card actor-card">
-                    <div class="strip strip-student text-center">ÖĞRENCİ PORTALI</div>
+                    <div class="strip strip-student">ÖĞRENCİ PORTALI</div>
                     <div class="card-body p-4 text-center">
-                        <div class="icon-area fs-1 mb-3" style="color: #5b8bc3;"><i class="fas fa-user-graduate fa-2x"></i></div>
-                        <p class="small text-muted mb-4">İlanlara başvur ve sonuçlarını anlık takip et.</p>
-
-                        @if (User.Identity.IsAuthenticated && User.IsInRole("Student"))
-                        {
-                            <a asp-controller="StudentPanel" asp-action="Index" class="btn btn-entry mb-2 shadow-sm bg-primary text-white border-0">Panele Git</a>
-                        }
-                        else
-                        {
-                            <a asp-controller="Account" asp-action="Login" asp-route-role="Student" class="btn btn-entry mb-2 shadow-sm">Giriş Yap</a>
-                            <a asp-controller="Account" asp-action="Register" asp-route-role="Student" class="text-decoration-none small text-secondary">Yeni Hesap Oluştur</a>
-                        }
+                        <i class="fas fa-user-graduate fa-3x mb-3" style="color: #5b8bc3;"></i>
+                        <p class="small text-muted mb-4">İlanlara başvur ve sonuçlarını takip et.</p>
+                        <a asp-controller="Account" asp-action="Login" asp-route-role="Student" class="btn btn-entry shadow-sm">Giriş Yap</a>
                     </div>
                 </div>
             </div>
-
-            @* DANIŞMAN KARTI *@
             <div class="col-md-4">
                 <div class="card actor-card">
-                    <div class="strip strip-advisor text-center">DANIŞMAN PORTALI</div>
+                    <div class="strip strip-advisor">DANIŞMAN PORTALI</div>
                     <div class="card-body p-4 text-center">
-                        <div class="icon-area fs-1 mb-3" style="color: #6da59c;"><i class="fas fa-chalkboard-teacher fa-2x"></i></div>
-                        <p class="small text-muted mb-4">Başvuruları değerlendir ve stajyerleri mühürle.</p>
-
-                        @if (User.Identity.IsAuthenticated && (User.IsInRole("Advisor") || User.IsInRole("Admin")))
-                        {
-                            <a asp-controller="Advisor" asp-action="Index" class="btn btn-entry mb-2 shadow-sm bg-success text-white border-0">Yönetim Paneli</a>
-                        }
-                        else
-                        {
-                            <a asp-controller="Account" asp-action="Login" asp-route-role="Advisor" class="btn btn-entry mb-2 shadow-sm">Yetkili Girişi</a>
-                        }
+                        <i class="fas fa-chalkboard-teacher fa-3x mb-3" style="color: #6da59c;"></i>
+                        <p class="small text-muted mb-4">Başvuruları değerlendir ve mühürle.</p>
+                        <a asp-controller="Account" asp-action="Login" asp-route-role="Advisor" class="btn btn-entry shadow-sm">Yetkili Girişi</a>
                     </div>
                 </div>
             </div>
-
-            @* SİSTEM YÖNETİCİSİ *@
             <div class="col-md-4">
                 <div class="card actor-card">
-                    <div class="strip strip-admin text-center">SİSTEM YÖNETİCİSİ</div>
+                    <div class="strip strip-admin">SİSTEM YÖNETİCİSİ</div>
                     <div class="card-body p-4 text-center">
-                        <div class="icon-area fs-1 mb-3" style="color: #f3a656;"><i class="fas fa-user-shield fa-2x"></i></div>
+                        <i class="fas fa-user-shield fa-3x mb-3" style="color: #f3a656;"></i>
                         <p class="small text-muted mb-4">Bölümleri ve sistem ayarlarını yönet.</p>
-                        <a asp-controller="Account" asp-action="Login" asp-route-role="Admin" class="btn btn-entry mb-2 shadow-sm">Yönetici Paneli</a>
+                        <a asp-controller="Account" asp-action="Login" asp-route-role="Admin" class="btn btn-entry shadow-sm">Yönetici Paneli</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        @* ALT ÖZELLİKLER *@
-        <div class="row g-4 mt-5 text-center">
-            <div class="col-md-4">
-                <div class="feature-item">
-                    <i class="fas fa-bolt feature-icon"></i>
-                    <h5 class="fw-bold">Hızlı Başvuru</h5>
-                    <p class="small opacity-75 mb-0">Tek tıkla CV ve sertifikalarını sisteme mühürle.</p>
+        @* --- 🎡 KAYDIRILABİLİR İLANLAR --- *@
+        <div class="mt-5 pt-4 position-relative">
+            <h3 class="text-center mb-5 fw-bold"><i class="fas fa-fire text-danger me-2"></i>Günün Öne Çıkan İlanları</h3>
+
+            <div id="internshipCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    @if (Model != null && Model.Any())
+                    {
+                        @for (int i = 0; i < Model.Count; i += 3)
+                        {
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <div class="row g-4">
+                                    @* ✅ HATA BURADAYDI: item yerine ilan kullanıyoruz *@
+                                    @foreach (var ilan in Model.Skip(i).Take(3))
+                                    {
+                                        <div class="col-md-4">
+                                            <div class="card intern-card h-100 shadow-lg border-0">
+                                                <div class="live-badge">
+                                                    <span class="pulse-dot"></span>
+                                                    <span>@((new Random().Next(3, 9))) kişi inceliyor</span>
+                                                </div>
+
+                                                <div class="card-body p-4 pt-5">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <span class="badge bg-light text-primary rounded-pill small border" style="font-size: 0.65rem;">
+                                                            @(ilan.Department?.DepartmentName ?? "Genel")
+                                                        </span>
+                                                        <a href="https://www.google.com/maps/search/?api=1&query=@(ilan.CompanyName)+@(ilan.City?.Name)" target="_blank" class="map-radar-link">
+                                                            <i class="fas fa-map-marker-alt"></i> @(ilan.City?.Name ?? "Konum")
+                                                        </a>
+                                                    </div>
+
+                                                    <h5 class="fw-bold mb-2 starred-company">
+                                                        @{
+                                                            string compName = ilan.CompanyName ?? "Şirket";
+                                                            string masked = compName.Length > 3 ? compName.Substring(0, 3) : compName;
+                                                        }
+                                                        @masked<span class="star-box">****</span>
+                                                    </h5>
+
+                                                    <p class="small text-secondary mb-4">
+                                                        @{
+                                                            string d = ilan.Description ?? "Detaylar kilitli.";
+                                                        }
+                                                        @(d.Length > 40 ? d.Substring(0, 40) + "..." : d)
+                                                    </p>
+
+                                                    <div class="d-grid mt-auto">
+                                                        <a asp-controller="Account" asp-action="Login" class="btn btn-sm btn-dark rounded-pill py-2 fw-bold">
+                                                            Giriş Yap ve Gör <i class="fas fa-lock ms-1" style="font-size: 0.7rem;"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="feature-item">
-                    <i class="fas fa-search-location feature-icon"></i>
-                    <h5 class="fw-bold">Anlık Takip</h5>
-                    <p class="small opacity-75 mb-0">Başvurun hangi aşamada? Anında bildirim al.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="feature-item">
-                    <i class="fas fa-file-contract feature-icon"></i>
-                    <h5 class="fw-bold">Güvenli Arşiv</h5>
-                    <p class="small opacity-75 mb-0">Tüm geçmiş staj belgelerine tek noktadan eriş.</p>
-                </div>
+
+                @if (Model != null && Model.Count > 3)
+                {
+                    <button class="carousel-control-prev" type="button" data-bs-target="#internshipCarousel" data-bs-slide="prev">
+                        <i class="fas fa-chevron-left carousel-icon-box text-white fs-4"></i>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#internshipCarousel" data-bs-slide="next">
+                        <i class="fas fa-chevron-right carousel-icon-box text-white fs-4"></i>
+                    </button>
+                }
             </div>
         </div>
-
-        <p class="mt-5 text-center opacity-50 small">© 2026 StajSistemi | Dijital Süreç Yönetimi</p>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

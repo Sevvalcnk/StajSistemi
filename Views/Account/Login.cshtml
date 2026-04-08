@@ -19,7 +19,6 @@
         box-shadow: 0 0 10px rgba(76, 161, 175, 0.2);
     }
 
-    /* Göz ikonunun olduğu kısmın tasarımı */
     .input-group-text {
         cursor: pointer;
         transition: color 0.2s;
@@ -126,21 +125,13 @@
                 </div>
 
                 <div class="card-footer bg-white border-0 py-3 text-center">
-                    @if (isStudent)
-                    {
-                        <p class="mb-0 small text-muted">
-                            Hesabınız yok mu?
-                            <a asp-action="Register" asp-route-role="@ViewBag.SelectedRole" class="text-primary fw-bold text-decoration-none">
-                                <i class="fas fa-user-plus me-1"></i> Hemen Kayıt Ol
-                            </a>
-                        </p>
-                    }
-                    else
-                    {
-                        <div class="p-2 border rounded-pill bg-light text-muted shadow-sm" style="font-size: 0.75rem;">
-                            <i class="fas fa-lock me-1"></i> Personel kayıtları sistem yöneticisi tarafından yapılmaktadır.
-                        </div>
-                    }
+                    @* ✅ MÜHÜR: Buradaki kısıtlamayı kaldırdık, artık personel için de kayıt linki görünecek *@
+                    <p class="mb-0 small text-muted">
+                        Hesabınız yok mu?
+                        <a asp-action="Register" asp-route-role="@ViewBag.SelectedRole" class="text-primary fw-bold text-decoration-none">
+                            <i class="fas fa-user-plus me-1"></i> Hemen Kayıt Ol
+                        </a>
+                    </p>
 
                     @* OTURUM GÜVENLİĞİ ZAMANLAYICI *@
                     <div class="mt-4">
@@ -195,8 +186,6 @@
 
             if (timeLeft <= 0) {
                 clearInterval(countdown);
-
-                // 🔒 SERT KİLİT MÜHRÜ: Ekranı karartır ve SS alabileceğin o uyarıyı basar
                 document.body.innerHTML = `
                     <div style="height:100vh; display:flex; align-items:center; justify-content:center; background:#1a1a1a; color:white; text-align:center; font-family:sans-serif; position:fixed; top:0; left:0; width:100%; z-index:9999;">
                         <div>

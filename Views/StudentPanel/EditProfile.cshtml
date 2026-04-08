@@ -6,8 +6,9 @@
 
 <style>
     body {
-        background: linear-gradient(rgba(240, 244, 248, 0.8), rgba(240, 244, 248, 0.8)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80');
-        background-size: cover;
+        background-color: #f8faff;
+        background-image: radial-gradient(at 0% 0%, rgba(37, 140, 251, 0.05) 0, transparent 50%), radial-gradient(at 100% 100%, rgba(118, 75, 162, 0.05) 0, transparent 50%), radial-gradient(#d1d8e0 0.5px, transparent 0.5px);
+        background-size: 100% 100%, 100% 100%, 30px 30px;
         background-attachment: fixed;
     }
 
@@ -35,14 +36,13 @@
                     <h3 class="fw-bold mb-0"><i class="fas fa-user-edit me-2"></i>Kariyer Profilini Güncelle</h3>
                 </div>
                 <div class="card-body p-4 p-md-5 bg-white">
-                    <form asp-action="EditProfile" method="post" enctype="multipart/form-data">
+                    <form asp-action="EditProfile" method="post" enctype="multipart/form-data" id="profileEditForm">
                         @Html.AntiForgeryToken()
 
                         @* 🛡️ GİZLİ ALANLAR *@
                         <input type="hidden" asp-for="Id" />
                         <input type="hidden" asp-for="Email" />
                         <input type="hidden" asp-for="StudentNo" />
-                        @* ✅ DÜZELTME: DepartmentId artık gizli değil, aşağıda SELECT olarak var! *@
 
                         <div class="mb-4 text-center">
                             <img src="https://ui-avatars.com/api/?name=@(Model.Name)+@(Model.Surname)&background=2c3e50&color=fff&size=100"
@@ -65,14 +65,23 @@
                             </div>
                         </div>
 
-                        @* ✅ YENİ: BÖLÜM SEÇİMİ (DROPDOWN) *@
                         <div class="mb-3">
                             <label asp-for="DepartmentId" class="form-label fw-bold text-muted small text-uppercase">Okuduğunuz Bölüm</label>
                             <select asp-for="DepartmentId" class="form-select rounded-pill border-2 input-focus"
-                                    asp-items="@(new SelectList(ViewBag.Departments, "Id", "DepartmentName"))">
+                                    asp-items="ViewBag.Departments">
                                 <option value="">--- Bölümünüzü Seçiniz ---</option>
                             </select>
                             <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                        </div>
+
+                        @* ✅ YENİ MÜHÜR: ŞEHİR SEÇİM ALANI *@
+                        <div class="mb-3">
+                            <label asp-for="CityId" class="form-label fw-bold text-muted small text-uppercase">Yaşadığınız Şehir</label>
+                            <select asp-for="CityId" class="form-select rounded-pill border-2 input-focus"
+                                    asp-items="ViewBag.Cities">
+                                <option value="">--- Şehir Seçiniz ---</option>
+                            </select>
+                            <span asp-validation-for="CityId" class="text-danger small"></span>
                         </div>
 
                         <div class="row">
@@ -104,16 +113,16 @@
                             <div class="col-md-6 mb-3">
                                 <div class="p-3 border-2 border-dashed rounded-4 bg-light text-center h-100 shadow-sm">
                                     <i class="fas fa-file-pdf text-danger mb-2 fa-2x"></i>
-                                    <label class="d-block fw-bold small text-uppercase mb-2">CV Yükle (PDF)</label>
-                                    <input type="file" name="CVFile" class="form-control form-control-sm rounded-pill" accept=".pdf" />
+                                    <label class="d-block fw-bold small text-uppercase mb-2">CV Yükle (PDF/Word)</label>
+                                    <input type="file" name="CVFile" id="CVFile" class="form-control form-control-sm rounded-pill" accept=".pdf,.doc,.docx" />
                                 </div>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <div class="p-3 border-2 border-dashed rounded-4 bg-light text-center h-100 shadow-sm">
                                     <i class="fas fa-award text-warning mb-2 fa-2x"></i>
-                                    <label class="d-block fw-bold small text-uppercase mb-2">Sertifikalar</label>
-                                    <input type="file" name="CertificateFile" class="form-control form-control-sm rounded-pill" accept=".pdf,.zip,.rar" />
+                                    <label class="d-block fw-bold small text-uppercase mb-2">Sertifikalar (PDF/Resim/Word)</label>
+                                    <input type="file" name="CertificateFile" id="CertificateFile" class="form-control form-control-sm rounded-pill" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 </div>
                             </div>
                         </div>
@@ -137,4 +146,31 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        document.getElementById('profileEditForm').onsubmit = function (e) {
+            const izinliCV = /(\.pdf|\.doc|\.docx)$/i;
+            const izinliSertifika = /(\.pdf|\.doc|\.docx|\.jpg|\.jpeg|\.png)$/i;
+
+            const cvInput = document.getElementById('CVFile');
+            const certInput = document.getElementById('CertificateFile');
+
+            if (cvInput.files.length > 0) {
+                if (!izinliCV.exec(cvInput.files[0].name)) {
+                    alert("❌ Hata: Uygun olmayan CV formatı!\nLütfen sadece PDF veya Word belgesi seçiniz.");
+                    e.preventDefault();
+                    return false;
+                }
+            }
+
+            if (certInput.files.length > 0) {
+                if (!izinliSertifika.exec(certInput.files[0].name)) {
+                    alert("❌ Hata: Uygun olmayan Sertifika formatı!\nLütfen PDF, Word veya Resim (JPG/PNG) seçiniz.");
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            return true;
+        };
+    </script>
 }

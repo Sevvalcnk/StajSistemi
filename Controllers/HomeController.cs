@@ -1,7 +1,8 @@
 ﻿using System.Diagnostics;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using StajSistemi.Models;
-using StajSistemi.Repositories.Abstract; // ✅ KRİTİK: Kırmızı çizginin ilacı burası!
+using StajSistemi.Repositories.Abstract;
 
 namespace StajSistemi.Controllers;
 
@@ -18,17 +19,40 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
-        // Veritabanından verileri çekiyoruz
+        // 1. Veritabanından ham verileri çekiyoruz
         var applications = await _unitOfWork.InternshipApplications.GetAllAsync();
-        var internships = await _unitOfWork.Internships.GetAllAsync();
+        var allInternships = await _unitOfWork.Internships.GetAllIncludingAsync(i => i.Department, i => i.City);
 
-        // ✅ BİLDİRİM BALONCUĞU: Beklemede olanları sayıp Layout'a gönderiyoruz
+        // ✅ BAŞVURU BİLDİRİMİ: Beklemede olanları sayıp Layout'a gönderiyoruz
         ViewBag.NewApplicationsCount = applications.Count(a => a.Status == "Beklemede" && !a.IsDeleted);
 
-        // Dashboard kartları için
-        ViewBag.ActiveInternshipsCount = internships.Count(i => i.Status == "Aktif" && !i.IsDeleted);
+        // Dashboard kartları için aktif ilan sayısını mühürle
+        ViewBag.ActiveInternshipsCount = allInternships.Count(i => i.Status == "Aktif" && !i.IsDeleted);
 
-        return View();
+        // 🔥 YENİ KRİTİK MÜHÜR: Mesaj Bildirimi
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrEmpty(userId))
+        {
+            var currentUserId = int.Parse(userId);
+            var allMessages = await _unitOfWork.ChatMessages.GetAllAsync();
+            if (allMessages != null)
+            {
+                ViewBag.UnreadMessagesCount = allMessages
+                    .Count(m => m.ReceiverId == currentUserId && !m.IsRead);
+            }
+        }
+
+        // ✅ ANA SAYFA İLANLARI (CAROUSEL İÇİN GÜNCELLENDİ): 
+        // Eskiden .Take(3) idi, kaydırma olması için sınırı 15'e çıkardık.
+        // Artık 3'ten fazla ilan olduğunda oklar otomatik belirecek!
+        var homeInternships = allInternships
+            .Where(i => i.Status == "Aktif" && !i.IsDeleted)
+            .OrderByDescending(i => i.Id)
+            .Take(15)
+            .ToList();
+
+        // Listeyi View tarafına model olarak gönderiyoruz
+        return View(homeInternships);
     }
 
     public IActionResult About() => View();

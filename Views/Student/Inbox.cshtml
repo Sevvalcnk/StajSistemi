@@ -1,0 +1,103 @@
+﻿@model IEnumerable<StajSistemi.Models.ChatMessage>
+
+@{
+    ViewData["Title"] = "Gelen Mesajlar";
+}
+
+<style>
+    /* Yeni mesajlar için hafif bir vurgu efekti */
+    .unread-row {
+        background-color: rgba(255, 193, 7, 0.05); /* Çok hafif sarı tonu */
+        border-left: 4px solid #ffc107 !important;
+    }
+
+    .transition {
+        transition: all 0.3s ease;
+    }
+
+    .hover-up:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="container mt-5 techNode-fade-in">
+    <div class="card shadow-lg border-0 rounded-4 p-4 bg-white">
+        @* --- 🛡️ BAŞLIK --- *@
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0 text-dark">
+                <i class="fas fa-inbox me-2 text-warning"></i>Gelen Mesaj Kutusu
+            </h2>
+            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill shadow-sm">
+                <i class="fas fa-comment-dots me-1 text-primary"></i> Toplam: @(Model?.Count() ?? 0) Öğrenci
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle table-hover">
+                <thead class="bg-light">
+                    <tr class="text-secondary small text-uppercase fw-bold">
+                        <th class="border-0 rounded-start-pill ps-4 py-3">Öğrenci</th>
+                        <th class="border-0 py-3">Son Mesaj İçeriği</th>
+                        <th class="border-0 py-3">Tarih</th>
+                        <th class="border-0 rounded-end-pill text-center py-3">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var msg in Model)
+                        {
+                            @* ✅ MÜHÜR: Okunmamış mesajları daha belirgin yapıyoruz *@
+                            <tr class="transition @(!msg.IsRead ? "unread-row" : "")">
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        @* UI Avatars ile otomatik profil resmi *@
+                                        <img src="https://ui-avatars.com/api/?name=@(msg.Sender?.FullName ?? "Öğrenci")&background=random&color=fff&size=40"
+                                             class="rounded-circle me-3 shadow-sm border border-2 border-white" alt="Profil">
+                                        <div>
+                                            <span class="fw-bold text-dark d-block">
+                                                @(msg.Sender?.FullName ?? "İsimsiz Öğrenci")
+                                                @if (!msg.IsRead)
+                                                {
+                                                    <span class="badge bg-danger ms-1 animate__animated animate__heartBeat animate__infinite" style="font-size: 0.5rem; vertical-align: middle;">YENİ</span>
+                                                }
+                                            </span>
+                                            @* 🚫 KRİTİK: Çirkin ID rakamı buradan silindi! *@
+                                            <small class="text-muted small">Danışmanlık Öğrencisi</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="mb-0 text-truncate text-secondary" style="max-width: 300px; font-size: 0.9rem;">
+                                        @msg.Content
+                                    </p>
+                                </td>
+                                <td>
+                                    <small class="text-muted fw-bold">
+                                        <i class="far fa-clock me-1"></i> @msg.SentDate.ToString("dd.MM.yyyy HH:mm")
+                                    </small>
+                                </td>
+                                <td class="text-center">
+                                    @* Detay butonuna basınca hocayı öğrencinin kariyer analizi sayfasına uçuruyoruz *@
+                                    <a asp-controller="Student" asp-action="Details" asp-route-id="@msg.SenderId"
+                                       class="btn btn-sm btn-primary rounded-pill px-4 fw-bold shadow-sm transition hover-up">
+                                        <i class="fas fa-eye me-1"></i> Görüntüle
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fas fa-envelope-open fa-3x mb-3 opacity-25"></i>
+                                <p>Henüz öğrencilerden gelen bir mesaj bulunmuyor kardaşım. 🛡️</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

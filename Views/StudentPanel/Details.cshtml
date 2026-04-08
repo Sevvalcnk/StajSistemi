@@ -1,0 +1,47 @@
+﻿@model StajSistemi.Models.InternshipApplication
+
+@{
+    ViewData["Title"] = "Başvuru Detayı";
+}
+
+<div class="container py-5">
+    <div class="glass-card p-5 shadow-lg border-0 rounded-4 bg-white mx-auto" style="max-width: 800px;">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <h3 class="fw-bold text-dark mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Başvuru Detayı</h3>
+            <span class="badge @(Model.Status == "Onaylandı" ? "bg-success" : "bg-warning text-dark") px-4 py-2 rounded-pill shadow-sm">
+                @Model.Status
+            </span>
+        </div>
+
+        <div class="row g-4 mt-2">
+            <div class="col-md-6">
+                <label class="small text-muted fw-bold text-uppercase">Şirket Adı</label>
+                <h5 class="fw-bold text-dark">@(Model.Internship?.CompanyName ?? "Şirket Bilgisi Yok")</h5>
+            </div>
+            <div class="col-md-6">
+                <label class="small text-muted fw-bold text-uppercase">Departman</label>
+                <h5 class="text-dark">@(Model.Internship?.Department?.DepartmentName ?? "Genel")</h5>
+            </div>
+            <div class="col-md-6">
+                <label class="small text-muted fw-bold text-uppercase">Başvuru Tarihi</label>
+                <h5 class="text-dark"><i class="far fa-calendar-alt me-1"></i> @Model.ApplicationDate.ToString("dd MMMM yyyy")</h5>
+            </div>
+            <div class="col-md-6">
+                <label class="small text-muted fw-bold text-uppercase">Şehir</label>
+                <h5 class="text-dark"><i class="fas fa-map-marker-alt me-1"></i> @(Model.Internship?.City?.Name ?? "Konum Belirtilmemiş")</h5>
+            </div>
+        </div>
+
+        <div class="alert alert-light border rounded-4 p-4 text-dark mt-4 shadow-sm">
+            <h6 class="fw-bold"><i class="fas fa-shield-alt text-success me-2"></i>Akıllı Süreç Bilgilendirmesi:</h6>
+            <p class="mb-0 small opacity-75">Sayın @User.Identity.Name, başvurunuzun detayları yukarıdaki gibidir. Staj kabul sürecinizi "Staj Sonuçlarım" sayfasından veya danışman hocanızla mesajlaşarak anlık takip edebilirsiniz.</p>
+        </div>
+
+        <div class="d-grid mt-5">
+            <a asp-action="Results" class="btn btn-dark rounded-pill py-2 fw-bold shadow-sm transition hover-shadow">
+                <i class="fas fa-arrow-left me-2"></i> Sonuç Listesine Geri Dön
+            </a>
+        </div>
+    </div>
+</div>

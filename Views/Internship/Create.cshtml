@@ -18,24 +18,29 @@
 
                 <div class="card-body p-4 p-md-5 bg-white">
 
-                    @* 🔍 KRİTİK DOKUNUŞ: Neden kaydolmadığını (Hataları) görmek için "All" yaptık *@
                     <div asp-validation-summary="All" class="alert alert-danger shadow-sm border-0 rounded-4 small mb-4"></div>
 
                     <form asp-action="Create" method="post" id="internshipForm">
                         @Html.AntiForgeryToken()
 
                         <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label asp-for="CompanyName" class="form-label fw-bold text-secondary">Şirket Adı</label>
-                                <div class="input-group">
+                            @* 📍 GÜNCELLENEN KISIM: Şirket Adı & Konum Testi *@
+                            <div class="col-md-12 mb-4">
+                                <label asp-for="CompanyName" class="form-label fw-bold text-secondary">Şirket / Kurum Tam Adı</label>
+                                <div class="input-group shadow-sm">
                                     <span class="input-group-text bg-light border-0"><i class="fas fa-building text-muted"></i></span>
-                                    <input asp-for="CompanyName" class="form-control border-light bg-light" placeholder="Örn: Sinop Teknopark" />
+                                    <input asp-for="CompanyName" id="CompanyName" class="form-control border-light bg-light" placeholder="Örn: Sinop Teknopark" />
+
+                                    @* 🔥 AKILLI RADAR: Konumu anında test eder *@
+                                    <button type="button" class="btn btn-outline-danger" onclick="verifyMapLocation()" title="Haritada Konumu Doğrula">
+                                        <i class="fas fa-map-marker-alt"></i> Konumu Test Et
+                                    </button>
                                 </div>
                                 <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                                <small class="text-muted" style="font-size: 0.7rem;">Doğru konum için kurumun tam adını yazınız.</small>
                             </div>
 
-                            @* ✅ MÜHÜR: Sektörler Senin Bölümlerine Tam Uyumlu *@
-                            <div class="col-md-6 mb-4">
+                            <div class="col-md-12 mb-4">
                                 <label asp-for="CompanySector" class="form-label fw-bold text-secondary">Faaliyet Sektörü</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-0"><i class="fas fa-chart-line text-muted"></i></span>
@@ -55,9 +60,27 @@
                             </div>
                         </div>
 
-                        @* Bölüm Seçimi *@
+                        @* ✅ ŞEHİR SEÇİMİ *@
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-secondary">Hedef Öğrenci Bölümü</label>
+                            <label asp-for="CityId" class="form-label fw-bold text-secondary">Stajın Yapılacağı Şehir</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0"><i class="fas fa-map-marker-alt text-muted"></i></span>
+                                <select asp-for="CityId" id="CitySelect" class="form-select border-light bg-light">
+                                    <option value="">-- Şehir Seçiniz --</option>
+                                    @if (ViewBag.Cities != null)
+                                    {
+                                        foreach (var item in (IEnumerable<StajSistemi.Models.City>)ViewBag.Cities)
+                                        {
+                                            <option value="@item.Id">@item.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <span asp-validation-for="CityId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="DepartmentId" class="form-label fw-bold text-secondary">Hedef Öğrenci Bölümü</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0"><i class="fas fa-graduation-cap text-muted"></i></span>
                                 <select asp-for="DepartmentId" class="form-select border-light bg-light">
@@ -71,10 +94,22 @@
                                     }
                                 </select>
                             </div>
-                            <span asp-validation-for="DepartmentId" class="text-danger small"></span>
                         </div>
 
-                        @* Tarihler *@
+                        <div class="mb-4 p-3 rounded-4 border-2 border-dashed bg-light text-center">
+                            <label class="form-label fw-bold text-dark"><i class="fas fa-calendar-check me-2"></i>Haftalık Çalışma Düzeni</label>
+                            <div class="d-flex justify-content-center gap-3 mt-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="weeklyWorkDays" id="work5" value="5" checked>
+                                    <label class="form-check-label" for="work5">Haftada 5 Gün</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="weeklyWorkDays" id="work6" value="6">
+                                    <label class="form-check-label" for="work6">Haftada 6 Gün</label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-4">
                                 <label asp-for="StartDate" class="form-label fw-bold text-secondary">Başlangıç Tarihi</label>
@@ -85,11 +120,10 @@
                                 <label asp-for="EndDate" class="form-label fw-bold text-secondary">Bitiş Tarihi</label>
                                 <input asp-for="EndDate" id="endDate" type="date" class="form-control border-light bg-light" />
                                 <span asp-validation-for="EndDate" class="text-danger small"></span>
-                                <small id="dateError" class="text-danger d-none fw-bold mt-1">Staj süresi en az 30 gün olmalıdır!</small>
+                                <small id="dateError" class="text-danger d-none fw-bold mt-1"></small>
                             </div>
                         </div>
 
-                        @* Kontenjan *@
                         <div class="mb-4">
                             <label asp-for="Quota" class="form-label fw-bold text-secondary">Öğrenci Kontenjanı</label>
                             <input asp-for="Quota" type="number" class="form-control border-light bg-light" min="1" placeholder="Örn: 5" />
@@ -122,22 +156,62 @@
     }
 
     <script>
-        // ✅ 30 GÜN KURALI SİHİRİ
+        // 📍 1. KONUM DOĞRULAMA RADARI (YENİ EKLENDİ)
+        function verifyMapLocation() {
+            var company = document.getElementById("CompanyName").value;
+            var citySelect = document.getElementById("CitySelect");
+            var cityText = citySelect.options[citySelect.selectedIndex].text;
+
+            if (company && cityText && citySelect.value !== "") {
+                // Şirket Adı + Şehir şeklinde Google Maps araması açar
+                var searchQuery = encodeURIComponent(company + " " + cityText);
+                var mapUrl = "https://www.google.com/maps/search/?api=1&query=" + searchQuery;
+                window.open(mapUrl, '_blank');
+            } else {
+                alert("Kardaşım Şevval; önce kurum adını yazıp şehri seçmelisin ki mühürleyelim! 🛡️");
+            }
+        }
+
+        // ✅ 2. 2026 AKILLI İŞ GÜNÜ HESAPLAYICI (Senin kodun, korundu!)
         document.getElementById("internshipForm").addEventListener("submit", function (e) {
             const startVal = document.getElementById("startDate").value;
             const endVal = document.getElementById("endDate").value;
+            const weeklyWorkDays = document.querySelector('input[name="weeklyWorkDays"]:checked').value;
             const errorElement = document.getElementById("dateError");
 
             if (!startVal || !endVal) return;
 
             const start = new Date(startVal);
             const end = new Date(endVal);
-            const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
 
-            if (diffDays < 30) {
+            const holidays = [
+                "2026-01-01", "2026-03-20", "2026-03-21", "2026-03-22",
+                "2026-04-23", "2026-05-01", "2026-05-19", "2026-05-27",
+                "2026-05-28", "2026-05-29", "2026-05-30", "2026-07-15",
+                "2026-08-30", "2026-10-29"
+            ];
+
+            let businessDays = 0;
+            let current = new Date(start);
+
+            while (current <= end) {
+                const dayOfWeek = current.getDay();
+                const formattedDate = current.toISOString().split('T')[0];
+
+                let isHoliday = holidays.includes(formattedDate);
+                let isWeekend = (dayOfWeek === 0) || (weeklyWorkDays == 5 && dayOfWeek === 6);
+
+                if (!isHoliday && !isWeekend) {
+                    businessDays++;
+                }
+                current.setDate(current.getDate() + 1);
+            }
+
+            if (businessDays < 30) {
                 e.preventDefault();
+                errorElement.innerText = "❌ Hata: Resmi tatiller ve hafta sonları hariç sadece " + businessDays + " iş günü var. En az 30 iş günü gereklidir!";
                 errorElement.classList.remove("d-none");
-                alert("❌ Staj süresi en az 30 gün olmalıdır! (Şu an: " + diffDays + " gün)");
+                alert("❌ Seçtiğiniz tarihler yönetmeliğe uygun değil!\nToplam İş Günü: " + businessDays);
             } else {
                 errorElement.classList.add("d-none");
             }

@@ -1,58 +1,235 @@
-﻿@{
-    ViewData["Title"] = "Danışman Paneli";
+﻿@model List<StajSistemi.DTOs.StudentDto>
+
+@{
+    ViewData["Title"] = "Danışman Yönetim Merkezi";
 }
 
-<div class="container mt-5 techNode-fade-in">
-    @* ✅ MÜHÜR: Giriş Uyarısı *@
-    @if (TempData["LoginWarning"] != null)
-    {
-        <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0 rounded-4 mb-4" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
-                <div>
-                    <h5 class="alert-heading fw-bold mb-0">Oturum Bilgisi</h5>
-                    <span>@TempData["LoginWarning"]</span>
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+<style>
+    /* ✅ Profesyonel Dashboard Mühürleri */
+    :root {
+        --primary-color: #4e73df;
+        --success-color: #1cc88a;
+        --dark-bg: #2c3e50;
     }
 
-    <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
-        <div class="text-center mb-4">
-            <div class="bg-success bg-opacity-10 d-inline-block p-4 rounded-circle mb-3">
-                <i class="fas fa-chalkboard-teacher fa-4x text-success"></i>
+    .tech-card {
+        border: none;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .stat-card {
+        border-left: 5px solid;
+        padding: 20px;
+    }
+
+    .filter-section {
+        background: #f8f9fc;
+        border-radius: 15px;
+        border: 1px solid #e3e6f0;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .btn-action {
+        width: 35px;
+        height: 35px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        transition: 0.2s;
+    }
+
+        .btn-action:hover {
+            transform: scale(1.1);
+        }
+
+    .gpa-badge {
+        font-weight: 800;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+</style>
+
+<div class="container-fluid py-4 px-4 techNode-fade-in">
+
+    @* --- 📊 ÜST İSTATİSTİK KARTLARI --- *@
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card tech-card stat-card border-primary shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1 small">Toplam Kayıtlı Öğrenci</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300 opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h2 class="fw-bold" style="color: #2c3e50;">Danışman (Öğretim Elemanı) Paneli</h2>
-            <p class="text-muted">Öğrenci başvurularını değerlendirebilir, kariyer dosyalarını inceleyebilir ve süreci yönetebilirsiniz.</p>
         </div>
 
-        <div class="row g-3 mt-4">
-            @* ✅ MÜHÜR: Staj Başvuruları Linki *@
-            <div class="col-md-4">
-                <a asp-controller="Internship" asp-for="Applications" class="btn btn-success w-100 rounded-pill py-3 fw-bold shadow-sm h-100 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-file-signature me-2"></i> Staj Başvuruları
-                </a>
-            </div>
-
-            @* ✅ MÜHÜR: Öğrenci Listesi Linki *@
-            <div class="col-md-4">
-                <a asp-controller="Student" asp-action="Index" class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-sm h-100 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-users me-2"></i> Öğrenci Listesi
-                </a>
-            </div>
-
-            @* ✅ YENİ MÜHÜR: Kariyer Havuzu & Belgeler *@
-            <div class="col-md-4">
-                <a asp-controller="Student" asp-action="Index" class="btn btn-dark w-100 rounded-pill py-3 fw-bold shadow-sm h-100 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-id-card-alt me-2 text-info"></i> Kariyer Havuzu
-                </a>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card tech-card stat-card border-success shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1 small">Yeni Başvurular</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.NewApplicationsCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-alt fa-2x text-gray-300 opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="mt-5 p-4 bg-light rounded-4 border-start border-5 border-success small">
-            <h6 class="fw-bold mb-1"><i class="fas fa-info-circle me-1 text-success"></i> Danışman Notu:</h6>
-            <p class="text-muted mb-0">Öğrenci listesi üzerinden öğrencilerin yüklediği güncel CV ve sertifikalara "Kariyer Dosyası" butonu ile ulaşabilirsiniz.</p>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card tech-card stat-card border-info shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1 small">Aktif Stajyerler</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count(x => x.InternshipStatus == "Onaylandı")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300 opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* --- 🔍 AKILLI FİLTRELEME PANELİ --- *@
+    <div class="card tech-card shadow-sm mb-4 filter-section">
+        <div class="card-body p-4">
+            <h5 class="fw-bold text-dark mb-4"><i class="fas fa-sliders-h me-2"></i> Akıllı Filtreleme Sistemi</h5>
+            <form method="get" class="row g-3">
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label small fw-bold">Şehir</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-map-marker-alt text-muted"></i></span>
+                        <select name="cityId" class="form-select border-start-0 shadow-none" asp-items="ViewBag.Cities">
+                            <option value="">Tüm Şehirler</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label small fw-bold">Bölüm</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-graduation-cap text-muted"></i></span>
+                        <select name="departmentId" class="form-select border-start-0 shadow-none" asp-items="ViewBag.Departments">
+                            <option value="">Tüm Bölümler</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label small fw-bold">Minimum GPA</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-star text-warning"></i></span>
+                        <input type="number" name="minGpa" step="0.1" class="form-control border-start-0 shadow-none" placeholder="Örn: 3.0" />
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm py-2">
+                        <i class="fas fa-filter me-2"></i> Sonuçları Getir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* --- 📊 ÖĞRENCİ LİSTESİ TABLOSU --- *@
+    <div class="card tech-card shadow-sm table-container">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Öğrenci Veritabanı</h6>
+            <a asp-action="InternshipApplications" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                <i class="fas fa-bell me-1"></i> Bekleyen Başvurular
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Öğrenci Profili</th>
+                            <th>Akademik Bilgi</th>
+                            <th class="text-center">Başarı Skoru</th>
+                            <th class="text-center">Durum</th>
+                            <th class="text-end pe-4">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var student in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-3">
+                                            <img src="https://ui-avatars.com/api/?name=@(student.Name)+@(student.Surname)&background=random&size=45" class="rounded-circle" />
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">@student.Name @student.Surname</div>
+                                            <small class="text-muted">No: @student.StudentNo</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold small">@student.DepartmentName</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">
+                                        <i class="fas fa-location-arrow me-1"></i> @(student.CityName ?? "Bilinmiyor")
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center">
+                                        @{
+                                            var gpaColor = student.GPA >= 3.0 ? "bg-success text-white" : (student.GPA >= 2.0 ? "bg-warning text-dark" : "bg-danger text-white");
+                                        }
+                                        <div class="gpa-badge @gpaColor small">@student.GPA</div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    @{
+                                        var statusIcon = student.InternshipStatus == "Onaylandı" ? "fa-check-circle text-success" :
+                                        (student.InternshipStatus == "Beklemede" ? "fa-clock text-warning" : "fa-times-circle text-danger");
+                                    }
+                                    <span class="small fw-bold">
+                                        <i class="fas @statusIcon me-1"></i> @student.InternshipStatus
+                                    </span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a asp-action="StudentDetails" asp-route-id="@student.Id" class="btn btn-action btn-outline-primary" title="İncele">
+                                            <i class="fas fa-id-card"></i>
+                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@student.Id" method="post" onsubmit="return confirm('Arşive kaldırmak istediğinize emin misiniz?')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-action btn-outline-danger" title="Arşivle">
+                                                <i class="fas fa-archive"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

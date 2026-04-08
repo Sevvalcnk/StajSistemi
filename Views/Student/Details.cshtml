@@ -1,0 +1,269 @@
+﻿@model StajSistemi.DTOs.StudentDto
+
+@{
+    ViewData["Title"] = "Öğrenci Kariyer Dosyası";
+}
+
+<style>
+    /* Senin hover efektlerini ve geçişlerini koruyoruz */
+    .transition {
+        transition: all 0.3s ease;
+    }
+
+    .hover-up:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .bg-soft-primary {
+        background-color: rgba(37, 140, 251, 0.1);
+    }
+
+    /* ✅ YENİ MÜHÜR: Mesaj Silme ve Balon Tasarımı */
+    .message-bubble {
+        position: relative;
+    }
+
+    .delete-btn {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        display: none;
+        cursor: pointer;
+        color: #dc3545;
+        background: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 0.65rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: 1px solid #eee;
+        z-index: 10;
+    }
+
+    .message-bubble:hover .delete-btn {
+        display: block;
+    }
+</style>
+
+<div class="container py-4 techNode-fade-in">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        @* --- 🛡️ ÜST BANT: KURUMSAL GÖRÜNÜM (Aynen Korundu) --- *@
+        <div class="card-header bg-dark p-4 border-0 d-flex justify-content-between align-items-center">
+            <h4 class="fw-bold text-white mb-0">
+                <i class="fas fa-user-shield me-2 text-info"></i>Öğrenci Kariyer Analizi
+            </h4>
+            <a href="javascript:history.back()" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                <i class="fas fa-arrow-left me-1"></i> Geri Dön
+            </a>
+        </div>
+
+        <div class="card-body p-5 bg-white">
+            <div class="row">
+                @* --- 👤 SOL SÜTUN: KİMLİK VE İLETİŞİM (Aynen Korundu) --- *@
+                <div class="col-md-4 text-center border-end">
+                    <img src="https://ui-avatars.com/api/?name=@Model.Name+@Model.Surname&size=150&background=2c3e50&color=fff"
+                         class="rounded-circle mb-3 shadow-sm border border-4 border-white" alt="Profil">
+                    <h3 class="fw-bold text-dark">@Model.Name @Model.Surname</h3>
+                    <span class="badge bg-primary rounded-pill px-3 py-2 mb-3">@Model.DepartmentName</span>
+
+                    <div class="text-start mt-4 px-3">
+                        <div class="mb-3">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Öğrenci No</small>
+                            <span class="text-dark fw-bold">@Model.StudentNo</span>
+                        </div>
+                        <div class="mb-3 border-top pt-2">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">E-posta</small>
+                            <span class="text-dark">@Model.Email</span>
+                        </div>
+                        <div class="mb-3 border-top pt-2">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Telefon</small>
+                            <span class="text-dark">@(Model.PhoneNumber ?? "Girilmemiş")</span>
+                        </div>
+                    </div>
+                </div>
+
+                @* --- 🚀 SAĞ SÜTUN: AKADEMİK, BELGELER VE MESAJLAR --- *@
+                <div class="col-md-8 ps-md-5">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Akademik Performans</h5>
+                    <div class="progress mb-4" style="height: 25px; border-radius: 15px;">
+                        @{
+                            var barColor = Model.GPA >= 3.0 ? "bg-success" : (Model.GPA >= 2.0 ? "bg-info" : "bg-warning");
+                        }
+                        <div class="progress-bar @barColor progress-bar-striped progress-bar-animated fw-bold"
+                             style="width: @(Model.GPA * 25)%">
+                            GPA: @Model.GPA / 4.0
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-3 mt-4"><i class="fas fa-lightbulb me-2 text-warning"></i>Yetenekler & Uzmanlıklar</h5>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        @if (!string.IsNullOrEmpty(Model.PersonalSkills))
+                        {
+                            foreach (var skill in Model.PersonalSkills.Split(','))
+                            {
+                                <span class="badge bg-light text-dark border rounded-pill px-3 py-2">@skill.Trim()</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted small italic">Öğrenci henüz yetenek bilgisi girmedi.</span>
+                        }
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-3 mt-4"><i class="fas fa-folder-open me-2 text-danger"></i>Mühürlü Belgeler</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            @if (!string.IsNullOrEmpty(Model.CVPath))
+                            {
+                                <a href="@Model.CVPath" target="_blank" class="btn btn-danger w-100 rounded-pill shadow-sm py-2 fw-bold">
+                                    <i class="fas fa-file-pdf me-2"></i>CV'yi Görüntüle
+                                </a>
+                            }
+                            else
+                            {
+                                <button class="btn btn-secondary w-100 rounded-pill disabled py-2 opacity-50">CV Yüklenmemiş</button>
+                            }
+                        </div>
+
+                        <div class="col-md-6">
+                            @if (!string.IsNullOrEmpty(Model.CertificatePath))
+                            {
+                                var certs = Model.CertificatePath.Split(';');
+                                <div class="dropdown">
+                                    <button class="btn btn-primary w-100 rounded-pill dropdown-toggle shadow-sm py-2 fw-bold" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-award me-2"></i>Sertifikalar (@certs.Length)
+                                    </button>
+                                    <ul class="dropdown-menu w-100 rounded-4 shadow border-0 mt-2">
+                                        @for (int j = 0; j < certs.Length; j++)
+                                        {
+                                            <li><a class="dropdown-item py-2" href="@certs[j]" download><i class="fas fa-download me-2 text-muted"></i> Sertifika @(j + 1)</a></li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="btn btn-secondary w-100 rounded-pill disabled py-2 opacity-50">Sertifika Yok</button>
+                            }
+                        </div>
+                    </div>
+
+                    @* 💬 AKILLI KARİYER DİYALOGU: TİKLER VE SİLME EKLENDİ *@
+                    <h5 class="fw-bold text-dark mb-3 mt-5"><i class="fas fa-comments me-2 text-info"></i>Kariyer Rehberliği & Mesajlar</h5>
+                    <div class="card border-0 bg-light rounded-4 shadow-sm overflow-hidden mb-4">
+                        <div class="card-body p-0">
+                            <div id="chatWindow" class="p-4" style="height: 350px; overflow-y: auto; background-color: #f8f9fa;">
+                                @if (ViewBag.ChatHistory != null && ((IEnumerable<StajSistemi.Models.ChatMessage>)ViewBag.ChatHistory).Any())
+                                {
+                                    foreach (var chat in (IEnumerable<StajSistemi.Models.ChatMessage>)ViewBag.ChatHistory)
+                                    {
+                                        bool isMine = chat.SenderId != Model.Id; @* Hoca (Advisor) tarafındayız *@
+
+                                        <div class="mb-3 d-flex @(isMine ? "justify-content-end" : "justify-content-start")">
+                                            <div class="message-bubble p-3 shadow-sm @(isMine ? "bg-primary text-white" : "bg-white text-dark")"
+                                                 style="max-width: 80%; border-radius: @(isMine ? "20px 20px 0 20px" : "20px 20px 20px 0") !important;">
+
+                                                @* ✅ SİLME BUTONU: Sadece kendi mesajlarımda *@
+                                                @if (isMine)
+                                                {
+                                                    <span class="delete-btn" onclick="deleteMsg(@chat.Id, this)"><i class="fas fa-trash"></i></span>
+                                                }
+
+                                                <p class="small mb-1">@chat.Content</p>
+
+                                                <div class="small @(isMine ? "text-white-50" : "text-muted") d-flex justify-content-end align-items-center" style="font-size: 0.6rem;">
+                                                    @chat.SentDate.ToString("HH:mm")
+
+                                                    @* ✅ TİK SİSTEMİ MÜHÜRÜ *@
+                                                    @if (isMine)
+                                                    {
+                                                        if (chat.IsRead)
+                                                        {
+                                                            @* Çift Mavi Tik *@
+                                                            <i class="fas fa-check-double ms-1 text-info" title="Öğrenci okudu"></i>
+                                                        }
+                                                        else
+                                                        {
+                                                            @* Tek Gri Tik *@
+                                                            <i class="fas fa-check ms-1" title="Gönderildi"></i>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-comment-dots fa-2x text-muted mb-2"></i>
+                                        <p class="small text-muted">Öğrenciye ilk tavsiyenizi göndererek rehberliği başlatın.</p>
+                                    </div>
+                                }
+                            </div>
+
+                            @* MESAJ YAZMA ALANI (Aynen Korundu) *@
+                            <div class="p-3 bg-white border-top">
+                                <form asp-controller="Student" asp-action="SendMessage" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="ReceiverId" value="@Model.Id" />
+
+                                    <div class="input-group mb-2">
+                                        <textarea name="Content" class="form-control border-light bg-light rounded-start-pill ps-4"
+                                                  rows="1" placeholder="Tavsiyenizi buraya mühürleyin..." required></textarea>
+                                        <button type="submit" class="btn btn-dark rounded-end-pill px-4 fw-bold">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="d-flex align-items-center gap-2 mt-2">
+                                        <i class="fas fa-magic text-warning small ms-2"></i>
+                                        <select name="suggestedInternshipId" class="form-select form-select-sm border-0 bg-light rounded-pill small" style="width: auto; font-size: 0.75rem;">
+                                            <option value="">-- Bu mesajla bir ilan öner (Opsiyonel) --</option>
+                                            @if (ViewBag.ActiveInternships != null)
+                                            {
+                                                foreach (var item in (IEnumerable<StajSistemi.Models.Internship>)ViewBag.ActiveInternships)
+                                                {
+                                                    <option value="@item.Id">@item.CompanyName (@item.Department?.DepartmentName)</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* EĞİTİM ÖZETİ (Aynen Korundu) *@
+                    <div class="p-4 bg-light rounded-4 border-start border-5 border-info mt-4 shadow-sm">
+                        <h6 class="fw-bold mb-1 small text-uppercase text-muted">Öğrenci Notu / Eğitim Özeti:</h6>
+                        <p class="mb-0 small text-dark">@(Model.EducationSummary ?? "Henüz bir özet girilmemiş.")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+@* ✅ YENİ MÜHÜR: Mesaj Silme JavaScript *@
+    <script>
+        function deleteMsg(msgId, element) {
+            if (confirm('Mesajı silmek istediğine emin misin kardaşım? 🛡️')) {
+                $.post('/Student/DeleteMessage', { id: msgId }, function (res) {
+                    if (res.success) {
+                        $(element).closest('.mb-3').fadeOut(300);
+                    } else {
+                        alert(res.message);
+                    }
+                });
+            }
+        }
+
+        // Chat penceresini en aşağı kaydırıyoruz
+        var chatWin = document.getElementById("chatWindow");
+        if(chatWin) {
+            chatWin.scrollTop = chatWin.scrollHeight;
+        }
+    </script>
+}

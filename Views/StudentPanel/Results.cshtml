@@ -1,0 +1,83 @@
+﻿@model List<StajSistemi.Models.InternshipApplication>
+
+@{
+    ViewData["Title"] = "Staj Sonuçlarım";
+}
+
+<div class="container py-4">
+    <div class="glass-card p-4 shadow-lg border-0 rounded-4 bg-white">
+        <h3 class="fw-bold mb-4 text-dark">
+            <i class="fas fa-poll-h text-info me-2"></i>Staj Başvuru Sonuçları
+        </h3>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Şirket Adı</th>
+                            <th>Başvuru Tarihi</th>
+                            <th>Durum</th>
+                            <th class="text-center">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in Model)
+                        {
+                            <tr>
+                                <td class="ps-3 fw-bold text-dark">@(app.Internship?.CompanyName ?? "Şirket Bilgisi Yok")</td>
+                                <td>@app.ApplicationDate.ToShortDateString()</td>
+                                <td>
+                                    @if (app.Status == "Onaylandı")
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 shadow-sm">
+                                            <i class="fas fa-check-circle me-1"></i> Başarılı
+                                        </span>
+                                    }
+                                    else if (app.Status == "Reddedildi")
+                                    {
+                                        <span class="badge bg-danger rounded-pill px-3 shadow-sm">
+                                            <i class="fas fa-times-circle me-1"></i> Reddedildi
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 shadow-sm">
+                                            <i class="fas fa-clock me-1"></i> Beklemede
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @* ✅ KRİTİK MÜHÜR: asp-action ismini "Details" olarak güncelledik *@
+                                    <a asp-action="Details"
+                                       asp-route-id="@app.Id"
+                                       class="btn btn-sm btn-outline-primary rounded-pill px-4 fw-bold shadow-sm transition hover-up">
+                                        <i class="fas fa-search-plus me-1"></i> Detay
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5 opacity-50">
+                <i class="fas fa-hourglass-start fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Henüz sonuçlanmış bir başvurunuz bulunmamaktadır kardaşım.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .transition {
+        transition: all 0.3s ease;
+    }
+
+    .hover-up:hover {
+        transform: translateY(-3px);
+    }
+</style>

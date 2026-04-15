@@ -1,30 +1,30 @@
-﻿@using StajSistemi.Models
+﻿@using StajSistemi.Models @* 🛡️ Akıllı etiketleri tanımak için bu mühür şart! *@
 @model IEnumerable<InternshipApplication>
 
 @{
     ViewData["Title"] = "Gelen Staj Başvuruları";
 }
 
-<div class="container mt-5">
+<div class="container mt-5 techNode-fade-in">
     <div class="card shadow-lg border-0 rounded-4 p-4 bg-white">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-bold mb-0 text-dark">
-                <i class="fas fa-clipboard-list me-2 text-primary"></i>Gelen Staj Başvuruları
+                <i class="fas fa-user-shield me-2 text-primary"></i>Danışman Onay Paneli
             </h2>
-            <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
-                Toplam: @Model.Count() Başvuru
+            <span class="badge bg-primary text-white border rounded-pill px-4 py-2 shadow-sm fw-bold">
+                <i class="fas fa-users me-1"></i> Toplam: @Model.Count() Başvuru
             </span>
         </div>
 
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th class="border-0 ps-4">Öğrenci Bilgisi</th>
-                        <th class="border-0">Staj İlanı</th>
-                        <th class="border-0">Başvuru Tarihi</th>
-                        <th class="border-0">Durum</th>
-                        <th class="border-0 text-center">İşlemler</th>
+                        <th class="border-0 ps-4 py-3 text-muted small fw-bold text-uppercase">Öğrenci Profili</th>
+                        <th class="border-0 py-3 text-muted small fw-bold text-uppercase">Staj İlanı</th>
+                        <th class="border-0 text-center py-3 text-muted small fw-bold text-uppercase">Başarı Skoru</th>
+                        <th class="border-0 py-3 text-muted small fw-bold text-uppercase">Durum</th>
+                        <th class="border-0 text-center py-3 text-muted small fw-bold text-uppercase">İşlemler</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -32,60 +32,67 @@
                     {
                         <tr>
                             <td class="ps-4">
-                                @* ✅ AppUser üzerinden FirstName ve LastName çekiyoruz *@
                                 <div class="d-flex flex-column">
-                                    <span class="fw-bold text-dark">@item.AppUser?.FirstName @item.AppUser?.LastName</span>
-                                    <small class="text-muted">@item.AppUser?.UserName</small>
+                                    <span class="fw-bold text-dark" style="font-size: 1.05rem;">@item.AppUser?.FirstName @item.AppUser?.LastName</span>
+                                    <small class="text-muted"><i class="fas fa-id-card me-1"></i> No: @item.AppUser?.UserName</small>
                                 </div>
                             </td>
                             <td>
-                                <span class="badge bg-info text-white rounded-pill px-3">
-                                    @item.Internship?.Name
-                                </span>
+                                <div class="fw-bold text-primary">@item.Internship?.Name</div>
+                                <small class="text-secondary"><i class="fas fa-building me-1"></i> @item.Internship?.CompanyName</small>
                             </td>
-                            <td class="text-muted">@item.ApplicationDate.ToString("dd.MM.yyyy")</td>
+                            <td class="text-center">
+                                @* ✅ BAŞARI SKORU: Liyakat mühürü *@
+                                <div class="badge bg-dark text-white px-3 py-2 rounded-3 shadow-sm fw-bold" style="min-width: 55px; font-size: 0.95rem;">
+                                    @item.SuccessScore.ToString("0")
+                                </div>
+                            </td>
                             <td>
-                                @* ✅ Duruma göre renk değiştiren badge *@
-                                @if (item.Status == "Onaylandı")
+                                @* ✅ PROFESYONEL DURUM ROZETLERİ (Hatalı ikonlar burada düzeliyor) *@
+                                @if (item.Status == ApplicationStatus.Approved)
                                 {
-                                    <span class="badge bg-success rounded-pill px-3">Onaylandı</span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+                                        <i class="fas fa-check-circle me-1"></i> Onaylandı
+                                    </span>
                                 }
-                                else if (item.Status == "Reddedildi")
+                                else if (item.Status == ApplicationStatus.Rejected)
                                 {
-                                    <span class="badge bg-danger rounded-pill px-3">Reddedildi</span>
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-bold">
+                                        <i class="fas fa-times-circle me-1"></i> Reddedildi
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-warning text-dark rounded-pill px-3">Beklemede</span>
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-bold text-dark">
+                                        <i class="fas fa-clock me-1"></i> Beklemede
+                                    </span>
                                 }
                             </td>
                             <td class="text-center">
-                                <div class="btn-group shadow-sm rounded-pill overflow-hidden">
+                                <div class="d-flex justify-content-center align-items-center gap-2">
                                     @* ✅ İNCELE BUTONU *@
                                     <a asp-controller="Advisor" asp-action="StudentDetails" asp-route-id="@item.AppUserId"
-                                       class="btn btn-sm btn-primary px-3" title="Öğrenci Detayı">
-                                        <i class="fas fa-search"></i>
+                                       class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm transition" title="Öğrenci Detayı">
+                                        <i class="fas fa-search me-1"></i> İncele
                                     </a>
 
-                                    @if (item.Status == "Beklemede")
+                                    @if (item.Status == ApplicationStatus.Pending)
                                     {
-                                        @* ✅ ONAYLA FORMU *@
                                         <form asp-controller="Internship" asp-action="UpdateStatus" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@item.Id" />
-                                            <input type="hidden" name="newStatus" value="Onaylandı" />
-                                            <button type="submit" class="btn btn-sm btn-success px-3" title="Onayla">
-                                                <i class="fas fa-check"></i>
+                                            <input type="hidden" name="status" value="@((int)ApplicationStatus.Approved)" />
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm fw-bold">
+                                                <i class="fas fa-check"></i> Onayla
                                             </button>
                                         </form>
 
-                                        @* ✅ REDDET FORMU *@
                                         <form asp-controller="Internship" asp-action="UpdateStatus" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@item.Id" />
-                                            <input type="hidden" name="newStatus" value="Reddedildi" />
-                                            <button type="submit" class="btn btn-sm btn-danger px-3" title="Reddet">
-                                                <i class="fas fa-times"></i>
+                                            <input type="hidden" name="status" value="@((int)ApplicationStatus.Rejected)" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                <i class="fas fa-times"></i> Reddet
                                             </button>
                                         </form>
                                     }
@@ -98,3 +105,30 @@
         </div>
     </div>
 </div>
+
+<style>
+    .bg-success-subtle {
+        background-color: #e8f5e9 !important;
+    }
+
+    .bg-danger-subtle {
+        background-color: #ffebee !important;
+    }
+
+    .bg-warning-subtle {
+        background-color: #fff9c4 !important;
+    }
+
+    .bg-info-subtle {
+        background-color: #e3f2fd !important;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.02);
+        transition: 0.3s;
+    }
+
+    .transition {
+        transition: all 0.2s ease-in-out;
+    }
+</style>

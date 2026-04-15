@@ -51,17 +51,39 @@
                             <span class="badge bg-light text-dark border">No: @Model.StudentNo</span>
                         </div>
 
+                        @* 👤 TEMEL BİLGİLER *@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="Name" class="form-label fw-bold text-muted small text-uppercase">Adınız</label>
                                 <input asp-for="Name" class="form-control rounded-pill border-2 input-focus" />
-                                <span asp-validation-for="Name" class="text-danger small"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="Surname" class="form-label fw-bold text-muted small text-uppercase">Soyadınız</label>
                                 <input asp-for="Surname" class="form-control rounded-pill border-2 input-focus" />
-                                <span asp-validation-for="Surname" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        @* 🎓 EĞİTİM DÜZEYİ VE ÜNİVERSİTE *@
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="DegreeType" class="form-label fw-bold text-muted small text-uppercase">Eğitim Düzeyi</label>
+                                <select asp-for="DegreeType" class="form-select rounded-pill border-2 input-focus" id="degreeSelect">
+                                    <option value="Lisans">Lisans (4 Yıllık)</option>
+                                    <option value="Önlisans">Önlisans (2 Yıllık)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="UniversityName" class="form-label fw-bold text-muted small text-uppercase">Üniversite Adı</label>
+                                <input asp-for="UniversityName" class="form-control rounded-pill border-2 input-focus" placeholder="Örn: Niğde Üniversitesi" />
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label id="facultyLabel" class="form-label fw-bold text-muted small text-uppercase">
+                                    @(Model.DegreeType == "Önlisans" ? "Meslek Yüksekokulu" : "Fakülte Adı")
+                                </label>
+                                <input asp-for="FacultyName" class="form-control rounded-pill border-2 input-focus" placeholder="Birim adını yazınız" />
                             </div>
                         </div>
 
@@ -71,17 +93,32 @@
                                     asp-items="ViewBag.Departments">
                                 <option value="">--- Bölümünüzü Seçiniz ---</option>
                             </select>
-                            <span asp-validation-for="DepartmentId" class="text-danger small"></span>
                         </div>
 
-                        @* ✅ YENİ MÜHÜR: ŞEHİR SEÇİM ALANI *@
                         <div class="mb-3">
                             <label asp-for="CityId" class="form-label fw-bold text-muted small text-uppercase">Yaşadığınız Şehir</label>
                             <select asp-for="CityId" class="form-select rounded-pill border-2 input-focus"
                                     asp-items="ViewBag.Cities">
                                 <option value="">--- Şehir Seçiniz ---</option>
                             </select>
-                            <span asp-validation-for="CityId" class="text-danger small"></span>
+                        </div>
+
+                        @* 👶 DOĞUM VE AKADEMİK BİLGİLER *@
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="BirthPlace" class="form-label fw-bold text-muted small text-uppercase">Doğum Yeri</label>
+                                <input asp-for="BirthPlace" class="form-control rounded-pill border-2 input-focus" placeholder="Şehir" />
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="BirthDate" class="form-label fw-bold text-muted small text-uppercase">Doğum Tarihi</label>
+                                <input asp-for="BirthDate" type="date" class="form-control rounded-pill border-2 input-focus" />
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="AcademicYear" class="form-label fw-bold text-muted small text-uppercase">Akademik Yıl</label>
+                                <input asp-for="AcademicYear" class="form-control rounded-pill border-2 input-focus" placeholder="2025-2029" />
+                            </div>
                         </div>
 
                         <div class="row">
@@ -91,8 +128,12 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="GPA" class="form-label fw-bold text-muted small text-uppercase">GPA (Not Ort.)</label>
-                                <input asp-for="GPA" class="form-control rounded-pill border-2 input-focus" placeholder="Örn: 3.50" />
+                                <label asp-for="GPA" class="form-label fw-bold text-muted small text-uppercase">GPA (Not Ort. Max: 4.00)</label>
+                                @* 🛡️ MÜHÜR: GPA KRİZİNİ BİTİREN KİLİT *@
+                                <input asp-for="GPA" type="number" step="0.01" min="0" max="4.00"
+                                       class="form-control rounded-pill border-2 input-focus"
+                                       placeholder="Örn: 3.50" required id="GPAInput" />
+                                <span asp-validation-for="GPA" class="text-danger small"></span>
                             </div>
                         </div>
 
@@ -148,9 +189,24 @@
     }
 
     <script>
+        // ✅ SİHİRLİ ETİKET DEĞİŞTİRİCİ
+        document.getElementById('degreeSelect').addEventListener('change', function() {
+            const label = document.getElementById('facultyLabel');
+            label.innerText = this.value === "Önlisans" ? "Meslek Yüksekokulu" : "Fakülte Adı";
+        });
+
         document.getElementById('profileEditForm').onsubmit = function (e) {
+            const gpaInput = document.getElementById('GPAInput');
             const izinliCV = /(\.pdf|\.doc|\.docx)$/i;
             const izinliSertifika = /(\.pdf|\.doc|\.docx|\.jpg|\.jpeg|\.png)$/i;
+
+            // 🛡️ GPA SİBER KALKANI: 4'ten büyükse durdur!
+            if (parseFloat(gpaInput.value.replace(',', '.')) > 4.00) {
+                alert("❌ Hata: Akademik ortalama (GPA) 4.00'den büyük olamaz!\nLütfen geçerli bir not giriniz (Örn: 2.80).");
+                gpaInput.focus();
+                e.preventDefault();
+                return false;
+            }
 
             const cvInput = document.getElementById('CVFile');
             const certInput = document.getElementById('CertificateFile');

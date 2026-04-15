@@ -1,5 +1,377 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model StajSistemi.DTOs.StudentDto
 @{
+    Layout = "_Layout";
+    var activeApp = ViewBag.ActiveInternship as StajSistemi.Models.InternshipApplication;
+
+    // 🛡️ KRİTİK GÜVENLİK MÜHÜRÜ: Bölüm değişmişse, eski bölümün stajını dosyada gösterme!
+    if (activeApp != null && activeApp.Internship.DepartmentId != Model.DepartmentId)
+    {
+        activeApp = null;
+    }
+
+    var reports = ViewBag.DailyReports as List<StajSistemi.Models.DailyReport>;
+    int totalDays = 30;
+    bool isAdvisor = User.IsInRole("Advisor") || User.IsInRole("Admin");
 }
+
+<style>
+    /* 🚀 ANA SAHNE: Beyaz Kağıdı Parlatan Hafif Gri Arka Plan */
+    .staj-wrapper {
+        background-color: #f1f5f9;
+        min-height: 100vh;
+        padding: 40px 15px;
+        display: flex;
+        justify-content: center; /* Ekran görünümünde her şeyi ortalar */
+        align-items: flex-start;
+        gap: 25px;
+    }
+
+    .staj-sidebar {
+        width: 260px;
+        flex-shrink: 0;
+    }
+
+    .day-box {
+        border: 1px solid #ddd;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 10pt;
+        font-weight: bold;
+        border-radius: 6px;
+        background: #fff;
+        transition: 0.2s;
+    }
+
+        .day-box.filled {
+            background: #e8f5e9 !important;
+            color: #2e7d32 !important;
+            border-color: #c8e6c9 !important;
+        }
+
+        .day-box:hover {
+            border-color: #0d6efd;
+            transform: scale(1.1);
+        }
+
+    /* 📄 GERÇEK A4 KAĞIDI (EKRAN GÖRÜNÜMÜ) */
+    .a4-document {
+        background: white;
+        width: 210mm;
+        min-height: 297mm;
+        padding: 20mm;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+        font-family: "Times New Roman", Times, serif;
+        color: #000;
+        flex-shrink: 0;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .tc-baslik {
+        text-align: center;
+        margin-bottom: 25px;
+        text-transform: uppercase;
+        line-height: 1.3;
+    }
+
+        .tc-baslik h6 {
+            font-weight: 700;
+            font-size: 11pt;
+        }
+
+        .tc-baslik h5 {
+            font-weight: 800;
+            font-size: 13pt;
+        }
+
+    .staj-ana-baslik {
+        text-align: center;
+        margin: 30px 0;
+        font-size: 26pt;
+        font-weight: 900;
+        letter-spacing: 5px;
+        border-top: 2px solid #000;
+        border-bottom: 2px solid #000;
+        padding: 10px 0;
+    }
+
+    .resmi-tablo {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+        .resmi-tablo td {
+            padding: 10px 15px;
+            border: 1px solid #000 !important;
+            font-size: 11pt;
+        }
+
+    .label-cell {
+        background-color: #fcfcfc;
+        font-weight: 700;
+        width: 40%;
+        text-transform: uppercase;
+        font-size: 9.5pt;
+    }
+
+    .report-textarea {
+        width: 100%;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 15px;
+        font-size: 11pt;
+        line-height: 1.6;
+        color: #333;
+        background: #fafafa;
+        min-height: 450px;
+        resize: none;
+        font-family: serif;
+    }
+
+    /* 🖨️ PDF YAZDIRMA MÜHRÜ - KÖKTEN TEMİZLİK VE NİZAM */
+    .print-only-area {
+        display: none;
+    }
+
+    @@media print {
+        /* 🛡️ MÜHÜR: Tarayıcı lekelerini (URL, Tarih) kökten siler */
+        @@page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .no-print, .staj-sidebar, .btn-group, .staj-wrapper, .navbar, .footer {
+            display: none !important;
+        }
+
+        .print-only-area {
+            display: block !important;
+            background: white;
+            width: 100% !important;
+        }
+        /* 🛡️ MÜHÜR: İçeriğin kağıt kenarına yapışmaması için güvenli alan */
+        .pdf-page {
+            display: block;
+            page-break-after: always;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm 20mm; /* Üstten 1.5cm, Yanlardan 2cm profesyonel boşluk */
+            font-family: "Times New Roman", serif;
+            box-sizing: border-box;
+        }
+        /* Tabloyu tam genişlik yapıp daralmayı engelledik */
+        .resmi-tablo {
+            width: 100% !important;
+            margin-top: 20px;
+        }
+        /* 🛡️ MÜHÜR: Rapor Başlığını tam istediğin "bi tık yukarı" ayarına çektim (0.5 cm marj) */
+        .pdf-report-header {
+            margin-top: 0.5cm !important;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 16pt;
+            text-align: center;
+        }
+        /* 🛡️ MÜHÜR: Rapor Görselini Kusursuzca Ortalar */
+        .pdf-report-image-container {
+            text-align: center !important;
+            margin-top: 25px;
+            width: 100%;
+        }
+
+            .pdf-report-image-container img {
+                max-height: 14cm;
+                max-width: 90%;
+                border: 1.5px solid #000;
+                padding: 5px;
+                display: inline-block;
+            }
+        /* İmza Alanı Nizamı */
+        .signature-area {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 2.5cm;
+            text-align: center;
+        }
+
+        .signature-box {
+            width: 30%;
+            border-top: 1.5px solid #000;
+            padding-top: 10px;
+            font-weight: bold;
+        }
+    }
+</style>
+
+<div class="staj-wrapper">
+    @* --- 🛠️ SIDEBAR --- *@
+    <div id="sidebarArea" class="staj-sidebar no-print d-none">
+        <div class="card shadow border-0 rounded-3 overflow-hidden">
+            <div class="bg-dark text-white p-3 text-center fw-bold small">İŞ GÜNÜ SEÇİMİ</div>
+            <div class="p-2 bg-white text-center">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                    @for (int i = 1; i <= totalDays; i++)
+                    {
+                        var hasRep = reports?.Any(r => r.DayNumber == i) ?? false;
+                        <div class="day-box @(hasRep ? "filled" : "")" id="day-@i" onclick="sayfaGoster(@i)">@i</div>
+                    }
+                </div>
+            </div>
+            @if (isAdvisor)
+            {
+                <button onclick="window.print()" class="btn btn-primary rounded-0 py-3 fw-bold small w-100 mt-2">
+                    <i class="fas fa-file-pdf me-2"></i>PDF ÇIKTI AL
+                </button>
+            }
+        </div>
+    </div>
+
+    @* --- 📄 EKRAN GÖRÜNÜMÜ --- *@
+    <div class="a4-document no-print">
+        <div class="d-flex justify-content-center mb-4">
+            <div class="btn-group p-1 bg-light rounded-pill border">
+                <button class="btn btn-primary rounded-pill px-4 btn-sm fw-bold shadow-sm" id="btnKapak" onclick="tabDegistir('kapak')">📜 Kapak</button>
+                <button class="btn btn-link text-dark text-decoration-none px-4 btn-sm fw-bold" id="btnGunluk" onclick="tabDegistir('gunluk')">✍️ Raporlar</button>
+            </div>
+        </div>
+
+        <div id="panelKapak">
+            <div class="tc-baslik">
+                <h6>T.C.</h6>
+                <h5>@(Model.UniversityName?.ToUpper() ?? "SAMSUN ÜNİVERSİTESİ")</h5>
+                <h6>@(Model.FacultyName?.ToUpper() ?? "MESLEK YÜKSEKOKULU")</h6>
+            </div>
+            <div class="staj-ana-baslik">STAJ DOSYASI</div>
+            <table class="resmi-tablo">
+                <tr><td class="label-cell">Öğrenci Adı Soyadı</td><td class="fw-bold">@Model.FullName.ToUpper()</td></tr>
+                <tr><td class="label-cell">Öğrenci Numarası</td><td class="fw-bold">@Model.StudentNo</td></tr>
+                <tr><td class="label-cell">Bölümü / Programı</td><td class="fw-bold">@Model.DepartmentName</td></tr>
+                <tr><td class="label-cell">Akademik Yıl / Sınıf</td><td class="fw-bold">@(Model.AcademicYear ?? "2024-2026") / 2. SINIF</td></tr>
+                <tr><td class="label-cell">Staj Yapılan Kurum</td><td class="fw-bold">@(activeApp?.Internship?.CompanyName?.ToUpper() ?? "VERİ BEKLENİYOR")</td></tr>
+                <tr><td class="label-cell">Staj Başlangıç Tarihi</td><td>@(activeApp?.StartDate?.ToString("dd.MM.yyyy") ?? "__ / __ / 2026")</td></tr>
+                <tr><td class="label-cell">Staj Bitiş Tarihi</td><td>@(activeApp?.EndDate?.ToString("dd.MM.yyyy") ?? "__ / __ / 2026")</td></tr>
+                <tr><td class="label-cell">Toplam İş Günü</td><td class="fw-bold text-danger">30 İŞ GÜNÜ</td></tr>
+            </table>
+            <div style="margin-top:70px; display:flex; justify-content:space-between; text-align:center;">
+                <div style="border-top:1px solid #000; width:30%; padding-top:5px; font-weight:bold; font-size:9pt;">Öğrenci İmzası</div>
+                <div style="border-top:1px solid #000; width:30%; padding-top:5px; font-weight:bold; font-size:9pt;">Kurum Onayı</div>
+                <div style="border-top:1px solid #000; width:30%; padding-top:5px; font-weight:bold; font-size:9pt;">Danışman Onayı</div>
+            </div>
+        </div>
+
+        <div id="panelGunluk" class="d-none">
+            <div id="dynamicFormArea" style="min-height: 500px;">
+                <div class="text-center py-5 text-muted small"><h5>Takvimden gün seçiniz.</h5></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* 🖨️ PDF YAZDIRMA ALANI *@
+<div class="print-only-area">
+    <div class="pdf-page">
+        <div class="tc-baslik">
+            <h6>T.C.</h6>
+            <h5>@(Model.UniversityName?.ToUpper() ?? "SAMSUN ÜNİVERSİTESİ")</h5>
+            <h6>@(Model.FacultyName?.ToUpper() ?? "MESLEK YÜKSEKOKULU")</h6>
+        </div>
+        <div class="staj-ana-baslik">STAJ DOSYASI</div>
+        <table class="resmi-tablo">
+            <tr><td style="font-weight:bold; width:40%; background-color:#fcfcfc;">Öğrenci Adı Soyadı</td><td>@Model.FullName.ToUpper()</td></tr>
+            <tr><td style="font-weight:bold; background-color:#fcfcfc;">Öğrenci Numarası</td><td>@Model.StudentNo</td></tr>
+            <tr><td style="font-weight:bold; background-color:#fcfcfc;">Bölümü / Programı</td><td>@Model.DepartmentName</td></tr>
+            <tr><td style="font-weight:bold; background-color:#fcfcfc;">Akademik Yıl / Sınıf</td><td>@(Model.AcademicYear ?? "2024-2026") / 2. SINIF</td></tr>
+            <tr><td style="font-weight:bold; background-color:#fcfcfc;">Staj Yapılan Kurum</td><td>@(activeApp?.Internship?.CompanyName?.ToUpper() ?? "VERİ BEKLENİYOR")</td></tr>
+            <tr><td style="font-weight:bold; background-color:#fcfcfc;">Staj Başlangıç Tarihi</td><td>@(activeApp?.StartDate?.ToString("dd.MM.yyyy") ?? "__/__/2026")</td></tr>
+            <tr><td style="font-weight:bold; background-color:#fcfcfc;">Staj Bitiş Tarihi</td><td>@(activeApp?.EndDate?.ToString("dd.MM.yyyy") ?? "__/__/2026")</td></tr>
+            <tr><td style="font-weight:bold; color:red; background-color:#fcfcfc;">Toplam İş Günü</td><td style="font-weight:bold; color:red;">30 İŞ GÜNÜ</td></tr>
+        </table>
+        <div class="signature-area">
+            <div class="signature-box">Öğrenci İmzası</div>
+            <div class="signature-box">Kurum Onayı (Mühür)</div>
+            <div class="signature-box">Danışman Onayı</div>
+        </div>
+    </div>
+
+    @for (int i = 1; i <= 30; i++)
+    {
+        var rep = reports?.FirstOrDefault(r => r.DayNumber == i);
+        <div class="pdf-page">
+            <h4 class="pdf-report-header">@i. GÜN ÇALIŞMA RAPORU</h4>
+            <div class="pdf-report-content">
+                @(rep != null ? rep.Content : "Bu iş günü için faaliyet girişi yapılmamıştır.")
+            </div>
+            @if (rep != null && !string.IsNullOrEmpty(rep.ImagePath))
+            {
+                <div class="pdf-report-image-container">
+                    <img src="/uploads/reports/@rep.ImagePath">
+                    <p style="font-size:10pt; font-style:italic; margin-top:5px;">Görsel Kanıt - @i. Gün</p>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    const reportsData = @Html.Raw(Json.Serialize(reports?.Select(r => new { r.DayNumber, r.Content, r.ImagePath }))) || [];
+    const isAdvisorRole = @(isAdvisor ? "true" : "false");
+
+    function tabDegistir(s) {
+        document.getElementById('panelKapak').classList.toggle('d-none', s !== 'kapak');
+        document.getElementById('panelGunluk').classList.toggle('d-none', s !== 'gunluk');
+        const sidebar = document.getElementById('sidebarArea');
+        if(s === 'gunluk') { sidebar.classList.remove('d-none'); } else { sidebar.classList.add('d-none'); }
+
+        document.getElementById('btnKapak').className = s === 'kapak' ? "btn btn-primary rounded-pill px-4 btn-sm fw-bold shadow-sm" : "btn btn-link text-dark text-decoration-none px-4 btn-sm fw-bold";
+        document.getElementById('btnGunluk').className = s === 'gunluk' ? "btn btn-primary rounded-pill px-4 btn-sm fw-bold shadow-sm" : "btn btn-link text-dark text-decoration-none px-4 btn-sm fw-bold";
+    }
+
+    function sayfaGoster(gun) {
+        document.querySelectorAll('.day-box').forEach(b => { b.style.background = "#fff"; b.style.color = "#000"; b.style.borderColor = "#ddd"; });
+        const sel = document.getElementById('day-' + gun);
+        if(sel) { sel.style.background = "#0d6efd"; sel.style.color = "#fff"; sel.style.borderColor = "#0d6efd"; }
+
+        const report = reportsData.find(r => r.dayNumber === gun);
+        const area = document.getElementById('dynamicFormArea');
+
+        area.innerHTML = `
+            <form action="/StudentPanel/SaveDailyReport" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+                <input type="hidden" name="dayNumber" value="${gun}">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h6 class="fw-bold mb-0">${gun}. GÜN ÇALIŞMA RAPORU</h6>
+                    ${!isAdvisorRole ? `<button type="submit" class="btn btn-success btn-sm fw-bold">KAYDET</button>` : ''}
+                </div>
+                <textarea name="content" class="report-textarea" ${isAdvisorRole ? 'readonly' : ''} placeholder="Bugün neler yaptın?">${report ? report.content : ''}</textarea>
+                ${!isAdvisorRole ? `<input type="file" name="reportImage" class="form-control form-control-sm mb-3" onchange="previewImage(this)">` : ''}
+                <div id="imgPreview" class="text-center mt-3 ${report && report.imagePath ? '' : 'd-none'}">
+                    <img id="prev" src="${report && report.imagePath ? '/uploads/reports/' + report.imagePath : '#'}" class="img-fluid border shadow-sm" style="max-height: 380px;">
+                </div>
+            </form>
+        `;
+    }
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('prev').src = e.target.result;
+                document.getElementById('imgPreview').classList.remove('d-none');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>

@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
     <style>
-        /* ✅ Tasarım Mühürlerin Aynen Korundu */
+        /* ✅ Senin Tasarım Mühürlerin Aynen Korundu */
         body {
             background: linear-gradient(rgba(44, 62, 80, 0.8), rgba(44, 62, 80, 0.8)), url('https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80');
             background-size: cover;
@@ -106,29 +106,6 @@
                 box-shadow: 0 25px 50px rgba(0,0,0,0.4) !important;
             }
 
-        .live-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 50px;
-            font-size: 0.65rem;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-        }
-
-        .pulse-dot {
-            width: 6px;
-            height: 6px;
-            background: #2ecc71;
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: pulse-green 1.5s infinite;
-        }
-
         .map-radar-link {
             color: #6c757d;
             text-decoration: none;
@@ -172,16 +149,6 @@
             border-radius: 50%;
             padding: 15px;
             transition: 0.3s;
-        }
-
-        @@keyframes pulse-green {
-            0%, 100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.3;
-            }
         }
     </style>
 </head>
@@ -236,27 +203,23 @@
                 <div class="carousel-inner">
                     @if (Model != null && Model.Any())
                     {
-                        @for (int i = 0; i < Model.Count; i += 3)
+                        for (int i = 0; i < Model.Count; i += 3)
                         {
                             <div class="carousel-item @(i == 0 ? "active" : "")">
                                 <div class="row g-4">
-                                    @* ✅ HATA BURADAYDI: item yerine ilan kullanıyoruz *@
                                     @foreach (var ilan in Model.Skip(i).Take(3))
                                     {
                                         <div class="col-md-4">
                                             <div class="card intern-card h-100 shadow-lg border-0">
-                                                <div class="live-badge">
-                                                    <span class="pulse-dot"></span>
-                                                    <span>@((new Random().Next(3, 9))) kişi inceliyor</span>
-                                                </div>
-
-                                                <div class="card-body p-4 pt-5">
+                                                <div class="card-body p-4">
                                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                                         <span class="badge bg-light text-primary rounded-pill small border" style="font-size: 0.65rem;">
                                                             @(ilan.Department?.DepartmentName ?? "Genel")
                                                         </span>
-                                                        <a href="https://www.google.com/maps/search/?api=1&query=@(ilan.CompanyName)+@(ilan.City?.Name)" target="_blank" class="map-radar-link">
-                                                            <i class="fas fa-map-marker-alt"></i> @(ilan.City?.Name ?? "Konum")
+
+                                                        @* ✅ KRİTİK DÜZELTME: "Ordu" (Konum) yazısına tıklayınca doğrudan Google Maps açılır *@
+                                                        <a href="https://www.google.com/maps/search/?api=1&query=@(ilan.CompanyName)+@(ilan.City?.Name ?? ilan.CityName)" target="_blank" class="map-radar-link">
+                                                            <i class="fas fa-map-marker-alt"></i> @(ilan.City?.Name ?? ilan.CityName ?? "Konum")
                                                         </a>
                                                     </div>
 
@@ -270,13 +233,15 @@
 
                                                     <p class="small text-secondary mb-4">
                                                         @{
-                                                            string d = ilan.Description ?? "Detaylar kilitli.";
+                                                            string d = ilan.Description ?? "Detaylar için giriş yapınız.";
+                                                            string shortDesc = d.Length > 60 ? d.Substring(0, 60) + "..." : d;
                                                         }
-                                                        @(d.Length > 40 ? d.Substring(0, 40) + "..." : d)
+                                                        @shortDesc
                                                     </p>
 
                                                     <div class="d-grid mt-auto">
-                                                        <a asp-controller="Account" asp-action="Login" class="btn btn-sm btn-dark rounded-pill py-2 fw-bold">
+                                                        @* ✅ İlanın detaylarını görmek için başlığı veya bu butonu kullanabilirsin *@
+                                                        <a asp-controller="Internship" asp-action="Details" asp-route-id="@ilan.Id" class="btn btn-sm btn-dark rounded-pill py-2 fw-bold">
                                                             Giriş Yap ve Gör <i class="fas fa-lock ms-1" style="font-size: 0.7rem;"></i>
                                                         </a>
                                                     </div>
@@ -287,6 +252,10 @@
                                 </div>
                             </div>
                         }
+                    }
+                    else
+                    {
+                        <p class="text-center opacity-50">Henüz yayınlanmış bir ilan bulunmuyor.</p>
                     }
                 </div>
 

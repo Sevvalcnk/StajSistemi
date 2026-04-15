@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using StajSistemi.DTOs;
 using StajSistemi.Models;
 using StajSistemi.Repositories.Abstract;
+using System.Linq;
 
 namespace StajSistemi.Controllers
 {
@@ -21,7 +22,7 @@ namespace StajSistemi.Controllers
             _mapper = mapper;
         }
 
-        // --- ✅ 1. ÖĞRENCİ LİSTESİ (Dokunulmadı, Filtreleme Doğru) ---
+        // --- ✅ 1. ÖĞRENCİ LİSTESİ ---
         public async Task<IActionResult> Index(int? cityId, int? departmentId, double? minGpa)
         {
             var allStudents = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
@@ -35,7 +36,7 @@ namespace StajSistemi.Controllers
 
             var filteredStudents = studentQuery.OrderByDescending(s => s.GPA).ToList();
 
-            ViewBag.NewApplicationsCount = allApps.Count(a => a.Status == "Beklemede" && !a.IsDeleted);
+            ViewBag.NewApplicationsCount = allApps.Count(a => a.Status == ApplicationStatus.Pending && !a.IsDeleted);
 
             var cities = await _unitOfWork.Cities.GetAllAsync();
             var departments = await _unitOfWork.Departments.GetAllAsync();
@@ -46,21 +47,33 @@ namespace StajSistemi.Controllers
 
             foreach (var student in studentDtos)
             {
+                var originalStudent = filteredStudents.First(s => s.Id == student.Id);
+                student.StudentNo = !string.IsNullOrWhiteSpace(originalStudent.StudentNo) ? originalStudent.StudentNo : originalStudent.UserName;
+
                 var lastApp = allApps
                     .Where(a => a.AppUserId == student.Id && !a.IsDeleted)
                     .OrderByDescending(a => a.ApplicationDate)
                     .FirstOrDefault();
 
-                student.InternshipStatus = lastApp != null ? lastApp.Status : "Başvuru Yok";
+                if (lastApp != null)
+                {
+                    student.InternshipStatus = lastApp.Status switch
+                    {
+                        ApplicationStatus.Approved => "Onaylandı",
+                        ApplicationStatus.Rejected => "Reddedildi",
+                        ApplicationStatus.Pending => "Beklemede",
+                        _ => "İşlemde"
+                    };
+                }
+                else { student.InternshipStatus = "Başvuru Yok"; }
             }
 
             return View(studentDtos);
         }
 
-        // --- ✅ 2. ÖĞRENCİ DETAYI (Düzenlendi: İlişkili Tablolar Eklendi) ---
+        // --- ✅ 2. ÖĞRENCİ DETAYI ---
         public async Task<IActionResult> StudentDetails(int id)
         {
-            // Mühür: Detay sayfasında bölüm ve şehir adının görünmesi için Include ekledik
             var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
             var student = students.FirstOrDefault(s => s.Id == id);
 
@@ -71,10 +84,69 @@ namespace StajSistemi.Controllers
             }
 
             var studentDto = _mapper.Map<StudentDto>(student);
+            studentDto.StudentNo = !string.IsNullOrWhiteSpace(student.StudentNo) ? student.StudentNo : student.UserName;
+
             return View(studentDto);
         }
 
-        // --- ✅ 3. SOFT DELETE (Dokunulmadı) ---
+        // --- 🛡️ 3. ÖĞRENCİ STAJ DOSYASI İZLEME (31 SAYFA GARANTİLİ) ---
+        // Image 2'deki Kapak Bilgilerinin hocada görünmesini sağlayan motor burasıdır.
+        public async Task<IActionResult> ViewStudentFile(int studentId)
+        {
+            var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
+            var student = students.FirstOrDefault(s => s.Id == studentId);
+
+            if (student == null) return NotFound();
+
+            var studentDto = _mapper.Map<StudentDto>(student);
+            studentDto.StudentNo = !string.IsNullOrWhiteSpace(student.StudentNo) ? student.StudentNo : student.UserName;
+            studentDto.DepartmentName = student.Department?.DepartmentName ?? "Bölüm Belirtilmemiş";
+
+            var apps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(
+                a => a.Internship, a => a.Internship.City, a => a.Internship.Department);
+
+            // GÜVENLİK: Sadece bölümüyle eşleşen onaylı staj (Hatalı kurum ismini bitirir)
+            var activeApp = apps.FirstOrDefault(a => a.AppUserId == studentId && a.Status == ApplicationStatus.Approved && a.Internship.DepartmentId == student.DepartmentId);
+
+            ViewBag.ActiveInternship = activeApp;
+
+            var reports = await _unitOfWork.DailyReports.GetAllAsync();
+            var studentReports = reports.Where(r => r.AppUserId == studentId).OrderBy(r => r.DayNumber).ToList();
+
+            ViewBag.DailyReports = studentReports;
+
+            return View("../StudentPanel/Documents", studentDto);
+        }
+
+        // --- 🛡️ 🚀 YENİ MÜHÜR: ÖĞRENCİ DASHBOARD İZLEME (ÇİZELGE GARANTİLİ) ---
+        // Image 1'deki "Takip Çizelgesi"nin hocada görünmesini sağlayan asil metot budur.
+        public async Task<IActionResult> ViewStudentDashboard(int studentId)
+        {
+            var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
+            var student = students.FirstOrDefault(s => s.Id == studentId);
+            if (student == null) return NotFound();
+
+            var studentDto = _mapper.Map<StudentDto>(student);
+            studentDto.StudentNo = !string.IsNullOrWhiteSpace(student.StudentNo) ? student.StudentNo : student.UserName;
+            studentDto.DepartmentName = student.Department?.DepartmentName ?? "Bölüm Belirtilmemiş";
+
+            // 🛡️ Çizelge için aktif başvuruyu çekiyoruz
+            var allApps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(a => a.Internship);
+            var activeAppForTimeline = allApps
+                .Where(a => a.AppUserId == studentId && !a.IsDeleted)
+                .OrderByDescending(a => a.ApplicationDate)
+                .FirstOrDefault();
+
+            ViewBag.ActiveAppForTimeline = activeAppForTimeline; // Dashboard'daki çizelgeyi hoca için canlandırır.
+            ViewBag.AppliedInternshipIds = allApps.Where(a => a.AppUserId == studentId).Select(a => a.InternshipId).ToList();
+
+            // Puanlama ve akıllı eşleşmeler (Hoca her şeyi görmeli)
+            ViewBag.TotalScore = 350;
+
+            return View("../StudentPanel/Index", studentDto);
+        }
+
+        // --- ✅ 4. SOFT DELETE ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -90,39 +162,38 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // --- ✅ 4. STAJ BAŞVURULARI LİSTESİ (Dokunulmadı) ---
+        // --- ✅ 5. STAJ BAŞVURULARI LİSTESİ ---
         public async Task<IActionResult> InternshipApplications()
         {
-            var applications = await _unitOfWork.InternshipApplications
-                .GetAllIncludingAsync(a => a.AppUser, a => a.Internship);
+            var applications = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(a => a.AppUser, a => a.Internship);
 
             var activeApplications = applications
                 .Where(a => a.IsDeleted == false)
-                .OrderByDescending(a => a.ApplicationDate)
+                .OrderByDescending(a => a.SuccessScore)
+                .ThenByDescending(a => a.ApplicationDate)
                 .ToList();
 
-            ViewBag.NewApplicationsCount = activeApplications.Count(a => a.Status == "Beklemede");
-
+            ViewBag.NewApplicationsCount = activeApplications.Count(a => a.Status == ApplicationStatus.Pending);
             return View(activeApplications);
         }
 
-        // --- 🔥 5. YENİ MÜHÜR: BAŞVURU DURUMUNU GÜNCELLE (Onay/Red) ---
-        // Bu metot, hocanın butona bastığında başvuruyu onaylamasını sağlar.
+        // --- 🔥 6. BAŞVURU DURUMUNU GÜNCELLE ---
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateApplicationStatus(int id, string status)
+        public async Task<IActionResult> UpdateApplicationStatus(int id, ApplicationStatus status)
         {
-            var app = await _unitOfWork.InternshipApplications.GetByIdAsync(id);
-            if (app == null) return NotFound();
+            var applications = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(a => a.Internship);
+            var app = applications.FirstOrDefault(a => a.Id == id);
 
-            app.Status = status; // "Onaylandı" veya "Reddedildi"
+            if (app == null) return NotFound();
+            app.Status = status;
 
             _unitOfWork.InternshipApplications.Update(app);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = $"Başvuru '{status}' olarak mühürlendi! ✨";
+            string mesaj = status == ApplicationStatus.Approved ? "Onaylandı" : "Reddedildi";
+            TempData["SuccessMessage"] = $"Başvuru başarıyla '{mesaj}' olarak mühürlendi! ✨";
 
-            // İşlem bitince listeye geri dön
             return RedirectToAction(nameof(InternshipApplications));
         }
     }

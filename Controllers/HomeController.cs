@@ -23,13 +23,13 @@ public class HomeController : Controller
         var applications = await _unitOfWork.InternshipApplications.GetAllAsync();
         var allInternships = await _unitOfWork.Internships.GetAllIncludingAsync(i => i.Department, i => i.City);
 
-        // ✅ BAŞVURU BİLDİRİMİ: Beklemede olanları sayıp Layout'a gönderiyoruz
-        ViewBag.NewApplicationsCount = applications.Count(a => a.Status == "Beklemede" && !a.IsDeleted);
+        // ✅ BAŞVURU BİLDİRİMİ: Beklemede olanları akıllı etiketle sayıyoruz
+        ViewBag.NewApplicationsCount = applications.Count(a => a.Status == ApplicationStatus.Pending && !a.IsDeleted);
 
-        // Dashboard kartları için aktif ilan sayısını mühürle
-        ViewBag.ActiveInternshipsCount = allInternships.Count(i => i.Status == "Aktif" && !i.IsDeleted);
+        // ✅ İLAN SAYISI DÜZELTİLDİ: "Aktif" yazısı yerine ApplicationStatus.Active geldi
+        ViewBag.ActiveInternshipsCount = allInternships.Count(i => i.Status == ApplicationStatus.Active && !i.IsDeleted);
 
-        // 🔥 YENİ KRİTİK MÜHÜR: Mesaj Bildirimi
+        // 🔥 MESAJ BİLDİRİMİ (Aynen Korundu)
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!string.IsNullOrEmpty(userId))
         {
@@ -42,11 +42,10 @@ public class HomeController : Controller
             }
         }
 
-        // ✅ ANA SAYFA İLANLARI (CAROUSEL İÇİN GÜNCELLENDİ): 
-        // Eskiden .Take(3) idi, kaydırma olması için sınırı 15'e çıkardık.
-        // Artık 3'ten fazla ilan olduğunda oklar otomatik belirecek!
+        // ✅ ANA SAYFA İLANLARI DÜZELTİLDİ: 
+        // Filtrelemedeki "Aktif" yazısı ApplicationStatus.Active ile değiştirildi.
         var homeInternships = allInternships
-            .Where(i => i.Status == "Aktif" && !i.IsDeleted)
+            .Where(i => i.Status == ApplicationStatus.Active && !i.IsDeleted)
             .OrderByDescending(i => i.Id)
             .Take(15)
             .ToList();

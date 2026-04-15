@@ -1,0 +1,166 @@
+﻿@model IEnumerable<StajSistemi.Models.DailyReport>
+@{
+    ViewData["Title"] = "Resmi Staj Defteri";
+    // 🛡️ Modelindeki gerçek isimlere göre mühürlendi (FirstName/LastName)
+    var student = ViewBag.Student as StajSistemi.Models.AppUser;
+}
+
+<style>
+    .notebook-container {
+        background: #f4f7f6;
+        padding: 30px 0;
+        min-height: 100vh;
+    }
+
+    .a4-page {
+        background: white;
+        width: 210mm;
+        min-height: 297mm;
+        padding: 20mm;
+        margin: 0 auto 30px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+    }
+
+    .official-header {
+        border-bottom: 2px solid #000;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .info-table td {
+        padding: 8px;
+        border: 1px solid #dee2e6;
+    }
+
+    .nav-pills .nav-link.active {
+        background-color: #0d6efd;
+    }
+
+    .report-img-preview {
+        max-width: 100%;
+        max-height: 400px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+</style>
+
+<div class="notebook-container">
+    @* --- ÜST SEKME MENÜSÜ --- *@
+    <div class="container text-center mb-4">
+        <ul class="nav nav-pills justify-content-center bg-white p-2 rounded shadow-sm d-inline-flex">
+            <li class="nav-item">
+                <button class="nav-link active" id="btn-kapak" onclick="tabDegistir('kapak')">📜 Kapak Sayfası</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="btn-rapor" onclick="tabDegistir('raporlar')">✍️ Günlük Raporlar</button>
+            </li>
+        </ul>
+    </div>
+
+    @* --- 1. KAPAK SAYFASI (GENEL BİLGİLER) --- *@
+    <div id="section-kapak" class="tab-section">
+        <div class="a4-page">
+            <div class="official-header pb-3">
+                <h4>T.C.</h4>
+                <h5>@(student?.UniversityName ?? "SİNOP ÜNİVERSİTESİ")</h5>
+                <h6>@(student?.FacultyName ?? "AYANCIK MESLEK YÜKSEKOKULU")</h6>
+                <h2 class="mt-4 fw-bold">STAJ DOSYASI</h2>
+            </div>
+
+            <table class="table info-table mt-5">
+                @* ✅ HATA DÜZELTİLDİ: FirstName ve LastName kullanıldı *@
+                <tr><td width="30%" class="fw-bold bg-light">Öğrenci Adı Soyadı</td><td>@student?.FirstName @student?.LastName</td></tr>
+                <tr><td class="fw-bold bg-light">Öğrenci No</td><td>@student?.Id</td></tr>
+                <tr><td class="fw-bold bg-light">Doğum Yeri / Tarihi</td><td>@(student?.BirthPlace ?? "-") / @(student?.BirthDate?.ToShortDateString() ?? "-")</td></tr>
+                <tr><td class="fw-bold bg-light">Bölümü</td><td>@(student?.DepartmentName ?? "İnternet ve Ağ Teknolojileri")</td></tr>
+                <tr><td class="fw-bold bg-light">Akademik Yıl</td><td>@(student?.AcademicYear ?? "2025-2026")</td></tr>
+            </table>
+
+            <div class="mt-5">
+                <h5 class="fw-bold border-bottom pb-2">STAJ YAPILAN KURUM BİLGİLERİ</h5>
+                <table class="table info-table">
+                    <tr><td width="30%" class="fw-bold bg-light">Kurum Adı</td><td>@(student?.CompanyName ?? "-")</td></tr>
+                    <tr><td class="fw-bold bg-light">Vergi Numarası</td><td>@(student?.CompanyTaxNumber ?? "-")</td></tr>
+                    <tr><td class="fw-bold bg-light">Hizmet Alanı</td><td>@(student?.CompanySector ?? "-")</td></tr>
+                </table>
+            </div>
+
+            <div class="row mt-5 text-center">
+                <div class="col-4 border-top pt-2">Öğrenci İmza</div>
+                <div class="col-4 border-top pt-2">Kurum Onayı (Mühür)</div>
+                <div class="col-4 border-top pt-2">Danışman Onayı</div>
+            </div>
+        </div>
+    </div>
+
+    @* --- 2. GÜNLÜK RAPORLAR SAYFASI --- *@
+    <div id="section-raporlar" class="tab-section d-none">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card shadow-sm position-sticky" style="top: 20px;">
+                        <div class="card-header bg-dark text-white">🗓️ Gün Seçimi (1-30)</div>
+                        <div class="card-body d-flex flex-wrap overflow-auto" style="max-height: 500px;">
+                            @for (int i = 1; i <= 30; i++)
+                            {
+                                var report = Model.FirstOrDefault(r => r.DayNumber == i);
+                                <button onclick="gunGetir(@i, '@(report?.Content?.Replace("'", "\\'").Replace("\n", " "))', '@report?.ImagePath')"
+                                        class="btn gun-kutusu @(report != null ? "btn-primary" : "btn-outline-secondary") m-1" style="width: 45px;">
+                                    @i
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="a4-page" id="rapor-sayfasi">
+                        <div class="border-bottom d-flex justify-content-between pb-2 mb-4">
+                            <h4 class="fw-bold">GÜNLÜK ÇALIŞMA RAPORU</h4>
+                            <h4 class="text-primary">GÜN: <span id="gun-no">-</span></h4>
+                        </div>
+                        <div id="rapor-icerik" class="py-3" style="min-height: 400px; line-height: 1.8; white-space: pre-wrap;">
+                            <p class="text-muted text-center mt-5">Lütfen sol taraftan bir gün seçiniz kardaşım. 🛡️</p>
+                        </div>
+                        <div id="rapor-resim-konteynir" class="text-center mt-4 border-top pt-3 d-none">
+                            <h6 class="text-muted mb-2">📸 Çalışma Görseli</h6>
+                            <img id="rapor-resim" src="" class="report-img-preview" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function tabDegistir(secim) {
+        document.getElementById('section-kapak').classList.toggle('d-none', secim !== 'kapak');
+        document.getElementById('section-raporlar').classList.toggle('d-none', secim !== 'raporlar');
+        document.getElementById('btn-kapak').classList.toggle('active', secim === 'kapak');
+        document.getElementById('btn-rapor').classList.toggle('active', secim === 'raporlar');
+    }
+
+    function gunGetir(gunNo, icerik, resimYolu) {
+        document.getElementById('gun-no').innerText = gunNo;
+
+        // İçerik kontrolü
+        if (icerik && icerik !== '') {
+            document.getElementById('rapor-icerik').innerText = icerik;
+        } else {
+            document.getElementById('rapor-icerik').innerHTML = '<p class="text-danger text-center mt-5">Bu güne ait rapor henüz yazılmamış kardaşım. 🛡️</p>';
+        }
+
+        // Resim kontrolü
+        const resimKonteynir = document.getElementById('rapor-resim-konteynir');
+        const imgElement = document.getElementById('rapor-resim');
+
+        if (resimYolu && resimYolu !== '') {
+            resimKonteynir.classList.remove('d-none');
+            imgElement.src = '/uploads/reports/' + resimYolu;
+        } else {
+            resimKonteynir.classList.add('d-none');
+            imgElement.src = '';
+        }
+    }
+</script>

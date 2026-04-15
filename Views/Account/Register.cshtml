@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Yeni Kayıt";
-    // ✅ MÜHÜR: Tüm kilitleri kaldırdık, hoca ne seçerse o!
     bool canRegister = true;
 }
 
@@ -30,7 +29,6 @@
             color: #4ca1af !important;
         }
 
-    /* ✅ AKILLI GEÇİŞ EFEKTİ */
     #studentNoArea {
         transition: opacity 0.3s ease, transform 0.3s ease;
     }
@@ -53,13 +51,12 @@
         <div class="col-lg-6 col-xl-5">
             <div class="card glass-card p-4 border-0 shadow-lg rounded-4">
 
-                @* 🛡️ MÜHÜR: 5 DAKİKALIK GÜVENLİK PROTOKOLÜ UYARISI *@
                 <div class="alert alert-dark border-0 rounded-4 mb-4" style="background-color: #2c3e50; color: white;">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-shield-alt fa-2x me-3 text-warning"></i>
                         <div>
                             <h6 class="fw-bold mb-1">Güvenlik Protokolü Aktif!</h6>
-                            <p class="small mb-0 opacity-75">Sistem güvenliği için oturumunuz 5 dakika içinde mühürlenecektir. 🛡️</p>
+                            <p class="small mb-0 opacity-75">Hızlı kayıt modundasın. Detaylı okul bilgilerini içeride profilinden mühürleyebilirsin. 🛡️</p>
                         </div>
                     </div>
                 </div>
@@ -70,7 +67,8 @@
                 </div>
 
                 <form asp-action="Register" method="post" id="registerForm">
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
+                    @* 🛡️ KRİTİK DOKUNUŞ: 'ModelOnly' yerine 'All' yaptık ki tüm hataları (Şifre zayıf, Boş alan vs.) görelim *@
+                    <div asp-validation-summary="All" class="text-danger mb-3 small"></div>
 
                     @* ✅ ROL SEÇİMİ *@
                     <div class="mb-3">
@@ -83,7 +81,6 @@
                                 <option value="Admin">Admin (Yönetici)</option>
                             </select>
                         </div>
-                        <span asp-validation-for="Role" class="text-danger small"></span>
                     </div>
 
                     <div class="mb-3">
@@ -95,7 +92,7 @@
                         <span asp-validation-for="FullName" class="text-danger small"></span>
                     </div>
 
-                    @* ✅ AKILLI ALAN: Sadece Öğrenci seçiliyse görünecek *@
+                    @* 🆔 ÖĞRENCİ NUMARASI *@
                     <div class="mb-3" id="studentNoArea">
                         <label asp-for="StudentNo" class="form-label fw-bold small">Öğrenci Numarası</label>
                         <div class="input-group">
@@ -109,11 +106,12 @@
                         <label asp-for="Email" class="form-label fw-bold small">E-posta Adresi</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0"><i class="fas fa-envelope text-muted"></i></span>
-                            <input asp-for="Email" class="form-control border-start-0 premium-input" placeholder="ornek@sinop.edu.tr" />
+                            <input asp-for="Email" class="form-control border-start-0 premium-input" placeholder="ornek@alanadi.com" />
                         </div>
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
 
+                    @* 🔑 ŞİFRELER *@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="Password" class="form-label fw-bold small">Şifre</label>
@@ -174,7 +172,6 @@
             }
         }
 
-        // ✅ AKILLI GİZLEME MOTORU
         const roleSelect = document.getElementById('roleSelect');
         const studentNoArea = document.getElementById('studentNoArea');
         const studentNoInput = document.getElementById('studentNoInput');
@@ -182,16 +179,15 @@
         function updateFormFields() {
             if (roleSelect.value === 'Student') {
                 studentNoArea.style.display = 'block';
-                // Animasyon için küçük bir gecikme
                 setTimeout(() => { studentNoArea.style.opacity = '1'; }, 10);
             } else {
                 studentNoArea.style.opacity = '0';
                 studentNoArea.style.display = 'none';
-                studentNoInput.value = ""; // Admin/Hoca ise bu alanı boşalt
+                // studentNoInput.value = ""; // Rol değiştiğinde numarayı silmek istersen aktif edebilirsin
             }
         }
 
         roleSelect.addEventListener('change', updateFormFields);
-        window.addEventListener('load', updateFormFields); // Sayfa açıldığında kontrol et
+        window.addEventListener('load', updateFormFields);
     </script>
 }

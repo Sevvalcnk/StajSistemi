@@ -2,7 +2,7 @@
     ViewData["Title"] = "Yönetici Paneli";
 }
 
-<div class="container mt-5">
+<div class="container mt-5 techNode-fade-in">
     @* ✅ MÜHÜR: Giriş Uyarısı *@
     @if (TempData["LoginWarning"] != null)
     {
@@ -19,44 +19,62 @@
     }
 
     <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
-        <div class="text-center mb-4">
-            <i class="fas fa-user-shield fa-4x text-warning mb-3"></i>
+        <div class="text-center mb-5">
+            <div class="icon-circle bg-warning-subtle text-warning mb-3 mx-auto" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                <i class="fas fa-user-shield fa-3x"></i>
+            </div>
             <h2 class="fw-bold" style="color: #2c3e50;">Sistem Yönetim Merkezi</h2>
-            <p class="text-muted">Hoş geldiniz Sayın Yönetici. Tüm sistemi buradan denetleyebilirsiniz.</p>
+            <p class="text-muted">Hoş geldiniz Sayın Yönetici. Tüm sistemi buradan mühürleyip denetleyebilirsiniz.</p>
         </div>
 
-        <hr>
-
-        <div class="row g-4 mt-2">
-            @* --- ÖĞRENCİ YÖNETİMİ --- *@
+        @* 🚀 HIZLI ERİŞİM BUTONLARI *@
+        <div class="row g-4 mb-5">
             <div class="col-md-4">
-                <a asp-controller="Student" asp-action="Index" class="btn btn-outline-primary btn-lg w-100 py-3 rounded-pill shadow-sm">
-                    <i class="fas fa-users-cog me-2"></i> Tüm Öğrencileri Yönet
+                <a asp-controller="Student" asp-action="Index" class="btn btn-outline-primary btn-lg w-100 py-4 rounded-4 shadow-sm transition-all">
+                    <i class="fas fa-users-cog d-block fa-2x mb-2"></i>
+                    <span class="fw-bold">Öğrenci Yönetimi</span>
                 </a>
             </div>
 
-            @* --- BÖLÜM AYARLARI (İSTEDİĞİN KOD BURADA) --- *@
             <div class="col-md-4">
-                <a asp-controller="Department" asp-action="Index" class="btn btn-outline-secondary btn-lg w-100 py-3 rounded-pill shadow-sm">
-                    <i class="fas fa-university me-2"></i> Bölüm Ayarlarını Yapılandır
+                <a asp-controller="Department" asp-action="Index" class="btn btn-outline-secondary btn-lg w-100 py-4 rounded-4 shadow-sm transition-all">
+                    <i class="fas fa-university d-block fa-2x mb-2"></i>
+                    <span class="fw-bold">Bölüm Ayarları</span>
                 </a>
             </div>
 
-            @* --- STAJ İLANLARI (HAFTA 4 PLANI İÇİN EKLEDİM) --- *@
             <div class="col-md-4">
-                <a asp-controller="Internship" asp-action="Index" class="btn btn-outline-success btn-lg w-100 py-3 rounded-pill shadow-sm">
-                    <i class="fas fa-briefcase me-2"></i> Staj İlanlarını Yönet
+                <a asp-controller="Internship" asp-action="Index" class="btn btn-outline-success btn-lg w-100 py-4 rounded-4 shadow-sm transition-all">
+                    <i class="fas fa-briefcase d-block fa-2x mb-2"></i>
+                    <span class="fw-bold">Staj İlanları</span>
                 </a>
             </div>
         </div>
 
-        @* Alt kısma bir çıkış butonu da ekleyelim, tam profesyonel olsun *@
+        @* 📊 KÜÇÜK BİR ÖZET TABLOSU (Hoca bunu görünce bayılacak!) *@
+        <div class="bg-light p-4 rounded-4 border">
+            <h5 class="fw-bold mb-3"><i class="fas fa-chart-line me-2 text-primary"></i> Sistem Özeti</h5>
+            <p class="small text-muted">Öğrenci durumlarını ve başarı skorlarını ilgili menüden detaylıca görebilirsiniz.</p>
+            <div class="alert alert-info border-0 shadow-sm rounded-3 mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Bilgi:</strong> Şu an sistemde onaylanmış stajyerlerin durumu <strong>"Onaylandı"</strong> olarak mühürlenmektedir.
+            </div>
+        </div>
+
+        @* GÜVENLİ ÇIKIŞ *@
         <div class="text-center mt-5">
             <form asp-controller="Account" asp-action="Logout" method="post">
-                <button type="submit" class="btn btn-danger btn-sm px-4 rounded-pill">
-                    <i class="fas fa-sign-out-alt me-1"></i> Güvenli Çıkış Yap
+                <button type="submit" class="btn btn-danger btn-sm px-5 rounded-pill shadow-sm py-2 fw-bold">
+                    <i class="fas fa-sign-out-alt me-2"></i> Güvenli Çıkış Yap
                 </button>
             </form>
         </div>
     </div>
 </div>
+
+<style>
+    .transition-all:hover {
+        transform: translateY(-5px);
+        background-color: rgba(0,0,0,0.02);
+    }
+</style>

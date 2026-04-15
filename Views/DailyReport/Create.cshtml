@@ -1,0 +1,51 @@
+﻿@model StajSistemi.Models.DailyReport
+@{
+    ViewData["Title"] = "Günü Mühürle";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="bg-primary p-4 text-white d-flex align-items-center">
+                    <i class="fas fa-pen-nib fa-2x me-3"></i>
+                    <div>
+                        <h4 class="mb-0 fw-bold">Günü Mühürle</h4>
+                        <p class="mb-0 opacity-75 small">Bugün neler başardığını ve öğrendiğini anlat kardaşım.</p>
+                    </div>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="InternshipApplicationId" value="@ViewBag.ApplicationId" />
+
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Kaçıncı Gün? (1-30)</label>
+                                <input asp-for="DayNumber" type="number" class="form-control rounded-3 border-2" min="1" max="30" required placeholder="Örn: 1" />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Bugün Neler Yaptın?</label>
+                            <textarea asp-for="Content" class="form-control rounded-3 border-2" rows="6" required placeholder="Yaptığın çalışmaları detaylıca anlat..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Görsel Kanıt (İsteğe Bağlı)</label>
+                            <input type="file" name="imageFile" class="form-control rounded-3 border-2" accept="image/*" />
+                            <small class="text-muted"><i class="fas fa-info-circle me-1 mt-2"></i>Bir fotoğraf projenin inandırıcılığını artırır! 📸</small>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                            <a asp-action="Index" class="btn btn-light rounded-pill px-4 me-md-2">Vazgeç</a>
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 shadow">
+                                <i class="fas fa-check me-2"></i>Raporu Mühürle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -9,13 +9,16 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using StajSistemi.Services;
 using StajSistemi.Helpers;
 using StajSistemi.Hubs;
-// ✅ MÜHÜR: Hub'lara ulaşabilmek için namespace ekledik
-
+using StajSistemi.Filters; // 👈 MÜHÜR 1: Filtre klasörüne ulaşabilmek için ekledik
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Standart Servisler ---
-builder.Services.AddControllersWithViews();
+// 👈 MÜHÜR 2: Boş olan satırı bu şekilde güncelledik. Artık profil kontrolü aktif!
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<ProfileCompletionFilter>();
+});
 
 // 🚀 CANLI YAYIN MÜHÜRÜ: SignalR servisini sisteme kaydediyoruz
 builder.Services.AddSignalR();
@@ -100,7 +103,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // 🚀 CANLI YAYIN KANALI: ChatHub yolunu mühürlüyoruz
-// ÖNEMLİ: MapControllerRoute'dan önce gelmesi daha sağlıklıdır.
 app.MapHub<ChatHub>("/chatHub");
 
 app.MapControllerRoute(

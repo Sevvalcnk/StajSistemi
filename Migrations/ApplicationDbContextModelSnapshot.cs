@@ -190,11 +190,20 @@ namespace StajSistemi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AcademicYear")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
                     b.Property<int?>("AdvisorId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("BirthDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("BirthPlace")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CVPath")
                         .HasColumnType("nvarchar(max)");
@@ -205,12 +214,27 @@ namespace StajSistemi.Migrations
                     b.Property<int?>("CityId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CompanyName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanySector")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyTaxNumber")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DegreeType")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("DepartmentId")
                         .HasColumnType("int");
+
+                    b.Property<string>("DepartmentName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("EducationSummary")
                         .HasColumnType("nvarchar(max)");
@@ -221,6 +245,9 @@ namespace StajSistemi.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("FacultyName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
@@ -275,6 +302,9 @@ namespace StajSistemi.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
+                    b.Property<string>("UniversityName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -299,10 +329,13 @@ namespace StajSistemi.Migrations
                         new
                         {
                             Id = 1,
+                            AcademicYear = "2025-2026",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "1b6a7cb7-d454-4e6b-b3db-e1eaa5151a8b",
+                            ConcurrencyStamp = "474d0de4-5769-4fff-87bb-935f440a4251",
+                            DepartmentName = "Yönetim Paneli",
                             Email = "admin@stajsistemi.com",
                             EmailConfirmed = true,
+                            FacultyName = "Ayancık Meslek Yüksekokulu",
                             FirstName = "Süper",
                             FullName = "Süper Admin",
                             IsDeleted = false,
@@ -310,41 +343,13 @@ namespace StajSistemi.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@STAJSISTEMI.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAED/dtSEsHGv0/sirVoPowuM0IsYaWKq7AXwaO7mhAiIMeLAM2L72ZPIF9Y5ZZzJGaA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEA9ouE+kgynRF7qas3jlh5oIF8iFQcfuY9EdPo4JLA8DQLU8v74gPqYud8iIz+LW6Q==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "bb3e0c38-c330-47ea-8b16-c4d93ab0c8d4",
+                            SecurityStamp = "2c0e1df2-66a4-4f38-82db-8c6f8493e3de",
                             TwoFactorEnabled = false,
+                            UniversityName = "Sinop Üniversitesi",
                             UserName = "admin"
                         });
-                });
-
-            modelBuilder.Entity("StajSistemi.Models.Application", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AppUserId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ApplicationDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("InternshipId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppUserId");
-
-                    b.HasIndex("InternshipId");
-
-                    b.ToTable("Application");
                 });
 
             modelBuilder.Entity("StajSistemi.Models.ChatMessage", b =>
@@ -400,6 +405,122 @@ namespace StajSistemi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Cities");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Sinop"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Samsun"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "İstanbul"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Ankara"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "İzmir"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Kocaeli"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Bursa"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Sakarya"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Kastamonu"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Eskişehir"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Ordu"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Aydın"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "Trabzon"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "Muğla"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "Antalya"
+                        });
+                });
+
+            modelBuilder.Entity("StajSistemi.Models.DailyReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AppUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DayNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("InternshipApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.HasIndex("InternshipApplicationId");
+
+                    b.ToTable("DailyReports", (string)null);
                 });
 
             modelBuilder.Entity("StajSistemi.Models.Department", b =>
@@ -432,27 +553,37 @@ namespace StajSistemi.Migrations
                         new
                         {
                             Id = 3,
-                            DepartmentName = "Bilgisayar Programcılığı"
+                            DepartmentName = "Dış Ticaret Programı"
                         },
                         new
                         {
                             Id = 4,
-                            DepartmentName = "Muhasebe ve Vergi Uygulamaları"
+                            DepartmentName = "Kontrol ve Otomasyon Teknolojisi Programı"
                         },
                         new
                         {
                             Id = 5,
-                            DepartmentName = "Mekatronik"
+                            DepartmentName = "Ormancılık ve Orman Teknolojisi Programı"
                         },
                         new
                         {
                             Id = 6,
-                            DepartmentName = "Grafik Tasarımı"
+                            DepartmentName = "İç Mekan Tasarım Programı"
                         },
                         new
                         {
                             Id = 7,
-                            DepartmentName = "Lojistik"
+                            DepartmentName = "Lojistik Programı"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            DepartmentName = "Yapay Zeka"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            DepartmentName = "Dijital Oyun Tasarımı ve Geliştirme"
                         });
                 });
 
@@ -526,7 +657,8 @@ namespace StajSistemi.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal>("MinGPA")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(3, 2)
+                        .HasColumnType("decimal(3,2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -538,8 +670,8 @@ namespace StajSistemi.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -572,18 +704,26 @@ namespace StajSistemi.Migrations
                     b.Property<string>("CertificatePath")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("InternshipId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("StudentIP")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("SuccessScore")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -597,6 +737,40 @@ namespace StajSistemi.Migrations
                         });
 
                     b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("StajSistemi.Models.InternshipApplicationLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ChangeDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ChangedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NewStatus")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OldStatus")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId");
+
+                    b.ToTable("InternshipApplicationLogs");
                 });
 
             modelBuilder.Entity("StajSistemi.Models.LoginLog", b =>
@@ -687,37 +861,18 @@ namespace StajSistemi.Migrations
                     b.Navigation("Department");
                 });
 
-            modelBuilder.Entity("StajSistemi.Models.Application", b =>
-                {
-                    b.HasOne("StajSistemi.Models.AppUser", "AppUser")
-                        .WithMany("Applications")
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StajSistemi.Models.Internship", "Internship")
-                        .WithMany()
-                        .HasForeignKey("InternshipId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AppUser");
-
-                    b.Navigation("Internship");
-                });
-
             modelBuilder.Entity("StajSistemi.Models.ChatMessage", b =>
                 {
                     b.HasOne("StajSistemi.Models.AppUser", "Receiver")
                         .WithMany()
                         .HasForeignKey("ReceiverId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("StajSistemi.Models.AppUser", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("StajSistemi.Models.Internship", "SuggestedInternship")
@@ -729,6 +884,25 @@ namespace StajSistemi.Migrations
                     b.Navigation("Sender");
 
                     b.Navigation("SuggestedInternship");
+                });
+
+            modelBuilder.Entity("StajSistemi.Models.DailyReport", b =>
+                {
+                    b.HasOne("StajSistemi.Models.AppUser", "AppUser")
+                        .WithMany()
+                        .HasForeignKey("AppUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("StajSistemi.Models.InternshipApplication", "InternshipApplication")
+                        .WithMany("DailyReports")
+                        .HasForeignKey("InternshipApplicationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("AppUser");
+
+                    b.Navigation("InternshipApplication");
                 });
 
             modelBuilder.Entity("StajSistemi.Models.Internship", b =>
@@ -757,7 +931,7 @@ namespace StajSistemi.Migrations
             modelBuilder.Entity("StajSistemi.Models.InternshipApplication", b =>
                 {
                     b.HasOne("StajSistemi.Models.AppUser", "AppUser")
-                        .WithMany()
+                        .WithMany("Applications")
                         .HasForeignKey("AppUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -771,6 +945,17 @@ namespace StajSistemi.Migrations
                     b.Navigation("AppUser");
 
                     b.Navigation("Internship");
+                });
+
+            modelBuilder.Entity("StajSistemi.Models.InternshipApplicationLog", b =>
+                {
+                    b.HasOne("StajSistemi.Models.InternshipApplication", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Application");
                 });
 
             modelBuilder.Entity("StajSistemi.Models.AppUser", b =>
@@ -788,6 +973,11 @@ namespace StajSistemi.Migrations
             modelBuilder.Entity("StajSistemi.Models.Department", b =>
                 {
                     b.Navigation("Students");
+                });
+
+            modelBuilder.Entity("StajSistemi.Models.InternshipApplication", b =>
+                {
+                    b.Navigation("DailyReports");
                 });
 #pragma warning restore 612, 618
         }

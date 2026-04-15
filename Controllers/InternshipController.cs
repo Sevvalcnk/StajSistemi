@@ -6,7 +6,7 @@ using StajSistemi.data;
 using StajSistemi.Models;
 using System.IO;
 using System.Linq;
-using Microsoft.Extensions.Caching.Memory; // ✅ MÜHÜR: Önbellek kütüphanesi eklendi
+using Microsoft.Extensions.Caching.Memory;
 
 namespace StajSistemi.Controllers
 {
@@ -15,23 +15,21 @@ namespace StajSistemi.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
-        private readonly IMemoryCache _cache; // ✅ MÜHÜR: Hafıza motoru alanı açıldı
+        private readonly IMemoryCache _cache;
 
         public InternshipController(ApplicationDbContext context, UserManager<AppUser> userManager, IMemoryCache cache)
         {
             _context = context;
             _userManager = userManager;
-            _cache = cache; // ✅ MÜHÜR: Motor içeriye (Constructor) alındı
+            _cache = cache;
         }
 
-        // --- 1. LİSTELEME: Şehir ve Bölüm Zekası ile Güçlendirildi ---
+        // --- 1. LİSTELEME: Akıllı Sıralama ve Akıllı Filtre Kapısı ---
         [HttpGet]
         public async Task<IActionResult> Index(int? departmentId)
         {
-            // 🛠️ KRİTİK HATA DÜZELTMESİ: Metin olarak gelen ID'yi sayıya çeviriyoruz
             var userIdString = _userManager.GetUserId(User);
 
-            // Kullanıcı verisini ve şehir bilgisini nesne olarak çekiyoruz
             AppUser user = null;
             if (!string.IsNullOrEmpty(userIdString) && int.TryParse(userIdString, out int userId))
             {
@@ -43,32 +41,29 @@ namespace StajSistemi.Controllers
             var query = _context.Internships
                 .Include(i => i.Department)
                 .Include(i => i.City)
-                .Where(x => !x.IsDeleted && x.Status == "Aktif");
+                .Where(x => !x.IsDeleted && x.Status == ApplicationStatus.Active);
 
-            // 🧠 AKILLI SIRALAMA (Matching): 
-            // Eğer öğrencinin şehri (user.CityId) ilanın şehriyle (x.CityId) eşleşiyorsa en üste al!
             if (user != null && user.CityId != 0)
             {
                 query = query.OrderByDescending(x => x.CityId == user.CityId)
                              .ThenByDescending(x => x.CreatedDate);
 
-                ViewBag.SpecialMessage = $"Kardaşım, {user.City?.Name} şehrindeki ve bölümüne uygun ilanları senin için önceliklendirdim! 🛡️";
+                ViewBag.SpecialMessage = $"Kardaşım, {user.City?.Name} şehrindeki ilanları senin için mühürledim! 🛡️";
             }
             else
             {
                 query = query.OrderByDescending(x => x.CreatedDate);
             }
 
-            // 🧠 AKILLI TAVSİYE: Eğer tavsiyeden geliniyorsa listeyi bölüme göre süz
+            // ✅ MÜHÜR: Gelen departmentId varsa listeyi sadece o bölüme göre süzer.
             if (departmentId.HasValue)
             {
                 query = query.Where(x => x.DepartmentId == departmentId.Value);
-                ViewBag.SpecialMessage = "Bölümüne en uygun staj fırsatlarını senin için mühürledim! 🥂";
+                ViewBag.SpecialMessage = "Bölümüne en uygun staj fırsatlarını senin için süzdüm! 🥂";
             }
 
             var internships = await query.ToListAsync();
 
-            // ✅ HAFTA 4 MÜHÜRÜ: Öğrencinin hangi ilanlara başvurduğunu View tarafına fısıldıyoruz
             if (user != null)
             {
                 ViewBag.AppliedIds = await _context.InternshipApplications
@@ -80,7 +75,21 @@ namespace StajSistemi.Controllers
             return View(internships);
         }
 
-        // --- 🛡️ 2. ARŞİV SİSTEMİ: Silinen İlanları Görme ve Geri Getirme ---
+        // --- 🔍 İLAN DETAY SAYFASI ---
+        [AllowAnonymous]
+        public async Task<IActionResult> Details(int id)
+        {
+            var internship = await _context.Internships
+                .Include(i => i.Department)
+                .Include(i => i.City)
+                .FirstOrDefaultAsync(i => i.Id == id);
+
+            if (internship == null) return NotFound();
+
+            return View(internship);
+        }
+
+        // --- 🛡️ 2. ARŞİV SİSTEMİ ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpGet]
         public async Task<IActionResult> Archive()
@@ -88,7 +97,7 @@ namespace StajSistemi.Controllers
             var archived = await _context.Internships
                 .Include(i => i.Department)
                 .Include(i => i.City)
-                .Where(x => x.IsDeleted == true) // Sadece silinenleri çekiyoruz
+                .Where(x => x.IsDeleted == true)
                 .OrderByDescending(x => x.CreatedDate)
                 .ToListAsync();
 
@@ -103,22 +112,21 @@ namespace StajSistemi.Controllers
             var internship = await _context.Internships.FindAsync(id);
             if (internship != null)
             {
-                internship.IsDeleted = false; // Görünmezliği kaldırıyoruz ✅
-                internship.Status = "Aktif";   // Durumu düzelterek sisteme geri sokuyoruz
+                internship.IsDeleted = false;
+                internship.Status = ApplicationStatus.Active;
 
                 _context.Update(internship);
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "İlan başarıyla arşivden çıkarıldı ve sisteme geri döndü! 🥂🛡️";
+                TempData["SuccessMessage"] = "İlan başarıyla arşivden çıkarıldı ve tekrar yayına mühürlendi! 🥂🛡️";
             }
             return RedirectToAction(nameof(Archive));
         }
 
-        // --- 3. YENİ İLAN OLUŞTURMA (GET) ---
+        // --- 3. YENİ İLAN OLUŞTURMA ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            // 🧠 AKILLI HAFIZA (Cache): Şehirleri hafızadan alıyoruz
             if (!_cache.TryGetValue("CachedCities", out List<City> cities))
             {
                 cities = await _context.Cities.OrderBy(x => x.Name).ToListAsync();
@@ -130,7 +138,6 @@ namespace StajSistemi.Controllers
             return View();
         }
 
-        // --- 3. YENİ İLAN OLUŞTURMA (POST) ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -152,14 +159,14 @@ namespace StajSistemi.Controllers
 
                 if (gercekIsGunu < 30)
                 {
-                    ModelState.AddModelError("", $"❌ Hata: Seçtiğiniz tarihler arasında resmi tatiller ve hafta sonları hariç sadece {gercekIsGunu} iş günü var. Staj en az 30 iş günü olmalıdır!");
+                    ModelState.AddModelError("", $"❌ Hata: Seçtiğiniz tarihler arasında sadece {gercekIsGunu} iş günü var. Staj en az 30 iş günü olmalıdır!");
                     ViewBag.Departments = await _context.Departments.ToListAsync();
                     ViewBag.Cities = await _context.Cities.OrderBy(x => x.Name).ToListAsync();
                     return View(model);
                 }
 
                 model.CreatedDate = DateTime.Now;
-                model.Status = "Aktif";
+                model.Status = ApplicationStatus.Active;
                 model.IsDeleted = false;
 
                 _context.Internships.Add(model);
@@ -174,7 +181,7 @@ namespace StajSistemi.Controllers
             return View(model);
         }
 
-        // --- 4. İLAN DÜZENLEME ---
+        // --- 4. İLAN DÜZENLEME VE SİLME ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -205,7 +212,7 @@ namespace StajSistemi.Controllers
                 {
                     _context.Update(model);
                     await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "İlan başarıyla güncellendi! ✨";
+                    TempData["SuccessMessage"] = "İlan bilgileri başarıyla güncellendi! ✨";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
@@ -219,7 +226,6 @@ namespace StajSistemi.Controllers
             return View(model);
         }
 
-        // --- 🛡️ 4. İLAN SİLME (ARŞİVE KALDIRMA) ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -229,7 +235,7 @@ namespace StajSistemi.Controllers
             if (internship == null) return NotFound();
 
             internship.IsDeleted = true;
-            internship.Status = "Silindi";
+            internship.Status = ApplicationStatus.Deleted;
 
             _context.Update(internship);
             await _context.SaveChangesAsync();
@@ -238,31 +244,48 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // --- 5. BAŞVURU YAPMA (GET) ---
+        // --- 🚀 5. BAŞVURU SAYFASINI GÖSTER (GET) ---
         [Authorize(Roles = "Student")]
         [HttpGet]
         public async Task<IActionResult> Apply(int id)
         {
+            var userIdString = _userManager.GetUserId(User);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
+
             var internship = await _context.Internships
                 .Include(i => i.Department)
                 .Include(i => i.City)
-                .FirstOrDefaultAsync(i => i.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == id);
 
             if (internship == null) return NotFound();
 
-            ViewBag.Internship = internship;
+            // ✅ KRİTİK MÜHÜR: Yusuf'un (ve diğerlerinin) "Hatalı ID" sorununu burada bitiriyoruz.
+            // Sayfa her yüklendiğinde, o anki kullanıcının GERÇEK bölüm ID'sini TempData'ya taze olarak basıyoruz.
+            if (user != null)
+            {
+                TempData["UserDeptId"] = user.DepartmentId;
+                TempData.Keep("UserDeptId");
+            }
 
-            var model = new InternshipApplication { InternshipId = id };
-            return View(model);
+            // Ghost Warning Fix: Eğer öğrenci doğru ilana girmişse, eski hataları kafasından siliyoruz.
+            if (user != null && user.DepartmentId == internship.DepartmentId)
+            {
+                TempData["WrongDepartment"] = null;
+                TempData["ErrorMessage"] = null;
+            }
+
+            return View(internship);
         }
 
-        // --- 🚀 5. BAŞVURU YAPMA (POST): AKILLI TAVSİYE, KONTENJAN VE LOGLAR ---
+        // --- 🚀 5. BAŞVURU YAPMA (POST) ---
         [Authorize(Roles = "Student")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Apply(int internshipId, IFormFile cvFile, IFormFile certFile)
         {
-            var user = await _userManager.GetUserAsync(User);
+            var currentUserId = int.Parse(_userManager.GetUserId(User));
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId);
+
             if (user == null) return Challenge();
 
             var internship = await _context.Internships
@@ -271,16 +294,31 @@ namespace StajSistemi.Controllers
 
             if (internship == null || internship.Quota <= 0)
             {
-                TempData["ErrorMessage"] = "Kontenjan dolu veya ilan kaldırılmış!";
+                TempData["ErrorMessage"] = "Üzgünüz, kontenjan dolmuş veya ilan kaldırılmış!";
                 return RedirectToAction(nameof(Index));
             }
 
+            // ✅ AKILLI BÖLÜM KONTROLÜ (Hata anında Yusuf'un taze ID'sini hafızada tut)
             if (user.DepartmentId != internship.DepartmentId)
             {
                 TempData["WrongDepartment"] = true;
-                TempData["UserDeptId"] = user.DepartmentId;
-                TempData["ErrorMessage"] = "Bu ilan senin bölümünle ( " + internship.Department?.DepartmentName + " ) uyuşmuyor. Senin için uygun önerilerim var! 🛡️";
+                TempData["UserDeptId"] = user.DepartmentId; // 🛡️ BU SATIR HAYATİ!
+                TempData["ErrorMessage"] = "Bu ilan senin bölümünle uyuşmuyor kardaşım! 🛡️";
+                return RedirectToAction("Apply", new { id = internshipId });
+            }
 
+            // ✅ GÜVENLİK RADARI: Dosya Uzantı Kontrolü
+            string[] allowedExtensions = { ".pdf", ".doc", ".docx", ".ppt", ".pptx" };
+
+            if (cvFile != null && !allowedExtensions.Contains(Path.GetExtension(cvFile.FileName).ToLower()))
+            {
+                TempData["ErrorMessage"] = "❌ Geçersiz format! Özgeçmiş için sadece PDF veya Word kabul edilir.";
+                return RedirectToAction("Apply", new { id = internshipId });
+            }
+
+            if (certFile != null && !allowedExtensions.Contains(Path.GetExtension(certFile.FileName).ToLower()))
+            {
+                TempData["ErrorMessage"] = "❌ Geçersiz format! Sertifika için sadece PDF, Word veya PPT kabul edilir.";
                 return RedirectToAction("Apply", new { id = internshipId });
             }
 
@@ -289,48 +327,18 @@ namespace StajSistemi.Controllers
 
             if (alreadyApplied)
             {
-                TempData["ErrorMessage"] = "Bu ilana zaten başvurunuz bulunuyor!";
+                TempData["ErrorMessage"] = "Bu ilana zaten aktif bir başvurunuz bulunuyor!";
                 return RedirectToAction(nameof(Index));
             }
 
-            string[] allowedExtensions = { ".pdf", ".jpg", ".png", ".doc", ".docx" };
-            long maxFileSize = 5 * 1024 * 1024;
-
-            if (cvFile != null)
-            {
-                var ext = Path.GetExtension(cvFile.FileName).ToLower();
-                if (!allowedExtensions.Contains(ext) || cvFile.Length > maxFileSize)
-                {
-                    TempData["ErrorMessage"] = "CV formatı geçersiz veya 5MB'dan büyük! 🛡️";
-                    return RedirectToAction("Apply", new { id = internshipId });
-                }
-            }
-            if (certFile != null)
-            {
-                var ext = Path.GetExtension(certFile.FileName).ToLower();
-                if (!allowedExtensions.Contains(ext) || certFile.Length > maxFileSize)
-                {
-                    TempData["ErrorMessage"] = "Sertifika formatı geçersiz veya 5MB'dan büyük! 🛡️";
-                    return RedirectToAction("Apply", new { id = internshipId });
-                }
-            }
-
-            // Dosya Kayıt ve GUID İsimlendirme
             string cvFileName = cvFile != null ? await SaveFileAsync(cvFile, "cv") : null;
             string certFileName = certFile != null ? await SaveFileAsync(certFile, "certificates") : null;
 
-            // ✅ HAFTA 3 & 5 MÜHÜRÜ: IP Takibi ve Dosya Loglarını Kaydet
             string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+            if (cvFileName != null) _context.FileLogs.Add(new FileLog { AppUserId = user.Id, FileName = cvFileName, FileType = "Özgeçmiş", UploadTime = DateTime.Now, IpAddress = userIp });
+            if (certFileName != null) _context.FileLogs.Add(new FileLog { AppUserId = user.Id, FileName = certFileName, FileType = "Sertifika", UploadTime = DateTime.Now, IpAddress = userIp });
 
-            if (cvFileName != null)
-            {
-                _context.FileLogs.Add(new FileLog { AppUserId = user.Id, FileName = cvFileName, FileType = "CV", UploadTime = DateTime.Now, IpAddress = userIp });
-            }
-            if (certFileName != null)
-            {
-                _context.FileLogs.Add(new FileLog { AppUserId = user.Id, FileName = certFileName, FileType = "Sertifika", UploadTime = DateTime.Now, IpAddress = userIp });
-            }
-
+            // ✅ BAŞARI SKORU HESAPLAMA MÜHÜRÜ
             var application = new InternshipApplication
             {
                 AppUserId = user.Id,
@@ -338,73 +346,68 @@ namespace StajSistemi.Controllers
                 CVPath = cvFileName,
                 CertificatePath = certFileName,
                 ApplicationDate = DateTime.Now,
-                Status = "Beklemede",
-                IsDeleted = false
+                Status = ApplicationStatus.Pending,
+                IsDeleted = false,
+                SuccessScore = (user.GPA ?? 0) * 100
             };
 
-            internship.Quota -= 1; // ✅ Kontenjan Düştü!
+            internship.Quota -= 1;
             _context.InternshipApplications.Add(application);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Başvurunuz başarıyla mühürlendi! 🥂🔥";
+            TempData["SuccessMessage"] = "Staj başvurunuz başarıyla mühürlendi! Başarılar dileriz. 🥂🔥";
             return RedirectToAction(nameof(Index));
         }
 
-        // --- ✅ 6. BAŞVURU DURUMU GÜNCELLEME ---
+        // --- ✅ 6. DURUM GÜNCELLEME (Kara Kutu Loglama ve Kontenjan Yönetimi) ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateStatus(int id, string status)
+        public async Task<IActionResult> UpdateStatus(int id, ApplicationStatus status)
         {
-            if (string.IsNullOrEmpty(status))
-            {
-                TempData["ErrorMessage"] = "Hata: Durum bilgisi mühürlenemedi!";
-                return RedirectToAction(nameof(Applications));
-            }
-
             var application = await _context.InternshipApplications
                 .Include(a => a.Internship).ThenInclude(i => i.City)
                 .FirstOrDefaultAsync(a => a.Id == id);
 
             if (application == null) return NotFound();
 
-            if (status == "Reddedildi" && application.Status != "Reddedildi")
+            var statusLog = new InternshipApplicationLog
             {
+                ApplicationId = application.Id,
+                OldStatus = application.Status,
+                NewStatus = status,
+                ChangedBy = User.Identity?.Name ?? "Yetkili",
+                ChangeDate = DateTime.Now,
+                Note = "Başvuru durumu sistem üzerinden güncellendi."
+            };
+
+            if (status == ApplicationStatus.Rejected && application.Status != ApplicationStatus.Rejected)
                 application.Internship.Quota += 1;
-            }
-            else if (status == "Onaylandı" && application.Status == "Reddedildi")
-            {
-                if (application.Internship.Quota > 0)
-                {
-                    application.Internship.Quota -= 1;
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Kontenjan dolduğu için bu başvuru onaylanamıyor!";
-                    return RedirectToAction(nameof(Applications));
-                }
-            }
+            else if (status == ApplicationStatus.Approved && application.Status == ApplicationStatus.Rejected)
+                application.Internship.Quota -= 1;
 
             application.Status = status;
+            _context.InternshipApplicationLogs.Add(statusLog);
+
             _context.Update(application);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Başvuru durumu '{status}' olarak mühürlendi! 🥂";
+            TempData["SuccessMessage"] = "Öğrenci başvuru durumu başarıyla güncellendi ve mühürlendi! 🥂";
             return RedirectToAction(nameof(Applications));
         }
 
-        // --- LİSTELEME METOTLARI ---
+        // --- LİSTELEME VE YARDIMCI METOTLAR ---
         [Authorize(Roles = "Admin,Advisor")]
         public async Task<IActionResult> Applications()
         {
-            var applications = await _context.InternshipApplications
+            var apps = await _context.InternshipApplications
                 .Include(a => a.Internship).ThenInclude(i => i.Department)
                 .Include(a => a.Internship).ThenInclude(i => i.City)
                 .Include(a => a.AppUser)
                 .Where(a => !a.IsDeleted)
-                .OrderByDescending(a => a.ApplicationDate)
+                .OrderByDescending(a => a.SuccessScore)
                 .ToListAsync();
-            return View(applications);
+            return View(apps);
         }
 
         [Authorize(Roles = "Student")]
@@ -419,28 +422,19 @@ namespace StajSistemi.Controllers
             return View(myApps);
         }
 
-        // --- 🛠️ YARDIMCI METOTLAR: RESMİ TATİLLER VE DOSYA KAYIT ---
         private int IsGunuHesapla(DateTime baslangic, DateTime bitis, int haftalikGun)
         {
-            List<DateTime> tatiller = new List<DateTime>
-            {
-                new DateTime(2026, 1, 1),
-                new DateTime(2026, 3, 20), new DateTime(2026, 3, 21), new DateTime(2026, 3, 22),
-                new DateTime(2026, 4, 23),
-                new DateTime(2026, 5, 1),
-                new DateTime(2026, 5, 19),
-                new DateTime(2026, 5, 27), new DateTime(2026, 5, 28), new DateTime(2026, 5, 29), new DateTime(2026, 5, 30),
-                new DateTime(2026, 7, 15),
-                new DateTime(2026, 8, 30),
-                new DateTime(2026, 10, 29)
+            List<DateTime> tatiller = new List<DateTime> {
+                new DateTime(2026, 1, 1), new DateTime(2026, 3, 20), new DateTime(2026, 4, 23),
+                new DateTime(2026, 5, 1), new DateTime(2026, 5, 19), new DateTime(2026, 7, 15),
+                new DateTime(2026, 8, 30), new DateTime(2026, 10, 29)
             };
-
             int toplamIsGunu = 0;
             for (DateTime date = baslangic; date <= bitis; date = date.AddDays(1))
             {
                 if (date.DayOfWeek == DayOfWeek.Sunday) continue;
                 if (haftalikGun == 5 && date.DayOfWeek == DayOfWeek.Saturday) continue;
-                if (tatiller.Contains(date.Date)) continue;
+                if (tatiller.Any(t => t.Date == date.Date)) continue;
                 toplamIsGunu++;
             }
             return toplamIsGunu;
@@ -451,10 +445,7 @@ namespace StajSistemi.Controllers
             string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName).ToLower();
             string uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads", subFolder);
             if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
-            using (var stream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
+            using (var stream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.Create)) { await file.CopyToAsync(stream); }
             return fileName;
         }
     }

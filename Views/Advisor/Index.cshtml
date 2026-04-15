@@ -5,11 +5,9 @@
 }
 
 <style>
-    /* ✅ Profesyonel Dashboard Mühürleri */
     :root {
         --primary-color: #4e73df;
         --success-color: #1cc88a;
-        --dark-bg: #2c3e50;
     }
 
     .tech-card {
@@ -22,144 +20,157 @@
     .stat-card {
         border-left: 5px solid;
         padding: 20px;
+        transition: 0.3s;
     }
 
-    .filter-section {
-        background: #f8f9fc;
-        border-radius: 15px;
-        border: 1px solid #e3e6f0;
-    }
-
-    .table-container {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-    }
-
-    .btn-action {
-        width: 35px;
-        height: 35px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        transition: 0.2s;
-    }
-
-        .btn-action:hover {
-            transform: scale(1.1);
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
         }
+
+    .bg-success-subtle {
+        background-color: #e8f5e9 !important;
+    }
+
+    .bg-danger-subtle {
+        background-color: #ffebee !important;
+    }
+
+    .bg-warning-subtle {
+        background-color: #fff9c4 !important;
+    }
+
+    .bg-info-subtle {
+        background-color: #e3f2fd !important;
+    }
 
     .gpa-badge {
         font-weight: 800;
-        width: 50px;
-        height: 50px;
+        width: 45px;
+        height: 45px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 12px;
+        border-radius: 10px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        font-size: 0.9rem;
+    }
+
+    .btn-view-file {
+        background-color: #4e73df;
+        color: white;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: 0.3s;
+        border: none;
+    }
+
+        .btn-view-file:hover {
+            background-color: #2e59d9;
+            color: white;
+            transform: scale(1.05);
+        }
+
+    /* 🛡️ YENİ: DASHBOARD BUTON STİLİ */
+    .btn-view-dashboard {
+        background-color: #1cc88a;
+        color: white;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: 0.3s;
+        border: none;
+    }
+
+        .btn-view-dashboard:hover {
+            background-color: #17a673;
+            color: white;
+            transform: scale(1.05);
+        }
+
+    .avatar-text {
+        font-weight: 700;
+        color: #4e73df;
     }
 </style>
 
 <div class="container-fluid py-4 px-4 techNode-fade-in">
 
-    @* --- 📊 ÜST İSTATİSTİK KARTLARI --- *@
+    @* --- 📊 İSTATİSTİKLER --- *@
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
             <div class="card tech-card stat-card border-primary shadow-sm h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1 small">Toplam Kayıtlı Öğrenci</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count</div>
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1 small">Sorumlu Olduğum Öğrenciler</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">@Model.Count</div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300 opacity-25"></i>
-                        </div>
+                        <div class="col-auto"><i class="fas fa-user-graduate fa-2x text-gray-300 opacity-25"></i></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
             <div class="card tech-card stat-card border-success shadow-sm h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1 small">Yeni Başvurular</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.NewApplicationsCount</div>
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1 small">Bekleyen Başvurular</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">@ViewBag.NewApplicationsCount</div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-file-alt fa-2x text-gray-300 opacity-25"></i>
-                        </div>
+                        <div class="col-auto"><i class="fas fa-hourglass-half fa-2x text-gray-300 opacity-25"></i></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
             <div class="card tech-card stat-card border-info shadow-sm h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1 small">Aktif Stajyerler</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count(x => x.InternshipStatus == "Onaylandı")</div>
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1 small">Onaylı Stajyerler</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">@Model.Count(x => x.InternshipStatus == "Onaylandı")</div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-user-check fa-2x text-gray-300 opacity-25"></i>
-                        </div>
+                        <div class="col-auto"><i class="fas fa-check-double fa-2x text-gray-300 opacity-25"></i></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    @* --- 🔍 AKILLI FİLTRELEME PANELİ --- *@
-    <div class="card tech-card shadow-sm mb-4 filter-section">
+    @* --- 🔍 FİLTRELEME --- *@
+    <div class="card tech-card shadow-sm mb-4 border" style="background: #f8f9fc;">
         <div class="card-body p-4">
-            <h5 class="fw-bold text-dark mb-4"><i class="fas fa-sliders-h me-2"></i> Akıllı Filtreleme Sistemi</h5>
+            <h6 class="fw-bold text-dark mb-3"><i class="fas fa-search me-2 text-primary"></i>Öğrenci Sorgulama</h6>
             <form method="get" class="row g-3">
-                <div class="col-lg-3 col-md-6">
-                    <label class="form-label small fw-bold">Şehir</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-map-marker-alt text-muted"></i></span>
-                        <select name="cityId" class="form-select border-start-0 shadow-none" asp-items="ViewBag.Cities">
-                            <option value="">Tüm Şehirler</option>
-                        </select>
-                    </div>
+                <div class="col-lg-3">
+                    <select name="cityId" class="form-select shadow-none border-secondary-subtle" asp-items="ViewBag.Cities">
+                        <option value="">Tüm Şehirler</option>
+                    </select>
                 </div>
-                <div class="col-lg-3 col-md-6">
-                    <label class="form-label small fw-bold">Bölüm</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-graduation-cap text-muted"></i></span>
-                        <select name="departmentId" class="form-select border-start-0 shadow-none" asp-items="ViewBag.Departments">
-                            <option value="">Tüm Bölümler</option>
-                        </select>
-                    </div>
+                <div class="col-lg-3">
+                    <select name="departmentId" class="form-select shadow-none border-secondary-subtle" asp-items="ViewBag.Departments">
+                        <option value="">Tüm Bölümler</option>
+                    </select>
                 </div>
-                <div class="col-lg-3 col-md-6">
-                    <label class="form-label small fw-bold">Minimum GPA</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-star text-warning"></i></span>
-                        <input type="number" name="minGpa" step="0.1" class="form-control border-start-0 shadow-none" placeholder="Örn: 3.0" />
-                    </div>
+                <div class="col-lg-3">
+                    <input type="number" name="minGpa" step="0.1" class="form-control shadow-none border-secondary-subtle" placeholder="Min. GPA" />
                 </div>
-                <div class="col-lg-3 col-md-6 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm py-2">
-                        <i class="fas fa-filter me-2"></i> Sonuçları Getir
-                    </button>
+                <div class="col-lg-3">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm">Filtrele</button>
                 </div>
             </form>
         </div>
     </div>
 
-    @* --- 📊 ÖĞRENCİ LİSTESİ TABLOSU --- *@
-    <div class="card tech-card shadow-sm table-container">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Öğrenci Veritabanı</h6>
+    @* --- 📊 TABLO --- *@
+    <div class="card tech-card shadow-lg overflow-hidden border">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+            <h6 class="m-0 font-weight-bold text-primary">Öğrenci Yönetim Listesi</h6>
             <a asp-action="InternshipApplications" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
-                <i class="fas fa-bell me-1"></i> Bekleyen Başvurular
+                <i class="fas fa-bell me-1"></i> Başvuruları Yönet
             </a>
         </div>
         <div class="card-body p-0">
@@ -167,11 +178,11 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
-                            <th class="ps-4">Öğrenci Profili</th>
-                            <th>Akademik Bilgi</th>
-                            <th class="text-center">Başarı Skoru</th>
+                            <th class="ps-4">Öğrenci Bilgileri</th>
+                            <th>Bölüm / Şehir</th>
+                            <th class="text-center">Not Ort.</th>
                             <th class="text-center">Durum</th>
-                            <th class="text-end pe-4">İşlemler</th>
+                            <th class="text-end pe-4">Süreç & Dosya İşlemleri</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -180,47 +191,51 @@
                             <tr>
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-circle me-3">
-                                            <img src="https://ui-avatars.com/api/?name=@(student.Name)+@(student.Surname)&background=random&size=45" class="rounded-circle" />
-                                        </div>
+                                        <img src="https://ui-avatars.com/api/?name=@(student.Name)+@(student.Surname)&background=random&size=45" class="rounded-circle me-3 shadow-sm" />
                                         <div>
                                             <div class="fw-bold text-dark">@student.Name @student.Surname</div>
-                                            <small class="text-muted">No: @student.StudentNo</small>
+                                            <small class="text-muted fw-bold">No: @student.StudentNo</small>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     <div class="fw-bold small">@student.DepartmentName</div>
-                                    <div class="text-muted" style="font-size: 0.75rem;">
-                                        <i class="fas fa-location-arrow me-1"></i> @(student.CityName ?? "Bilinmiyor")
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="d-flex justify-content-center">
-                                        @{
-                                            var gpaColor = student.GPA >= 3.0 ? "bg-success text-white" : (student.GPA >= 2.0 ? "bg-warning text-dark" : "bg-danger text-white");
-                                        }
-                                        <div class="gpa-badge @gpaColor small">@student.GPA</div>
-                                    </div>
+                                    <div class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i> @(student.CityName ?? "Belirtilmemiş")</div>
                                 </td>
                                 <td class="text-center">
                                     @{
-                                        var statusIcon = student.InternshipStatus == "Onaylandı" ? "fa-check-circle text-success" :
-                                        (student.InternshipStatus == "Beklemede" ? "fa-clock text-warning" : "fa-times-circle text-danger");
+                                        var gpaVal = Convert.ToDouble(student.GPA ?? 0);
+                                        var gpaColor = gpaVal >= 3.0 ? "bg-success text-white" : (gpaVal >= 2.0 ? "bg-warning text-dark" : "bg-danger text-white");
                                     }
-                                    <span class="small fw-bold">
-                                        <i class="fas @statusIcon me-1"></i> @student.InternshipStatus
+                                    <div class="d-flex justify-content-center">
+                                        <div class="gpa-badge @gpaColor shadow-sm">@student.GPA</div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @(student.InternshipStatus == "Onaylandı" ? "bg-success-subtle text-success" : (student.InternshipStatus == "Beklemede" ? "bg-warning-subtle text-warning" : "bg-danger-subtle text-danger")) border rounded-pill px-3 py-2 fw-bold">
+                                        @student.InternshipStatus
                                     </span>
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="d-flex justify-content-end gap-2">
-                                        <a asp-action="StudentDetails" asp-route-id="@student.Id" class="btn btn-action btn-outline-primary" title="İncele">
-                                            <i class="fas fa-id-card"></i>
+                                        @* 🛡️ 🚀 YENİ MÜHÜR: Hocanın öğrenci Dashboard çizelgesini görebilmesi için *@
+                                        <a asp-action="ViewStudentDashboard" asp-route-studentId="@student.Id" class="btn btn-view-dashboard btn-sm px-3 shadow-sm" title="Süreç Çizelgesini İzle">
+                                            <i class="fas fa-chart-line me-1"></i> İzle
                                         </a>
-                                        <form asp-action="Delete" asp-route-id="@student.Id" method="post" onsubmit="return confirm('Arşive kaldırmak istediğinize emin misiniz?')">
+
+                                        @* 🚀 ✅ Dosyayı Gör butonu (Kapak sayfası ve 31 sayfa PDF) *@
+                                        <a asp-action="ViewStudentFile" asp-route-studentId="@student.Id" class="btn btn-view-file btn-sm px-3 shadow-sm">
+                                            <i class="fas fa-file-invoice me-1"></i> Dosyayı Gör
+                                        </a>
+
+                                        <a asp-action="StudentDetails" asp-route-id="@student.Id" class="btn btn-outline-secondary btn-sm rounded-circle" title="Hızlı Detay">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+
+                                        <form asp-action="Delete" asp-route-id="@student.Id" method="post" onsubmit="return confirm('Öğrenci arşive kaldırılsın mı?')">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-action btn-outline-danger" title="Arşivle">
-                                                <i class="fas fa-archive"></i>
+                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle">
+                                                <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </form>
                                     </div>

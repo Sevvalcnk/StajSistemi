@@ -1,47 +1,320 @@
-﻿@model StajSistemi.Models.InternshipApplication
-
+﻿@using StajSistemi.Models
+@model StajSistemi.DTOs.StudentDto
 @{
-    ViewData["Title"] = "Başvuru Detayı";
+    var ilan = ViewBag.SelectedInternship as StajSistemi.Models.Internship;
+    var app = ViewBag.ApplicationDetail as StajSistemi.Models.InternshipApplication;
+    var appliedIds = ViewBag.AppliedInternshipIds as List<int> ?? new List<int>();
+
+    // 🛡️ MÜHÜR: Buradaki isApplied artık Controller'dan gelen "Kesin Karar"dır.
+    bool isApplied = ViewBag.IsApplied ?? false;
+    ViewData["Title"] = isApplied ? "Başvuru Sonucu" : "Staj Başvurusu";
 }
 
-<div class="container py-5">
-    <div class="glass-card p-5 shadow-lg border-0 rounded-4 bg-white mx-auto" style="max-width: 800px;">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-            <h3 class="fw-bold text-dark mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Başvuru Detayı</h3>
-            <span class="badge @(Model.Status == "Onaylandı" ? "bg-success" : "bg-warning text-dark") px-4 py-2 rounded-pill shadow-sm">
-                @Model.Status
-            </span>
+<style>
+    :root {
+        --primary-green: #00d285;
+        --primary-blue: #4361ee;
+        --soft-bg: #f4f7fa;
+        --corp-navy: #1e293b;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--soft-bg);
+        color: #2b2d42;
+    }
+
+    .centered-wrapper {
+        max-width: 1150px;
+        margin: 0 auto;
+        padding: 40px 15px;
+    }
+
+    /* 👤 SOL TARAF: PROFİL KARTI */
+    .profile-card-side {
+        background: white;
+        border-radius: 20px;
+        padding: 25px 20px;
+        text-align: center;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.04);
+        border: none;
+    }
+
+    .profile-img-side {
+        width: 90px;
+        height: 90px;
+        border-radius: 28px;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .badge-program-fix {
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border: 1px solid #bae6fd;
+        white-space: nowrap;
+        display: inline-block;
+    }
+
+    /* 📋 SAĞ TARAF: DİNAMİK KART YAPISI */
+    .apply-card-compact {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.06);
+        border: none;
+    }
+
+    .header-info-blue {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    }
+
+    .header-info-green {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .header-info-red {
+        background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    }
+
+    .header-apply-green {
+        background: linear-gradient(135deg, #00d285 0%, #10b981 100%);
+    }
+
+    .apply-header-small {
+        padding: 30px;
+        color: white;
+        text-align: center;
+    }
+
+        .apply-header-small i {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .apply-header-small h4 {
+            font-weight: 800;
+            margin-bottom: 2px;
+            font-size: 1.35rem;
+        }
+
+    .form-section {
+        padding: 35px;
+    }
+
+    .input-wrapper-custom {
+        background: #f8fafc;
+        border: 1.5px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 12px;
+        transition: 0.3s;
+    }
+
+        .input-wrapper-custom:hover {
+            border-color: var(--primary-green);
+            background: #f0fff4;
+        }
+
+    .btn-submit-elegant {
+        background: linear-gradient(to right, #00d285, #10b981);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 12px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        width: 100%;
+        transition: 0.3s;
+    }
+
+    .map-container {
+        width: 100%;
+        height: 220px;
+        border-radius: 15px;
+        overflow: hidden;
+        border: 1px solid #cbd5e1;
+        margin-top: 15px;
+        background: #f1f5f9;
+    }
+
+    .feedback-alert {
+        border: none;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        border-left: 5px solid;
+    }
+</style>
+
+<div class="centered-wrapper">
+    <div class="row g-4 justify-content-center">
+
+        @* --- 👤 SOL TARAF: PROFİL ALANI --- *@
+        <div class="col-lg-3">
+            <div class="profile-card-side sticky-top" style="top: 20px;">
+                <div class="position-relative d-inline-block mb-3">
+                    <img src="https://ui-avatars.com/api/?name=@(Model.Name)+@(Model.Surname)&background=4361ee&color=fff&size=200" class="profile-img-side">
+                    <div class="badge bg-success position-absolute" style="bottom: 5px; right: -5px; border-radius: 8px; border: 2px solid white; padding: 4px 8px; font-size: 10px;">@(ViewBag.TotalScore ?? 350)</div>
+                </div>
+                <h6 class="fw-bold mb-1">@Model.Name @Model.Surname</h6>
+                <p class="text-muted x-small mb-3">@Model.Email</p>
+
+                <div class="text-start border-top pt-3 small">
+                    <label class="text-muted fw-bold text-uppercase" style="font-size:0.55rem;">Üniversite</label>
+                    <p class="fw-bold text-primary x-small mb-2">@(Model.UniversityName ?? "Samsun Üniversitesi")</p>
+                    <label class="text-muted fw-bold text-uppercase" style="font-size:0.55rem;">Program</label>
+                    <div class="badge-program-fix">@(Model.DepartmentName ?? "Bölüm Belirtilmedi")</div>
+                </div>
+
+                <a asp-action="Index" class="btn btn-light btn-sm w-100 rounded-pill mt-4 border x-small fw-bold">
+                    <i class="fas fa-chevron-left me-1"></i> İlanlara Geri Dön
+                </a>
+            </div>
         </div>
 
-        <div class="row g-4 mt-2">
-            <div class="col-md-6">
-                <label class="small text-muted fw-bold text-uppercase">Şirket Adı</label>
-                <h5 class="fw-bold text-dark">@(Model.Internship?.CompanyName ?? "Şirket Bilgisi Yok")</h5>
-            </div>
-            <div class="col-md-6">
-                <label class="small text-muted fw-bold text-uppercase">Departman</label>
-                <h5 class="text-dark">@(Model.Internship?.Department?.DepartmentName ?? "Genel")</h5>
-            </div>
-            <div class="col-md-6">
-                <label class="small text-muted fw-bold text-uppercase">Başvuru Tarihi</label>
-                <h5 class="text-dark"><i class="far fa-calendar-alt me-1"></i> @Model.ApplicationDate.ToString("dd MMMM yyyy")</h5>
-            </div>
-            <div class="col-md-6">
-                <label class="small text-muted fw-bold text-uppercase">Şehir</label>
-                <h5 class="text-dark"><i class="fas fa-map-marker-alt me-1"></i> @(Model.Internship?.City?.Name ?? "Konum Belirtilmemiş")</h5>
-            </div>
-        </div>
+        @* --- 📋 SAĞ TARAF: DİNAMİK İÇERİK --- *@
+        <div class="col-lg-8">
+            <div class="apply-card-compact animate__animated animate__fadeIn">
 
-        <div class="alert alert-light border rounded-4 p-4 text-dark mt-4 shadow-sm">
-            <h6 class="fw-bold"><i class="fas fa-shield-alt text-success me-2"></i>Akıllı Süreç Bilgilendirmesi:</h6>
-            <p class="mb-0 small opacity-75">Sayın @User.Identity.Name, başvurunuzun detayları yukarıdaki gibidir. Staj kabul sürecinizi "Staj Sonuçlarım" sayfasından veya danışman hocanızla mesajlaşarak anlık takip edebilirsiniz.</p>
-        </div>
+                @if (isApplied && app != null)
+                {
+                    @* 🏛️ MOD 1: BAŞVURU YAPILMIŞ - SONUÇ EKRANI *@
+                    <div class="apply-header-small @(app.Status == ApplicationStatus.Approved ? "header-info-green" : (app.Status == ApplicationStatus.Rejected ? "header-info-red" : "header-info-blue"))">
 
-        <div class="d-grid mt-5">
-            <a asp-action="Results" class="btn btn-dark rounded-pill py-2 fw-bold shadow-sm transition hover-shadow">
-                <i class="fas fa-arrow-left me-2"></i> Sonuç Listesine Geri Dön
-            </a>
+                        @* 🛡️ MÜHÜR: Kalp kaldırıldı, yerine profesyonel ikonlar (Onay: Check, Red: File/Exclamation) konuldu *@
+                        <i class="fas @(app.Status == ApplicationStatus.Approved ? "fa-check-double" : (app.Status == ApplicationStatus.Rejected ? "fa-file-signature" : "fa-clock"))"></i>
+
+                        @* 🛡️ MÜHÜR: Başlıklar profesyonel dile çevrildi *@
+                        <h4>@(app.Status == ApplicationStatus.Approved ? "Tebrikler, Başvurunuz Onaylanmıştır!" : (app.Status == ApplicationStatus.Rejected ? "Başvuru Süreci Bilgilendirmesi" : "Başvurunuz Değerlendiriliyor"))</h4>
+
+                        <p class="x-small mb-0 opacity-75 fw-bold">@ilan?.CompanyName Staj Programı</p>
+                    </div>
+
+                    <div class="form-section">
+                        @if (app.Status == ApplicationStatus.Rejected)
+                        {
+                            @* 🛡️ MÜHÜR: LİYAKATLİ RED MESAJI (Kardaşım silindi, profesyonel üslup geldi) *@
+                            <div class="feedback-alert alert-danger" style="border-left-color: #dc3545; background-color: #fff5f5;">
+                                <h6 class="fw-bold text-danger mb-2"><i class="fas fa-info-circle me-2"></i>Değerlendirme Notu:</h6>
+                                <p class="small text-dark mb-3" style="line-height: 1.7;">Bu başvurunuz mevcut kriterler çerçevesinde olumlu sonuçlanmamıştır. Ancak bu durum, yetkinliklerinize daha uygun yeni kariyer kapılarının açılması için bir hazırlık aşamasıdır. Potansiyelinize güvenin ve gelişim sürecinizi kararlılıkla sürdürün. Sizin için listelediğimiz diğer ilanları incelemenizi öneririz.</p>
+                                <a asp-action="Index" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm">Diğer İlanları Keşfet</a>
+                            </div>
+                        }
+                        else if (app.Status == ApplicationStatus.Approved)
+                        {
+                            @* ✅ MÜHÜR: LİYAKATLİ ONAY MESAJI *@
+                            <div class="feedback-alert alert-success" style="border-left-color: #198754; background-color: #f0fff4;">
+                                <h6 class="fw-bold text-success mb-2"><i class="fas fa-award me-2"></i>Danışman Notu:</h6>
+                                <p class="small text-dark mb-3" style="line-height: 1.7;">Kariyer yolculuğunuzun bu önemli basamağını liyakatle geçtiniz. Başvurunuz titizlikle incelenmiş ve onaylanmıştır. Şimdi, edindiğiniz tecrübeleri staj dosyanıza profesyonel bir disiplinle işleme vakti. Bu sürecin yetkinliklerinizi geliştireceğine inancımız tam. Başarılar dileriz!</p>
+                                <a asp-action="Documents" class="btn btn-success btn-sm rounded-pill px-4 fw-bold shadow-sm">Staj Dosyasına Git</a>
+                            </div>
+                        }
+
+                        <div class="row g-4 @(app.Status == ApplicationStatus.Rejected ? "mt-1" : "mt-2")">
+                            <div class="col-md-7 border-end">
+                                <h6 class="fw-bold text-dark border-bottom pb-2">Kurum Hakkında</h6>
+                                <p class="small text-secondary" style="line-height: 1.8;">@(ilan?.Description ?? "Kurum detayları yükleniyor...")</p>
+                            </div>
+
+                            @if (app.Status != ApplicationStatus.Rejected)
+                            {
+                                <div class="col-md-5">
+                                    <h6 class="fw-bold text-dark border-bottom pb-2">Konum Bilgisi</h6>
+                                    <div class="map-container">
+                                        @if (ilan?.City != null)
+                                        {
+                                            @* 🛡️ MÜHÜR: Harita linki milimetrik düzeltildi *@
+                                            <iframe width="100%" height="100%" frameborder="0" style="border:0"
+                                                    src="https://maps.google.com/maps?q=@(ilan.City.Name)&t=&z=14&ie=UTF8&iwloc=&output=embed"
+                                                    allowfullscreen>
+                                            </iframe>
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex align-items-center justify-content-center h-100 text-muted small">Konum verisi bulunamadı.</div>
+                                        }
+                                    </div>
+                                    <p class="x-small text-muted mt-2 text-center"><i class="fas fa-info-circle"></i> @(ilan?.City?.Name ?? "Konum Belirtilmedi")</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @* 🏛️ MOD 2: HENÜZ BAŞVURULMAMIŞ - CV VE SERTİFİKA FORMU *@
+                    <div class="header-apply-green apply-header-small">
+                        <i class="fas fa-file-signature"></i>
+                        <h4>Staj Başvurusu Yap</h4>
+                        <p class="x-small mb-0 opacity-75 fw-bold">@ilan?.CompanyName Staj Programı</p>
+                    </div>
+
+                    <div class="form-section">
+                        @if (TempData["FileError"] != null)
+                        {
+                            <div class="alert alert-danger border-0 rounded-4 mb-4 py-2 small shadow-sm">
+                                <i class="fas fa-exclamation-triangle me-2"></i> @TempData["FileError"]
+                            </div>
+                        }
+
+                        <form asp-action="ConfirmApplication" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="InternshipId" value="@ilan?.Id" />
+
+                            <div class="mb-4">
+                                <label class="small fw-bold text-dark mb-1">Güncel Özgeçmiş (CV) *</label>
+                                <div class="input-wrapper-custom">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" width="24">
+                                        <input type="file" name="CVFile" class="form-control form-control-sm border-0 bg-transparent" accept=".pdf,.doc,.docx" required />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-5">
+                                <label class="small fw-bold text-dark mb-1">Sertifika / Proje (Opsiyonel)</label>
+                                <div class="input-wrapper-custom">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="https://cdn-icons-png.flaticon.com/512/2436/2436636.png" width="24">
+                                        <input type="file" name="CertificateFile" class="form-control form-control-sm border-0 bg-transparent" accept=".pdf,.doc,.docx" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-submit-elegant">
+                                <i class="fas fa-paper-plane me-2"></i> BAŞVURUYU GÖNDER
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.addEventListener('change', function() {
+                const ext = this.value.split('.').pop().toLowerCase();
+                if (!['pdf', 'doc', 'docx'].includes(ext)) {
+                    Swal.fire({
+                        title: 'Hatalı Format! 🛡️',
+                        text: 'Lütfen akademik standartlara uygun (PDF/Word) bir belge seçiniz.',
+                        icon: 'error',
+                        confirmButtonColor: '#00d285'
+                    });
+                    this.value = '';
+                }
+            });
+        });
+    </script>
+}

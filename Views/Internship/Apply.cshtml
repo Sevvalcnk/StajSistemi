@@ -1,4 +1,4 @@
-﻿@model StajSistemi.Models.InternshipApplication
+﻿@model StajSistemi.Models.Internship
 
 @{
     ViewData["Title"] = "Staj Başvurusu";
@@ -6,61 +6,59 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-<div class="container py-5">
+<div class="container py-5 techNode-fade-in">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
 
-                @* ÜST PANEL: Tasarımın aynen korundu *@
-                <div class="card-header text-white text-center py-4" style="background: linear-gradient(to right, #11998e, #38ef7d) !important;">
-                    <i class="fas fa-file-upload fa-3x mb-3"></i>
-                    <h3 class="fw-bold mb-0">Yeni Staj Başvurusu</h3>
-                    <p class="small mb-0 opacity-75">Hafta 5: Güvenli Dosya ve Akıllı Yönlendirme</p>
+                @* ✅ ÜST PANEL: Dinamik Renk Mühürü *@
+                <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #11998e, #38ef7d) !important;">
+                    <i class="fas fa-file-signature fa-3x mb-3"></i>
+                    <h3 class="fw-bold mb-0">Staj Başvurusu</h3>
+                    <p class="small mb-0 opacity-75">@Model.CompanyName - @Model.Name</p>
                 </div>
 
                 <div class="card-body p-4 p-md-5 bg-white">
 
-                    @* 🚩 Standart Hata Mesajı *@
+                    @* 🚩 Hata Mesajı Radarı *@
                     @if (TempData["ErrorMessage"] != null)
                     {
                         <div class="alert alert-danger border-0 shadow-sm small mb-4 techNode-shake">
-                            <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
+                            <i class="fas fa-exclamation-triangle me-2"></i> @TempData["ErrorMessage"]
                         </div>
                     }
 
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm small mb-4"></div>
-
                     <form asp-action="Apply" method="post" enctype="multipart/form-data" id="applyForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="internshipId" value="@Model.Id" />
 
-                        <input type="hidden" asp-for="InternshipId" />
-
-                        @* CV YÜKLEME ALANI *@
+                        @* CV YÜKLEME *@
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-secondary">CV Dosyanız (PDF/Word)</label>
+                            <label class="form-label fw-bold text-dark">Özgeçmiş (CV)</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-file-pdf text-muted"></i></span>
+                                <span class="input-group-text bg-light border-0"><i class="fas fa-file-pdf text-danger"></i></span>
                                 <input type="file" name="cvFile" id="cvFile" class="form-control border-light bg-light" accept=".pdf,.doc,.docx" required />
                             </div>
-                            <div class="form-text small mt-1 text-muted">Maksimum 5MB (PDF veya Word seçiniz).</div>
+                            <div class="form-text small mt-1 text-muted">Sadece PDF veya Word (Maks 5MB)</div>
                         </div>
 
-                        @* SERTİFİKA YÜKLEME ALANI *@
+                        @* SERTİFİKA *@
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-secondary">Sertifika / Ek Belge (Opsiyonel)</label>
+                            <label class="form-label fw-bold text-dark">Sertifika / Proje (Opsiyonel)</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-certificate text-muted"></i></span>
-                                <input type="file" name="certFile" id="certFile" class="form-control border-light bg-light" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <span class="input-group-text bg-light border-0"><i class="fas fa-award text-warning"></i></span>
+                                <input type="file" name="certFile" id="certFile" class="form-control border-light bg-light" accept=".pdf,.doc,.docx,.ppt,.pptx" />
                             </div>
-                            <div class="form-text small mt-1 text-muted">PDF, Word veya Görsel (JPG/PNG) mühürleyin.</div>
+                            <div class="form-text small mt-1 text-muted">Sertifika veya Sunum dosyası ekleyebilirsiniz.</div>
                         </div>
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-success btn-lg rounded-pill fw-bold shadow-sm py-3 border-0"
                                     style="background: linear-gradient(to right, #11998e, #38ef7d);">
-                                <i class="fas fa-check-circle me-2"></i> Başvuruyu Sisteme Mühürle
+                                <i class="fas fa-paper-plane me-2"></i> Başvuruyu Gönder
                             </button>
                             <a asp-controller="Internship" asp-action="Index" class="btn btn-link text-muted text-decoration-none small text-center">
-                                <i class="fas fa-times me-1"></i> Başvurudan Vazgeç
+                                <i class="fas fa-arrow-left me-1"></i> İlanlara Geri Dön
                             </a>
                         </div>
                     </form>
@@ -71,69 +69,52 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-
-    @* 🛡️ PROFESYONEL BİLDİRİM VE GÜVENLİK MOTORU *@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // ✅ 1. BÖLÜM: Akıllı Tavsiye Kontrolü (Kurumsal Dil ile Güncellendi)
+        // ✅ 1. KRİTİK MÜHÜR: Akıllı Tavsiye Radarı (Döngü Kırıcı)
         @if (TempData["WrongDepartment"] != null)
         {
+            var targetDeptId = TempData["UserDeptId"]; // Öğrencinin asıl bölüm ID'si
+
             <text>
-                    Swal.fire({
-                        title: 'Bölüm Uyumluluğu Kısıtlaması 🛡️',
-                        text: 'Seçtiğiniz ilan mevcut akademik programınız ile eşleşmemektedir. Sistemimiz profilinize en uygun ilanları sizin için belirledi.',
-                        icon: 'info',
-                        showCancelButton: true,
-                        confirmButtonColor: '#11998e',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: '✅ Uygun İlanları Görüntüle',
-                        cancelButtonText: 'Kapat',
-                        backdrop: `rgba(0,0,123,0.2)`
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.href = '@Url.Action("Index", "Internship")?departmentId=@TempData["UserDeptId"]';
+                Swal.fire({
+                    title: 'Bölüm Uyuşmazlığı! 🛡️',
+                    text: 'Kardaşım bu ilan senin bölümüne uygun görünmüyor. Senin için en doğru ilanları süzmemi ister misin?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#11998e',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: '✅ Evet, Uygun İlanları Gör',
+                    cancelButtonText: 'Kapat'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // 🚀 DÖNGÜYÜ BURADA KIRIYORUZ:
+                        // Eğer targetDeptId boşsa varsayılan Index'e, doluysa filtreli Index'e yolla.
+                        const deptId = '@targetDeptId';
+                        if (deptId && deptId !== '0') {
+                            window.location.href = '/Internship/Index?departmentId=' + deptId;
+                        } else {
+                            window.location.href = '/Internship/Index';
                         }
-                    });
+                    }
+                });
             </text>
         }
 
-        // ✅ 2. BÖLÜM: Dosya Güvenlik Radarı (Senin 5MB mühürün, bozulmadı)
+        // ✅ 2. DOSYA KONTROL RADARI
         document.getElementById('applyForm').onsubmit = function (e) {
-            const docExtensions = /(\.pdf|\.doc|\.docx)$/i;
-            const certExtensions = /(\.pdf|\.doc|\.docx|\.jpg|\.jpeg|\.png)$/i;
-            const maxSize = 5 * 1024 * 1024; // 5MB
+            const allowed = /(\.pdf|\.doc|\.docx|\.ppt|\.pptx)$/i;
+            const cv = document.getElementById('cvFile').files[0];
+            const cert = document.getElementById('certFile').files[0];
 
-            const cvFile = document.getElementById('cvFile').files[0];
-            const certFile = document.getElementById('certFile').files[0];
-
-            if (cvFile) {
-                if (!docExtensions.exec(cvFile.name)) {
-                    alert('❌ Hata: CV için sadece PDF veya Word belgesi seçiniz.');
-                    e.preventDefault();
-                    return false;
-                }
-                if (cvFile.size > maxSize) {
-                    alert('❌ Hata: Dosya boyutu 5MB sınırını aşamaz!');
-                    e.preventDefault();
-                    return false;
-                }
+            if (cv && !allowed.exec(cv.name)) {
+                Swal.fire('Hata!', 'Özgeçmiş formatı uygun değil!', 'error');
+                e.preventDefault(); return false;
             }
-
-            if (certFile) {
-                if (!certExtensions.exec(certFile.name)) {
-                    alert('❌ Hata: Sertifika için PDF, Word veya Resim kullanınız.');
-                    e.preventDefault();
-                    return false;
-                }
-                if (certFile.size > maxSize) {
-                    alert('❌ Hata: Sertifika dosyası 5MB sınırını aşamaz!');
-                    e.preventDefault();
-                    return false;
-                }
+            if (cert && !allowed.exec(cert.name)) {
+                Swal.fire('Hata!', 'Sertifika formatı uygun değil!', 'error');
+                e.preventDefault(); return false;
             }
             return true;
         };

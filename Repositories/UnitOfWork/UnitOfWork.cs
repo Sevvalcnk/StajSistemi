@@ -15,9 +15,10 @@ namespace StajSistemi.Repositories.Concrete
         private IGenericRepository<InternshipApplication> _internshipApplications;
         private IGenericRepository<Internship> _internships;
         private IGenericRepository<City> _cityRepository;
-
-        // ✅ YENİ MÜHÜR: Mesajlaşma çekmecesi değişkeni
         private IGenericRepository<ChatMessage> _chatMessages;
+
+        // 📝 4. ADIM MÜHÜRÜ: Günlük raporlar çekmecesi değişkeni
+        private IGenericRepository<DailyReport> _dailyReports;
 
         public UnitOfWork(ApplicationDbContext context)
         {
@@ -30,9 +31,10 @@ namespace StajSistemi.Repositories.Concrete
         public IGenericRepository<InternshipApplication> InternshipApplications => _internshipApplications ??= new GenericRepository<InternshipApplication>(_context);
         public IGenericRepository<Internship> Internships => _internships ??= new GenericRepository<Internship>(_context);
         public IGenericRepository<City> Cities => _cityRepository ??= new GenericRepository<City>(_context);
-
-        // ✅ YENİ MÜHÜR: Akıllı Sohbet Sistemine Erişim Özelliği
         public IGenericRepository<ChatMessage> ChatMessages => _chatMessages ??= new GenericRepository<ChatMessage>(_context);
+
+        // ✅ 4. ADIM MÜHÜRÜ: Staj Günlükleri Çekmecesini Gerçekten Oluşturuyoruz
+        public IGenericRepository<DailyReport> DailyReports => _dailyReports ??= new GenericRepository<DailyReport>(_context);
 
         // 🛡️ İŞLEMLER
         public async Task<int> SaveAsync() => await _context.SaveChangesAsync();

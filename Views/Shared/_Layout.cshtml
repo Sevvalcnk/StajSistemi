@@ -1,6 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using StajSistemi.Models
+@using Microsoft.EntityFrameworkCore
 @inject UserManager<AppUser> UserManager
+@inject StajSistemi.data.ApplicationDbContext _context
 
 <!DOCTYPE html>
 <html lang="tr">
@@ -128,8 +130,6 @@
                             }
                         </a>
 
-                        @* ✅ BURADAKİ ESKİ "GELEN MESAJLAR" LİNKİNİ SİLDİM, ÇÜNKÜ VIEWCOMPONENT İÇİNDE VAR *@
-
                         <a asp-controller="Advisor" asp-action="Index" class="list-group-item list-group-item-action">
                             <i class="fas fa-users me-2 text-danger"></i> Öğrenci Listesi
                         </a>
@@ -143,20 +143,33 @@
                         </a>
 
                         <a asp-controller="StudentPanel" asp-action="Applications" class="list-group-item list-group-item-action">
-                            <i class="fas fa-file-signature me-2 text-warning"></i> Başvurularım
+                            <i class="fas fa-file-contract me-2 text-warning"></i> Başvurularım
                         </a>
 
                         <a asp-controller="StudentPanel" asp-action="Results" class="list-group-item list-group-item-action">
-                            <i class="fas fa-poll me-2 text-info"></i> Staj Sonuçlarım
+                            <i class="fas fa-poll me-2 text-info"></i> Başvuru Sonuçlarım
                         </a>
 
-                        <a asp-controller="StudentPanel" asp-action="Documents" class="list-group-item list-group-item-action">
-                            <i class="fas fa-folder-open me-2 text-success"></i> Belgelerim
-                        </a>
+                        @* 🛡️ MÜHÜR: AKILLI DURUM KONTROLÜ (RZ1010 hatası giderildi) *@
+                        var currentUserId = UserManager.GetUserId(User);
+                        var isInternshipApproved = currentUserId != null && _context.InternshipApplications
+                        .Any(a => a.AppUserId == int.Parse(currentUserId) && a.Status == ApplicationStatus.Approved);
+
+                        if (isInternshipApproved)
+                        {
+                            <a asp-controller="StudentPanel" asp-action="Documents" class="list-group-item list-group-item-action animate__animated animate__fadeIn">
+                                <i class="fas fa-file-signature me-2 text-success"></i> Staj Dosyam (Belgelerim)
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="list-group-item list-group-item-action text-muted" style="cursor: not-allowed; opacity: 0.6;" title="Stajınız onaylandığında aktif olacaktır.">
+                                <i class="fas fa-lock me-2"></i> <span style="font-size: 0.9rem;">Staj Dosyası (Onay Bekliyor)</span>
+                            </div>
+                        }
                     }
 
-                    @* 🔥 AKILLI BİLDİRİM MÜHÜRÜ BURADA *@
-                    @* Bu satır, hem hoca hem öğrenci için doğru mesaj linkini ve CANLI sayıyı getirir *@
+                    @* 🔥 AKILLI BİLDİRİM MÜHÜRÜ *@
                     @await Component.InvokeAsync("Sidebar")
 
                     <div class="border-top my-2 opacity-25"></div>
@@ -208,7 +221,6 @@
             }
         });
 
-        // ✅ CANLI BİLDİRİM MOTORU
         const connectionGlobal = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
             .withAutomaticReconnect()
@@ -217,7 +229,6 @@
         connectionGlobal.start().catch(err => console.error(err.toString()));
 
         connectionGlobal.on("ReceiveNewMessage", function (senderId, content) {
-            // Sidebar Sayaçlarını Canlı Artır
             const badges = ["unread-badge-advisor", "unread-badge-student"];
             badges.forEach(id => {
                 let badge = document.getElementById(id);
@@ -228,7 +239,6 @@
                 }
             });
 
-            // Ses ve Toast Bildirimi
             let audio = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3');
             audio.play().catch(e => {});
 

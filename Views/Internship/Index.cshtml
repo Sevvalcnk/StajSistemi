@@ -1,4 +1,5 @@
-﻿@model IEnumerable<StajSistemi.Models.Internship>
+﻿@using StajSistemi.Models @* 🛡️ Akıllı etiketleri tanımak için bu mühür şart! *@
+@model IEnumerable<StajSistemi.Models.Internship>
 
 @{
     ViewData["Title"] = "Staj İlanları";
@@ -45,7 +46,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (!Model.Any())
+                        @if (Model == null || !Model.Any())
                         {
                             <tr>
                                 <td colspan="6" class="text-center py-5 text-muted">
@@ -88,7 +89,8 @@
                                         }
                                     </td>
                                     <td class="py-3 text-center">
-                                        @if (item.Status == "Aktif")
+                                        @* ✅ AKILLI ENUM KONTROLÜ: Artık tırnak yok, akıllı etiket var! *@
+                                        @if (item.Status == ApplicationStatus.Active)
                                         {
                                             if (item.Quota <= 0)
                                             {
@@ -101,20 +103,20 @@
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary rounded-pill">@item.Status</span>
+                                            @* Diğer durumlar (Deleted vb.) için güvenli bir gösterim *@
+                                            <span class="badge bg-secondary rounded-pill">@item.Status.ToString()</span>
                                         }
                                     </td>
                                     <td class="py-3 text-end px-4">
                                         @if (User.IsInRole("Student"))
                                         {
-                                            @* ✅ HATASIZ MÜHÜR: Blok içindeki gereksiz @ işaretleri temizlendi *@
                                             if (appliedIds.Contains(item.Id))
                                             {
                                                 <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" disabled>
                                                     <i class="fas fa-check-circle me-1"></i> Başvuruldu
                                                 </button>
                                             }
-                                            else if (item.Status == "Aktif" && item.Quota > 0)
+                                            else if (item.Status == ApplicationStatus.Active && item.Quota > 0)
                                             {
                                                 <a asp-action="Apply" asp-route-id="@item.Id" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
                                                     <i class="fas fa-paper-plane me-1"></i> Başvur
@@ -123,7 +125,7 @@
                                             else
                                             {
                                                 <button class="btn btn-sm btn-light border rounded-pill px-3 text-danger" disabled>
-                                                    <i class="fas fa-ban me-1"></i> Dolu
+                                                    <i class="fas fa-ban me-1"></i> Kapalı
                                                 </button>
                                             }
                                         }

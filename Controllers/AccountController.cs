@@ -5,7 +5,7 @@ using StajSistemi.Models;
 using StajSistemi.Models.ViewModels;
 using StajSistemi.data;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http; // ✅ Session işlemleri için mühürlü
+using Microsoft.AspNetCore.Http; // ✅ Session işlemleri mühürlü kalsın
 
 namespace StajSistemi.Controllers
 {
@@ -60,12 +60,9 @@ namespace StajSistemi.Controllers
                         // --- ✅ HAFTA 3 MÜHÜRÜ: IP ADRESİ VE LOG KAYDI ---
                         string remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 
-                        // 1. Session'a Mühürle (Hızlı Erişim)
                         HttpContext.Session.SetString("UserIP", remoteIp);
                         HttpContext.Session.SetString("UserEmail", user.Email ?? "");
 
-                        // 2. Veritabanına Mühürle (Kalıcı Kayıt - LoginLogs)
-                        // Senin LoginLog modelindeki isimlere (Username, LoginTime) göre ayarladık
                         var log = new LoginLog
                         {
                             Username = user.UserName,
@@ -74,7 +71,6 @@ namespace StajSistemi.Controllers
                         };
                         _context.LoginLogs.Add(log);
                         await _context.SaveChangesAsync();
-                        // ------------------------------------------------
 
                         TempData.Remove("LoginWarning");
                         var roles = await _userManager.GetRolesAsync(user);
@@ -107,13 +103,19 @@ namespace StajSistemi.Controllers
 
                 var user = new AppUser
                 {
+                    // ✅ Username hâlâ öğrenci numarası (Student ise) veya Email olarak mühürleniyor
                     UserName = model.Role == "Student" ? model.StudentNo : model.Email,
                     Email = model.Email,
                     FullName = model.FullName,
                     FirstName = firstName,
                     LastName = lastName,
+
+                    // ❌ DÜZELTME: Eskiden burası "model.Role == 'Student' ? 1 : null" şeklindeydi.
+                    // Bu yüzden herkes 1 numaralı bölüme (İnternet ve Ağ) hapsoluyordu.
+                    // ✅ MÜHÜR: Burayı null yapıyoruz ki öğrenci girişte "Bölüm Seçilmedi" uyarısı alsın ve kendi bölümünü seçsin.
+                    DepartmentId = null,
+
                     StudentNo = model.Role == "Student" ? model.StudentNo : null,
-                    DepartmentId = model.Role == "Student" ? 1 : (int?)null,
                     IsDeleted = false
                 };
 
@@ -135,7 +137,8 @@ namespace StajSistemi.Controllers
             return View(model);
         }
 
-        // --- Şifre İşlemleri (Dokunulmadı) ---
+        // --- 📧 ŞİFRE SIFIRLAMA VE DİĞER İŞLEMLER BOZULMADAN KORUNDU ---
+
         [HttpGet] public IActionResult ForgotPassword() => View();
 
         [HttpPost]

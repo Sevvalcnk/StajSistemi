@@ -1,24 +1,36 @@
-﻿@model IEnumerable<StajSistemi.Models.InternshipApplication>
+﻿@using StajSistemi.Models
+@model IEnumerable<StajSistemi.Models.InternshipApplication>
 
-<div class="container py-5">
+@{
+    ViewData["Title"] = "Başvuru Yönetimi";
+}
+
+<div class="container py-5 techNode-fade-in">
+    @* --- 🛡️ ÜST BİLGİ KISMI --- *@
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-dark mb-0">
-            <i class="fas fa-user-graduate text-primary me-2"></i> Gelen Staj Başvuruları
-        </h2>
-        <span class="badge bg-light text-dark border rounded-pill px-3 py-2 shadow-sm small fw-normal">
-            Hafta 7: Başvuru Yönetimi 🛡️
-        </span>
+        <div>
+            <h2 class="fw-bold text-dark mb-0">
+                <i class="fas fa-clipboard-list text-primary me-2"></i> Gelen Staj Başvuruları
+            </h2>
+            <p class="text-muted small mb-0">Öğrencilerin liyakat puanlarına (SuccessScore) göre sıralanmış güncel liste.</p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-primary text-white border rounded-pill px-4 py-2 shadow-sm fw-bold">
+                <i class="fas fa-users me-1"></i> Toplam: @Model.Count() Başvuru
+            </span>
+        </div>
     </div>
 
-    <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden bg-white">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-primary text-white">
-                    <tr>
-                        <th class="ps-4" style="width: 30%;">Öğrenci Bilgileri</th>
-                        <th style="width: 25%;">Şirket & Departman</th>
-                        <th style="width: 15%;">Durum</th>
-                        <th class="text-end pe-4" style="width: 30%;">Yönetim</th>
+                    <tr class="py-3">
+                        <th class="ps-4" style="border:none;">Öğrenci & Bölüm</th>
+                        <th style="border:none;">Hedef Şirket</th>
+                        <th class="text-center" style="border:none;">Başarı Skoru</th>
+                        <th class="text-center" style="border:none;">Güncel Durum</th>
+                        <th class="text-end pe-4" style="border:none;">İşlemler</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,15 +39,12 @@
                         <tr>
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
-                                    @* 🎨 GÜVENLİ AVATAR *@
+                                    @* Harf Avatarları *@
                                     <div class="avatar-sm me-3 shadow-sm rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                                         style="width: 45px; height: 45px; background: linear-gradient(45deg, #4e73df, #224abe);">
-
-                                        @if (item.AppUser != null && !string.IsNullOrEmpty(item.AppUser.FirstName) && item.AppUser.FirstName.Length > 0)
+                                         style="width: 45px; height: 45px; background: linear-gradient(45deg, #4e73df, #224abe); font-size: 0.9rem;">
+                                        @if (item.AppUser != null && !string.IsNullOrEmpty(item.AppUser.FirstName))
                                         {
-                                            @item.AppUser.FirstName[0].ToString().ToUpper()
-
-                                            @((!string.IsNullOrEmpty(item.AppUser.LastName) && item.AppUser.LastName.Length > 0) ? item.AppUser.LastName[0].ToString().ToUpper() : "")
+                                            @(item.AppUser.FirstName[0].ToString().ToUpper() + (item.AppUser.LastName?[0].ToString().ToUpper() ?? ""))
                                         }
                                         else
                                         {
@@ -43,84 +52,87 @@
                                         }
                                     </div>
                                     <div>
-                                        @* İSİM ÖN PLANDA *@
-                                        <div class="fw-bold text-dark" style="font-size: 1rem;">
-                                            @if (item.AppUser != null && !string.IsNullOrEmpty(item.AppUser.FirstName))
-                                            {
-                                                @item.AppUser.FirstName @item.AppUser.LastName
-                                            }
-                                            else
-                                            {
-                                                @item.AppUser?.UserName
-                                            }
-                                        </div>
-                                        @* ÖĞRENCİ NUMARASI: ID kaldırıldı, sadece numara kaldı *@
+                                        <div class="fw-bold text-dark">@item.AppUser?.FirstName @item.AppUser?.LastName</div>
                                         <div class="text-muted" style="font-size: 0.75rem;">
-                                            Öğrenci No: @item.AppUser?.UserName
+                                            <i class="fas fa-graduation-cap me-1"></i> @(item.Internship?.Department?.DepartmentName ?? "Bölüm Belirtilmemiş")
                                         </div>
                                     </div>
                                 </div>
                             </td>
 
                             <td>
-                                <div class="fw-bold text-dark">@item.Internship?.CompanyName</div>
-                                <div class="small text-secondary">@item.Internship?.Department?.DepartmentName</div>
+                                <div class="fw-bold text-primary">@item.Internship?.CompanyName</div>
+                                <div class="small text-secondary"><i class="fas fa-briefcase me-1"></i> Stajyer Kontenjanı: @item.Internship?.Quota</div>
                             </td>
 
-                            <td>
-                                @if (item.Status == "Onaylandı")
+                            <td class="text-center">
+                                @* ✅ BAŞARI SKORU MÜHÜRÜ *@
+                                <div class="badge bg-success text-white px-3 py-2 rounded-3 shadow-sm fw-bold" style="min-width: 60px; font-size: 1rem;">
+                                    @item.SuccessScore.ToString("0")
+                                </div>
+                            </td>
+
+                            <td class="text-center">
+                                @* ✅ DURUM ROZETLERİ (Tam Türkçe ve İkonlu) *@
+                                @if (item.Status == ApplicationStatus.Approved)
                                 {
-                                    <span class="badge bg-success-soft text-success rounded-pill px-3 py-2">
-                                        <i class="fas fa-check-circle me-1"></i> @item.Status
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+                                        <i class="fas fa-check-circle me-1"></i> Onaylandı
                                     </span>
                                 }
-                                else if (item.Status == "Reddedildi")
+                                else if (item.Status == ApplicationStatus.Rejected)
                                 {
-                                    <span class="badge bg-danger-soft text-danger rounded-pill px-3 py-2">
-                                        <i class="fas fa-times-circle me-1"></i> @item.Status
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-bold">
+                                        <i class="fas fa-times-circle me-1"></i> Reddedildi
+                                    </span>
+                                }
+                                else if (item.Status == ApplicationStatus.Pending)
+                                {
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-bold text-dark">
+                                        <i class="fas fa-clock me-1"></i> Beklemede
                                     </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-warning-soft text-warning rounded-pill px-3 py-2 text-dark">
-                                        <i class="fas fa-clock me-1"></i> @item.Status
+                                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-normal">
+                                        <i class="fas fa-minus-circle me-1"></i> Başvuru Yok
                                     </span>
                                 }
                             </td>
 
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end align-items-center gap-2">
-                                    <div class="btn-group shadow-sm">
-                                        <a href="/uploads/cv/@item.CVPath" target="_blank" class="btn btn-light btn-sm border" title="CV">
+                                    <div class="btn-group shadow-sm me-2">
+                                        <a href="/uploads/cv/@item.CVPath" target="_blank" class="btn btn-outline-secondary btn-sm" title="Özgeçmiş">
                                             <i class="fas fa-file-pdf text-danger"></i>
                                         </a>
                                         @if (!string.IsNullOrEmpty(item.CertificatePath))
                                         {
-                                            <a href="/uploads/certificates/@item.CertificatePath" target="_blank" class="btn btn-light btn-sm border" title="Sertifika">
+                                            <a href="/uploads/certificates/@item.CertificatePath" target="_blank" class="btn btn-outline-secondary btn-sm" title="Sertifika">
                                                 <i class="fas fa-certificate text-warning"></i>
                                             </a>
                                         }
                                     </div>
 
-                                    @if (item.Status == "Beklemede")
+                                    @if (item.Status == ApplicationStatus.Pending)
                                     {
                                         <form asp-action="UpdateStatus" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@item.Id" />
-                                            <input type="hidden" name="status" value="Onaylandı" />
+                                            <input type="hidden" name="status" value="@ApplicationStatus.Approved" />
                                             <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm fw-bold">Onayla</button>
                                         </form>
 
                                         <form asp-action="UpdateStatus" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@item.Id" />
-                                            <input type="hidden" name="status" value="Reddedildi" />
+                                            <input type="hidden" name="status" value="@ApplicationStatus.Rejected" />
                                             <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">Reddet</button>
                                         </form>
                                     }
                                     else
                                     {
-                                        <span class="text-muted small bg-light px-3 py-1 rounded-pill border">İşlem Bitti</span>
+                                        <span class="text-muted small fst-italic">İşlem Tamam</span>
                                     }
                                 </div>
                             </td>
@@ -133,26 +145,20 @@
 </div>
 
 <style>
-    .bg-success-soft {
-        background-color: #d1e7dd;
-        border: 1px solid #a3cfbb;
-        color: #0f5132;
+    .bg-success-subtle {
+        background-color: #e8f5e9 !important;
     }
 
-    .bg-danger-soft {
-        background-color: #f8d7da;
-        border: 1px solid #f1aeb5;
-        color: #842029;
+    .bg-danger-subtle {
+        background-color: #ffebee !important;
     }
 
-    .bg-warning-soft {
-        background-color: #fff3cd;
-        border: 1px solid #ffe69c;
-        color: #664d03;
+    .bg-warning-subtle {
+        background-color: #fff9c4 !important;
     }
 
     .table-hover tbody tr:hover {
-        background-color: #f8f9fc;
-        transition: all 0.2s ease;
+        background-color: rgba(78, 115, 223, 0.02);
+        transition: 0.3s;
     }
 </style>

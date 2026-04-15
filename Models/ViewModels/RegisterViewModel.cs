@@ -8,12 +8,19 @@ namespace StajSistemi.Models.ViewModels
         public string FullName { get; set; }
 
         [Required(ErrorMessage = "E-posta adresi boş bırakılamaz.")]
-        // Standart doğrulama yerine "Regex" (Düzenli İfade) kullanarak noktadan sonra uzantı zorunluluğu getiriyoruz
         [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-    ErrorMessage = "Lütfen geçerli bir e-posta adresi giriniz (Örn: isim@alanadi.com)")]
+            ErrorMessage = "Lütfen geçerli bir e-posta adresi giriniz (Örn: isim@alanadi.com)")]
         public string Email { get; set; }
 
-        // Sadece bu kalsın, diğeri fazla olduğu için hata veriyordu
+        // --- 🌍 TÜRKİYE GENELİ ALANLAR (ZORUNLULUKLAR KALDIRILDI) ---
+        // Artık başında [Required] yok ve sonuna ? ekledik (boş bırakılabilir demek).
+        [Display(Name = "Üniversite Adı")]
+        public string? UniversityName { get; set; }
+
+        [Display(Name = "Fakülte veya Meslek Yüksekokulu")]
+        public string? FacultyName { get; set; }
+        // --------------------------------------------------
+
         [Display(Name = "Öğrenci Numarası")]
         public string? StudentNo { get; set; }
 
@@ -29,6 +36,5 @@ namespace StajSistemi.Models.ViewModels
 
         [Required(ErrorMessage = "Lütfen bir rol seçiniz.")]
         public string Role { get; set; } // Student, Advisor, Admin
-
     }
 }

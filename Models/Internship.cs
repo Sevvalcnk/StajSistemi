@@ -14,7 +14,6 @@ namespace StajSistemi.Models
         public string? CompanyName { get; set; }
 
         // ✅ MÜHÜR: Çakışma olmaması için ismini 'CityName' yaptık. 
-        // Gerçek şehir verisi aşağıdaki CityId'den gelecek.
         public string? CityName { get; set; }
 
         public string? CompanySector { get; set; }
@@ -39,7 +38,11 @@ namespace StajSistemi.Models
         public string? Description { get; set; }
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
-        public string? Status { get; set; } = "Aktif";
+
+        // 🔥 KRİTİK DOKUNUŞ: Artık "string" değil, akıllı "ApplicationStatus" mühürü!
+        // Varsayılan olarak "Active" (yani 6) değerini alıyor.
+        public ApplicationStatus Status { get; set; } = ApplicationStatus.Active;
+
         public bool IsDeleted { get; set; } = false;
 
         public int? AppUserId { get; set; }
@@ -50,10 +53,11 @@ namespace StajSistemi.Models
         // 🚀 HAFTA 6: AKILLI FİLTRELEME ALANLARI
         public decimal MinGPA { get; set; } // Gereken Min. Ortalama
 
-        public int? CityId { get; set; }    // Şehir Kimliği (Nullable yaptık ki hata vermesin)
+        public int? CityId { get; set; }    // Şehir Kimliği
 
         [ForeignKey("CityId")]
         public virtual City? City { get; set; }  // Şehir Tablosuyla Bağlantı
-        
+                                                 // ✅ MÜHÜR: Başarı skoru alanı modele eklendi
+       
     }
 }

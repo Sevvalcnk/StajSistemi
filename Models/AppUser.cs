@@ -1,44 +1,52 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System.Collections.Generic; // ✅ ICollection ve List işlemleri için şart
+using System;
+using System.Collections.Generic;
 
 namespace StajSistemi.Models
 {
-    // IdentityUser<int> ile ID'lerin sayı olacağını mühürledik.
     public class AppUser : IdentityUser<int>
     {
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
-
-        // ✅ DÜZELTME MÜHRÜ: 
-        // Bunu { get; set; } yaptık ki AccountController veya SeedData 
-        // buraya isim yazmaya çalıştığında proje hata vermesin, "şak" diye çalışsın.
         public string? FullName { get; set; }
-
         public string? StudentNo { get; set; }
         public string? IPAddress { get; set; }
 
-        // 🚀 ÖĞRENCİ PANELİ ALANLARI:
-        public double? GPA { get; set; }               // Not Ortalaması
-        public string? PersonalSkills { get; set; }   // Kişisel Yetenekler
-        public string? EducationSummary { get; set; } // Eğitim Özeti
-        public string? CVPath { get; set; }           // CV Dosyasının Yolu
-        public string? CertificatePath { get; set; }  // Sertifika Dosyasının Yolu
+        // 🚀 ÖĞRENCİ PANELİ ALANLARI
+        public double? GPA { get; set; }
+        public string? PersonalSkills { get; set; }
+        public string? EducationSummary { get; set; }
+        public string? CVPath { get; set; }
+        public string? CertificatePath { get; set; }
 
-        // ✅ AKILLI FİLTRELEME İÇİN EKLENEN ŞEHİR ALANLARI (HAFTA 6):
-        public int? CityId { get; set; }              // Şehir Kimliği
-        public City? City { get; set; }               // Şehir Tablosuyla Mühürleme
-
-        // ✅ Soft Delete Kontrolü
+        // ✅ ŞEHİR VE BÖLÜM İLİŞKİLERİ
+        public int? CityId { get; set; }
+        public City? City { get; set; }
         public bool IsDeleted { get; set; } = false;
-
-        // Bölüm İlişkisi
         public int? DepartmentId { get; set; }
         public Department? Department { get; set; }
 
-        // ✅ KRİTİK EKLEME: DANIŞMAN MÜHÜRÜ
+        // 🛡️ BÖLÜM ADI (ADMIN PANELİ VE ÇIKTILAR İÇİN)
+        public string? DepartmentName { get; set; }
+
         public int? AdvisorId { get; set; }
 
-        // ✅ Kullanıcının yaptığı başvuruları da burada görebilmeliyiz (İlişki için)
-        public ICollection<Application>? Applications { get; set; }
+        // 🏛️ GENEL ÜNİVERSİTE VE KAPAK SAYFASI MÜHÜRLERİ (DİNAMİK HALE GELDİ)
+        public string? UniversityName { get; set; } // ✅ Sabit yazı kaldırıldı, artık Türkiye geneli!
+        public string? FacultyName { get; set; }
+        public string? AcademicYear { get; set; }
+
+        // 👤 RESMİ KİMLİK KÜNYESİ (PDF ÇIKTISI İÇİN ŞART)
+        public string? BirthPlace { get; set; }
+        public DateTime? BirthDate { get; set; }
+
+        // 🏢 STAJ YAPILAN KURUM KÜNYESİ
+        public string? CompanyName { get; set; }
+        public string? CompanySector { get; set; }
+        public string? CompanyTaxNumber { get; set; }
+        // AppUser.cs veya Student.cs içine diğer özelliklerin yanına ekle:
+        public string? DegreeType { get; set; }
+        // ✅ İLİŞKİLER
+        public ICollection<InternshipApplication>? Applications { get; set; } // Model ismin neyse (Application veya InternshipApplication) ona göre güncelleyebilirsin.
     }
 }

@@ -36,9 +36,10 @@ namespace StajSistemi.Controllers
             // Tüm mesajları çek (Include ile ilişkileri bağla)
             var allMyMessages = await _unitOfWork.ChatMessages.GetAllIncludingAsync(m => m.Sender, m => m.Receiver);
 
-            // 1. SOL TARAF: Son görüşülen kişiler listesi
+            // 1. SOL TARAF: Son görüşülen kişiler listesi (Sıralama iyileştirildi)
             var recentContacts = allMyMessages
                 .Where(m => m.SenderId == currentUser.Id || m.ReceiverId == currentUser.Id)
+                .OrderByDescending(m => m.SentDate) // En son mesajlaşan en üstte!
                 .Select(m => m.SenderId == currentUser.Id ? m.Receiver : m.Sender)
                 .Where(u => u != null && u.Id != currentUser.Id)
                 .GroupBy(u => u.Id)
@@ -51,6 +52,15 @@ namespace StajSistemi.Controllers
                 if (newContact != null) recentContacts.Insert(0, newContact);
             }
             ViewBag.RecentContacts = recentContacts;
+
+            // 🔥 KRİTİK MÜHÜR: KİŞİ BAZLI OKUNMAMIŞ MESAJ SAYACI
+            // Her bir kişi için bana kaç tane okunmamış mesaj attığını hesaplayan radar
+            var unreadCounts = allMyMessages
+                .Where(m => m.ReceiverId == currentUser.Id && !m.IsRead)
+                .GroupBy(m => m.SenderId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            ViewBag.UnreadCountsPerContact = unreadCounts;
 
             // 2. SAĞ TARAF: Aktif Sohbet ve Okundu İşlemi
             if (receiverId.HasValue)
@@ -79,7 +89,7 @@ namespace StajSistemi.Controllers
 
                     ViewBag.Receiver = receiver;
 
-                    // 🔥 GLOBAL SAYAÇ MÜHÜRÜ: Okundu işleminden SONRA hesaplıyoruz ki sayı düşsün
+                    // 🔥 GLOBAL SAYAÇ MÜHÜRÜ: Genel bildirim sayısı için
                     var loggedUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                     ViewBag.UnreadMessagesCount = (await _unitOfWork.ChatMessages.GetAllAsync())
                         .Count(m => m.ReceiverId == loggedUserId && !m.IsRead);

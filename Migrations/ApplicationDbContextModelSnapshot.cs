@@ -236,6 +236,9 @@ namespace StajSistemi.Migrations
                     b.Property<string>("DepartmentName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EducationLevel")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("EducationSummary")
                         .HasColumnType("nvarchar(max)");
 
@@ -331,7 +334,7 @@ namespace StajSistemi.Migrations
                             Id = 1,
                             AcademicYear = "2025-2026",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "474d0de4-5769-4fff-87bb-935f440a4251",
+                            ConcurrencyStamp = "2e48f89d-4b93-4b79-a0ff-a50d9ec7d20e",
                             DepartmentName = "Yönetim Paneli",
                             Email = "admin@stajsistemi.com",
                             EmailConfirmed = true,
@@ -343,9 +346,9 @@ namespace StajSistemi.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@STAJSISTEMI.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEA9ouE+kgynRF7qas3jlh5oIF8iFQcfuY9EdPo4JLA8DQLU8v74gPqYud8iIz+LW6Q==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMycICVgW2pRKsUywj4hX4kPTJCjtnePZn8KSkBihZYsgQGKF30Va07H/f5eCzlxBA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "2c0e1df2-66a4-4f38-82db-8c6f8493e3de",
+                            SecurityStamp = "070655bf-45ab-472b-a1f1-95b668d6e5fe",
                             TwoFactorEnabled = false,
                             UniversityName = "Sinop Üniversitesi",
                             UserName = "admin"
@@ -531,9 +534,13 @@ namespace StajSistemi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("DegreeLevel")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("DepartmentName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.HasKey("Id");
 
@@ -543,47 +550,68 @@ namespace StajSistemi.Migrations
                         new
                         {
                             Id = 1,
+                            DegreeLevel = "Önlisans",
                             DepartmentName = "İnternet ve Ağ Teknolojileri"
                         },
                         new
                         {
                             Id = 2,
+                            DegreeLevel = "Önlisans",
                             DepartmentName = "Çocuk Gelişimi Programı"
                         },
                         new
                         {
                             Id = 3,
+                            DegreeLevel = "Önlisans",
                             DepartmentName = "Dış Ticaret Programı"
                         },
                         new
                         {
                             Id = 4,
+                            DegreeLevel = "Önlisans",
                             DepartmentName = "Kontrol ve Otomasyon Teknolojisi Programı"
                         },
                         new
                         {
                             Id = 5,
+                            DegreeLevel = "Önlisans",
                             DepartmentName = "Ormancılık ve Orman Teknolojisi Programı"
                         },
                         new
                         {
                             Id = 6,
+                            DegreeLevel = "Önlisans",
                             DepartmentName = "İç Mekan Tasarım Programı"
                         },
                         new
                         {
                             Id = 7,
+                            DegreeLevel = "Önlisans",
                             DepartmentName = "Lojistik Programı"
                         },
                         new
                         {
                             Id = 8,
+                            DegreeLevel = "Lisans",
                             DepartmentName = "Yapay Zeka"
                         },
                         new
                         {
                             Id = 9,
+                            DegreeLevel = "Lisans",
                             DepartmentName = "Dijital Oyun Tasarımı ve Geliştirme"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            DegreeLevel = "Lisans",
+                            DepartmentName = "Ziraat Mühendisliği"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            DegreeLevel = "Lisans",
+                            DepartmentName = "Bilgisayar Mühendisliği"
                         });
                 });
 
@@ -641,9 +669,6 @@ namespace StajSistemi.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("int");
-
                     b.Property<string>("DepartmentName")
                         .HasColumnType("nvarchar(max)");
 
@@ -658,11 +683,12 @@ namespace StajSistemi.Migrations
 
                     b.Property<decimal>("MinGPA")
                         .HasPrecision(3, 2)
-                        .HasColumnType("decimal(3,2)");
+                        .HasColumnType("decimal(3, 2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("Quota")
                         .HasColumnType("int");
@@ -678,8 +704,6 @@ namespace StajSistemi.Migrations
                     b.HasIndex("AppUserId");
 
                     b.HasIndex("CityId");
-
-                    b.HasIndex("DepartmentId");
 
                     b.ToTable("Internships");
                 });
@@ -698,11 +722,17 @@ namespace StajSistemi.Migrations
                     b.Property<DateTime>("ApplicationDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("CVPath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CertificatePath")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
@@ -714,6 +744,9 @@ namespace StajSistemi.Migrations
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("StartedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
@@ -747,30 +780,44 @@ namespace StajSistemi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ApplicationId")
+                    b.Property<string>("ChangedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("InternshipApplicationId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("ChangeDate")
+                    b.Property<DateTime>("LogDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("ChangedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("NewStatus")
                         .HasColumnType("int");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("OldStatus")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationId");
+                    b.HasIndex("InternshipApplicationId");
 
                     b.ToTable("InternshipApplicationLogs");
+                });
+
+            modelBuilder.Entity("StajSistemi.Models.InternshipDepartment", b =>
+                {
+                    b.Property<int>("InternshipId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("InternshipId", "DepartmentId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.ToTable("InternshipDepartments");
                 });
 
             modelBuilder.Entity("StajSistemi.Models.LoginLog", b =>
@@ -915,17 +962,9 @@ namespace StajSistemi.Migrations
                         .WithMany("Internships")
                         .HasForeignKey("CityId");
 
-                    b.HasOne("StajSistemi.Models.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("AppUser");
 
                     b.Navigation("City");
-
-                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("StajSistemi.Models.InternshipApplication", b =>
@@ -949,13 +988,32 @@ namespace StajSistemi.Migrations
 
             modelBuilder.Entity("StajSistemi.Models.InternshipApplicationLog", b =>
                 {
-                    b.HasOne("StajSistemi.Models.InternshipApplication", "Application")
-                        .WithMany()
-                        .HasForeignKey("ApplicationId")
+                    b.HasOne("StajSistemi.Models.InternshipApplication", "InternshipApplication")
+                        .WithMany("InternshipApplicationLogs")
+                        .HasForeignKey("InternshipApplicationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Application");
+                    b.Navigation("InternshipApplication");
+                });
+
+            modelBuilder.Entity("StajSistemi.Models.InternshipDepartment", b =>
+                {
+                    b.HasOne("StajSistemi.Models.Department", "Department")
+                        .WithMany("InternshipDepartments")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StajSistemi.Models.Internship", "Internship")
+                        .WithMany("InternshipDepartments")
+                        .HasForeignKey("InternshipId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Internship");
                 });
 
             modelBuilder.Entity("StajSistemi.Models.AppUser", b =>
@@ -972,12 +1030,21 @@ namespace StajSistemi.Migrations
 
             modelBuilder.Entity("StajSistemi.Models.Department", b =>
                 {
+                    b.Navigation("InternshipDepartments");
+
                     b.Navigation("Students");
+                });
+
+            modelBuilder.Entity("StajSistemi.Models.Internship", b =>
+                {
+                    b.Navigation("InternshipDepartments");
                 });
 
             modelBuilder.Entity("StajSistemi.Models.InternshipApplication", b =>
                 {
                     b.Navigation("DailyReports");
+
+                    b.Navigation("InternshipApplicationLogs");
                 });
 #pragma warning restore 612, 618
         }

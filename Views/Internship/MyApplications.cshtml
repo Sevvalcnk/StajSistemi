@@ -1,27 +1,32 @@
-﻿@using StajSistemi.Models @* 🛡️ Yeni etiketleri tanımak için bu mühür şart! *@
+﻿@using StajSistemi.Models
 @model IEnumerable<StajSistemi.Models.InternshipApplication>
 
 @{
     ViewData["Title"] = "Başvuru Sonuçlarım";
 }
 
+@* ✅ KRİTİK DÜZELTME: Animasyon CSS bloğu tamamen söküldü *@
+
 <div class="container mt-5">
+    @* ✅ Animasyon sınıfı 'page-animation' kaldırıldı *@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-dark mb-0">
             <i class="fas fa-clipboard-list text-primary me-2"></i> Başvuru Sonuçlarım
         </h2>
-        <a asp-controller="StudentPanel" asp-action="Index" class="btn btn-outline-secondary rounded-pill">
+        <a asp-controller="StudentPanel" asp-action="Index" class="btn btn-outline-secondary rounded-pill shadow-sm">
             <i class="fas fa-arrow-left me-1"></i> Panele Dön
         </a>
     </div>
 
-    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-primary text-white">
                     <tr>
                         <th class="ps-4">Şirket / Kurum</th>
                         <th>Departman</th>
+                        @* ✅ LİYAKAT MÜHÜRÜ 1: Başarı Skoru Başlığı *@
+                        <th class="text-center">Başarı Skoru (4.00)</th>
                         <th>Başvuru Tarihi</th>
                         <th>Durum</th>
                         <th class="text-end pe-4">İşlemler</th>
@@ -31,7 +36,7 @@
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="5" class="text-center py-5">
+                            <td colspan="6" class="text-center py-5">
                                 <i class="fas fa-folder-open fa-3x text-muted mb-3 d-block"></i>
                                 <p class="text-muted fw-bold">Henüz herhangi bir başvurunuz bulunmuyor.</p>
                                 <a asp-controller="Internship" asp-action="Index" class="btn btn-sm btn-primary rounded-pill">İlanları Gör</a>
@@ -44,14 +49,37 @@
                         {
                             <tr>
                                 <td class="ps-4">
-                                    <div class="fw-bold">@item.Internship?.CompanyName</div> @* ✅ MÜHÜR: Internship modeline uygun Name veya CompanyName *@
+                                    <div class="fw-bold">@item.Internship?.CompanyName</div>
                                     <small class="text-muted">@item.Internship?.CompanySector</small>
                                 </td>
-                                <td>@item.Internship?.Department?.DepartmentName</td>
+
+                                <td>
+                                    @if (item.Internship?.InternshipDepartments != null && item.Internship.InternshipDepartments.Any())
+                                    {
+                                        foreach (var deptMap in item.Internship.InternshipDepartments)
+                                        {
+                                            <span class="badge bg-light text-dark border border-secondary rounded-pill me-1 mb-1" style="font-size: 0.7rem;">
+                                                @(deptMap.Department?.DepartmentName ?? "Bölüm")
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-muted rounded-pill">Genel</span>
+                                    }
+                                </td>
+
+                                @* ✅ LİYAKAT MÜHÜRÜ 2: Başarı Skoru Gösterimi *@
+                                <td class="text-center">
+                                    <span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm">
+                                        <i class="fas fa-star text-warning me-1"></i>
+                                        @((item.SuccessScore / 100).ToString("N2"))
+                                    </span>
+                                </td>
+
                                 <td>@item.ApplicationDate.ToString("dd MMMM yyyy")</td>
                                 <td>
                                     @{
-                                        // Ekranda güzel görünmesi için etiketleri Türkçeye çeviren küçük bir mantık
                                         var bgClass = "bg-success";
                                         var displayStatus = "Onaylandı";
 
@@ -71,17 +99,22 @@
                                             displayStatus = "İnceleniyor";
                                         }
                                     }
-                                    <span class="badge rounded-pill px-3 py-2 @bgClass">
+                                    <span class="badge rounded-pill px-3 py-2 @bgClass shadow-sm">
                                         @displayStatus
                                     </span>
                                 </td>
                                 <td class="text-end pe-4">
-                                    @if (!string.IsNullOrEmpty(item.CVPath))
-                                    {
-                                        <a href="/uploads/cv/@item.CVPath" target="_blank" class="btn btn-sm btn-light border rounded-pill">
-                                            <i class="fas fa-file-pdf text-danger me-1"></i> CV'm
+                                    <div class="btn-group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2">
+                                            <i class="fas fa-search me-1"></i> Detaylar
                                         </a>
-                                    }
+                                        @if (!string.IsNullOrEmpty(item.CVPath))
+                                        {
+                                            <a href="/uploads/cv/@item.CVPath" target="_blank" class="btn btn-sm btn-light border rounded-pill shadow-sm">
+                                                <i class="fas fa-file-pdf text-danger me-1"></i> CV'm
+                                            </a>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }

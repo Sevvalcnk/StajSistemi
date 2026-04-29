@@ -2,11 +2,11 @@
 @model StajSistemi.DTOs.StudentDto
 @{
     var ilan = ViewBag.SelectedInternship as StajSistemi.Models.Internship;
-    var app = ViewBag.ApplicationDetail as StajSistemi.Models.InternshipApplication;
-    var appliedIds = ViewBag.AppliedInternshipIds as List<int> ?? new List<int>();
-
-    // 🛡️ MÜHÜR: Buradaki isApplied artık Controller'dan gelen "Kesin Karar"dır.
+    // 🛡️ MÜHÜR: Controller'dan gelen başvuru detayını alıyoruz
+    var app = ViewBag.MyApplication as StajSistemi.Models.InternshipApplication;
+    var hocaNotu = ViewBag.AdvisorNote as string;
     bool isApplied = ViewBag.IsApplied ?? false;
+
     ViewData["Title"] = isApplied ? "Başvuru Sonucu" : "Staj Başvurusu";
 }
 
@@ -60,7 +60,6 @@
         font-size: 0.72rem;
         font-weight: 700;
         border: 1px solid #bae6fd;
-        white-space: nowrap;
         display: inline-block;
     }
 
@@ -131,7 +130,6 @@
         border-radius: 50px;
         padding: 12px;
         font-weight: 700;
-        font-size: 1.05rem;
         width: 100%;
         transition: 0.3s;
     }
@@ -143,7 +141,6 @@
         overflow: hidden;
         border: 1px solid #cbd5e1;
         margin-top: 15px;
-        background: #f1f5f9;
     }
 
     .feedback-alert {
@@ -185,65 +182,54 @@
         <div class="col-lg-8">
             <div class="apply-card-compact animate__animated animate__fadeIn">
 
-                @if (isApplied && app != null)
+                @if (isApplied && app != null && (app.Status == ApplicationStatus.Approved || app.Status == ApplicationStatus.Rejected))
                 {
-                    @* 🏛️ MOD 1: BAŞVURU YAPILMIŞ - SONUÇ EKRANI *@
-                    <div class="apply-header-small @(app.Status == ApplicationStatus.Approved ? "header-info-green" : (app.Status == ApplicationStatus.Rejected ? "header-info-red" : "header-info-blue"))">
+                    @* 🏛️ MOD 1: BAŞVURU SONUÇLANDI (YEŞİL / KIRMIZI EKRAN) *@
+                    <div class="apply-header-small @(app.Status == ApplicationStatus.Approved ? "header-info-green" : "header-info-red")">
 
-                        @* 🛡️ MÜHÜR: Kalp kaldırıldı, yerine profesyonel ikonlar (Onay: Check, Red: File/Exclamation) konuldu *@
-                        <i class="fas @(app.Status == ApplicationStatus.Approved ? "fa-check-double" : (app.Status == ApplicationStatus.Rejected ? "fa-file-signature" : "fa-clock"))"></i>
+                        <i class="fas @(app.Status == ApplicationStatus.Approved ? "fa-check-double" : "fa-file-signature")"></i>
 
-                        @* 🛡️ MÜHÜR: Başlıklar profesyonel dile çevrildi *@
-                        <h4>@(app.Status == ApplicationStatus.Approved ? "Tebrikler, Başvurunuz Onaylanmıştır!" : (app.Status == ApplicationStatus.Rejected ? "Başvuru Süreci Bilgilendirmesi" : "Başvurunuz Değerlendiriliyor"))</h4>
-
+                        <h4>@(app.Status == ApplicationStatus.Approved ? "Tebrikler, Başvurunuz Onaylanmıştır!" : "Başvuru Süreci Bilgilendirmesi")</h4>
                         <p class="x-small mb-0 opacity-75 fw-bold">@ilan?.CompanyName Staj Programı</p>
                     </div>
 
                     <div class="form-section">
                         @if (app.Status == ApplicationStatus.Rejected)
                         {
-                            @* 🛡️ MÜHÜR: LİYAKATLİ RED MESAJI (Kardaşım silindi, profesyonel üslup geldi) *@
+                            @* 🛡️ 10. RESİMDEKİ RED GÖRSELİ *@
                             <div class="feedback-alert alert-danger" style="border-left-color: #dc3545; background-color: #fff5f5;">
                                 <h6 class="fw-bold text-danger mb-2"><i class="fas fa-info-circle me-2"></i>Değerlendirme Notu:</h6>
-                                <p class="small text-dark mb-3" style="line-height: 1.7;">Bu başvurunuz mevcut kriterler çerçevesinde olumlu sonuçlanmamıştır. Ancak bu durum, yetkinliklerinize daha uygun yeni kariyer kapılarının açılması için bir hazırlık aşamasıdır. Potansiyelinize güvenin ve gelişim sürecinizi kararlılıkla sürdürün. Sizin için listelediğimiz diğer ilanları incelemenizi öneririz.</p>
+                                <p class="small text-dark mb-3" style="line-height: 1.7;">@hocaNotu</p>
                                 <a asp-action="Index" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm">Diğer İlanları Keşfet</a>
                             </div>
                         }
                         else if (app.Status == ApplicationStatus.Approved)
                         {
-                            @* ✅ MÜHÜR: LİYAKATLİ ONAY MESAJI *@
+                            @* ✅ 9. RESİMDEKİ ONAY GÖRSELİ *@
                             <div class="feedback-alert alert-success" style="border-left-color: #198754; background-color: #f0fff4;">
                                 <h6 class="fw-bold text-success mb-2"><i class="fas fa-award me-2"></i>Danışman Notu:</h6>
-                                <p class="small text-dark mb-3" style="line-height: 1.7;">Kariyer yolculuğunuzun bu önemli basamağını liyakatle geçtiniz. Başvurunuz titizlikle incelenmiş ve onaylanmıştır. Şimdi, edindiğiniz tecrübeleri staj dosyanıza profesyonel bir disiplinle işleme vakti. Bu sürecin yetkinliklerinizi geliştireceğine inancımız tam. Başarılar dileriz!</p>
+                                <p class="small text-dark mb-3" style="line-height: 1.7;">@hocaNotu</p>
                                 <a asp-action="Documents" class="btn btn-success btn-sm rounded-pill px-4 fw-bold shadow-sm">Staj Dosyasına Git</a>
                             </div>
                         }
 
-                        <div class="row g-4 @(app.Status == ApplicationStatus.Rejected ? "mt-1" : "mt-2")">
+                        <div class="row g-4 mt-2">
                             <div class="col-md-7 border-end">
                                 <h6 class="fw-bold text-dark border-bottom pb-2">Kurum Hakkında</h6>
                                 <p class="small text-secondary" style="line-height: 1.8;">@(ilan?.Description ?? "Kurum detayları yükleniyor...")</p>
                             </div>
 
-                            @if (app.Status != ApplicationStatus.Rejected)
+                            @if (app.Status == ApplicationStatus.Approved)
                             {
                                 <div class="col-md-5">
                                     <h6 class="fw-bold text-dark border-bottom pb-2">Konum Bilgisi</h6>
                                     <div class="map-container">
-                                        @if (ilan?.City != null)
-                                        {
-                                            @* 🛡️ MÜHÜR: Harita linki milimetrik düzeltildi *@
-                                            <iframe width="100%" height="100%" frameborder="0" style="border:0"
-                                                    src="https://maps.google.com/maps?q=@(ilan.City.Name)&t=&z=14&ie=UTF8&iwloc=&output=embed"
-                                                    allowfullscreen>
-                                            </iframe>
-                                        }
-                                        else
-                                        {
-                                            <div class="d-flex align-items-center justify-content-center h-100 text-muted small">Konum verisi bulunamadı.</div>
-                                        }
+                                        @* Google Maps Iframe *@
+                                        <iframe width="100%" height="100%" frameborder="0" style="border:0"
+                                                src="http://googleusercontent.com/maps.google.com/6"
+                                                allowfullscreen></iframe>
                                     </div>
-                                    <p class="x-small text-muted mt-2 text-center"><i class="fas fa-info-circle"></i> @(ilan?.City?.Name ?? "Konum Belirtilmedi")</p>
+                                    <p class="x-small text-muted mt-2 text-center"><i class="fas fa-map-marker-alt text-danger"></i> @(ilan?.City?.Name ?? "Konum Bilgisi")</p>
                                 </div>
                             }
                         </div>
@@ -251,7 +237,7 @@
                 }
                 else
                 {
-                    @* 🏛️ MOD 2: HENÜZ BAŞVURULMAMIŞ - CV VE SERTİFİKA FORMU *@
+                    @* 🏛️ MOD 2: BAŞVURU YAPILMAMIŞSA FORM GÖSTER *@
                     <div class="header-apply-green apply-header-small">
                         <i class="fas fa-file-signature"></i>
                         <h4>Staj Başvurusu Yap</h4>

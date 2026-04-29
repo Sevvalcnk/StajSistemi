@@ -1,4 +1,4 @@
-﻿@using StajSistemi.Models @* 🛡️ Yeni etiketleri tanımak için bu mühür şart! *@
+﻿@using StajSistemi.Models
 @model IEnumerable<StajSistemi.Models.InternshipApplication>
 
 @{
@@ -29,7 +29,7 @@
                     <tr>
                         <th class="ps-4 py-3 text-uppercase small fw-bold">Şirket / Kurum</th>
                         <th class="py-3 text-uppercase small fw-bold text-center">Bölüm</th>
-                        <th class="py-3 text-uppercase small fw-bold text-center">Başarı Skoru (4.00)</th> @* ✅ LİYAKAT GİTTİ, BAŞARI GELDİ *@
+                        <th class="py-3 text-uppercase small fw-bold text-center">Başarı Skoru</th>
                         <th class="py-3 text-uppercase small fw-bold text-center">Başvuru Durumu</th>
                         <th class="pe-4 py-3 text-uppercase small fw-bold text-end">Detaylar</th>
                     </tr>
@@ -44,20 +44,35 @@
                                     <div class="fw-bold text-dark">@(item.Internship?.CompanyName ?? "Belirtilmemiş")</div>
                                     <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i> @(item.Internship?.City?.Name ?? "Konum Bilgisi Yok")</small>
                                 </td>
+
+                                @* ✅ SİBER DÜZELTME: Bölüm kısmı pırlanta gibi onarıldı *@
                                 <td class="py-3 text-center">
-                                    <span class="text-muted small">
-                                        @(item.Internship?.Department?.DepartmentName ?? "Genel")
-                                    </span>
+                                    @if (item.Internship?.InternshipDepartments != null && item.Internship.InternshipDepartments.Any())
+                                    {
+                                        @foreach (var deptMap in item.Internship.InternshipDepartments)
+                                        {
+                                            <span class="badge bg-light text-primary border border-primary rounded-pill small m-1">
+                                                @(deptMap.Department?.DepartmentName ?? "Bölüm")
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Genel</span>
+                                    }
                                 </td>
+
+                                @* ✅ KRİTİK MÜHÜR: Başarı Skoru Onarma (0.00 Fallback) *@
                                 <td class="py-3 text-center">
-                                    @* ✅ BAŞARI SKORU DÖNÜŞÜMÜ: 285'i 2.85 yapıyoruz (100.0'e bölerek) *@
                                     @{
-                                        double academicScore = item.SuccessScore / 100.0;
+                                        // Eğer veritabanındaki skor 0 geliyorsa (eski veri), öğrencinin profilindeki güncel GPA'yı kullanıyoruz.
+                                        double academicScore = item.SuccessScore > 0 ? (item.SuccessScore / 100.0) : (item.AppUser?.GPA ?? 0.0);
                                     }
                                     <div class="badge @(academicScore >= 3.0 ? "bg-success" : "bg-dark") text-white px-3 py-2 rounded-3 shadow-sm fw-bold">
                                         <i class="fas fa-graduation-cap me-1"></i> @academicScore.ToString("0.00")
                                     </div>
                                 </td>
+
                                 <td class="py-3 text-center">
                                     @if (item.Status == ApplicationStatus.Approved)
                                     {
@@ -85,7 +100,7 @@
                                     }
                                 </td>
                                 <td class="pe-4 py-3 text-end">
-                                    <a asp-action="Details" asp-route-id="@item.Id"
+                                    <a asp-action="Details" asp-route-id="@item.InternshipId"
                                        class="btn btn-outline-primary btn-sm rounded-pill px-4 transition hover-up fw-bold">
                                         <i class="fas fa-eye me-1"></i> İncele
                                     </a>
@@ -96,7 +111,8 @@
                     else
                     {
                         <tr>
-                            <td colspan="5" class="py-5 text-center">
+                            @* ✅ SİBER FIX: Colspan 5'ten 6'ya çekildi (Sütun sayısı uyuşmazlığı giderildi) *@
+                            <td colspan="6" class="py-5 text-center">
                                 <div class="opacity-50">
                                     <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
                                     <p class="mb-0 fw-bold">Henüz aktif bir staj başvurunuz bulunmamaktadır.</p>

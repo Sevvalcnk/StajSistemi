@@ -9,12 +9,24 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using StajSistemi.Services;
 using StajSistemi.Helpers;
 using StajSistemi.Hubs;
-using StajSistemi.Filters; // 👈 MÜHÜR 1: Filtre klasörüne ulaşabilmek için ekledik
+using StajSistemi.Filters;
+using Serilog; // 🛡️ SİBER GÜNLÜK MÜHÜRÜ: Serilog kütüphanesini dahil ettik
+
+// --- 🚀 SİBER GÜNLÜK (LOGGING) YAPILANDIRMASI ---
+// builder oluşturulmadan önce günlüğü kuruyoruz ki her şeyi duyalım.
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/staj_sistemi_gunluk.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 🛡️ SİBER ENTEGRASYON: Sistemi Serilog'un korumasına teslim ediyoruz
+builder.Host.UseSerilog();
+
 // --- Standart Servisler ---
-// 👈 MÜHÜR 2: Boş olan satırı bu şekilde güncelledik. Artık profil kontrolü aktif!
+// 👈 MÜHÜR 2: Profil kontrolü aktif!
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<ProfileCompletionFilter>();
@@ -84,11 +96,17 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-// --- Pipeline Ayarları ---
+// --- Pipeline Ayarları (Siber Kalkan) ---
 if (!app.Environment.IsDevelopment())
 {
+    // 🛡️ GLOBAL HATA KALKANI: Hata anında siber bir şıklıkla Error sayfasına gider.
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+}
+else
+{
+    // Geliştirme modunda hatayı detaylı gör ki hemen çözelim.
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();

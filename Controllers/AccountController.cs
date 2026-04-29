@@ -4,8 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using StajSistemi.Models;
 using StajSistemi.Models.ViewModels;
 using StajSistemi.data;
+using System;
+using System.Linq;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http; // ✅ Session işlemleri mühürlü kalsın
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace StajSistemi.Controllers
 {
@@ -28,6 +32,7 @@ namespace StajSistemi.Controllers
             _context = context;
         }
 
+        // --- 🔑 GİRİŞ İŞLEMLERİ (MEVCUT YAPI HARFİYEN KORUNDU) ---
         [HttpGet]
         public IActionResult Login(string role)
         {
@@ -57,9 +62,7 @@ namespace StajSistemi.Controllers
                     var result = await _signInManager.PasswordSignInAsync(user.UserName!, model.Password, model.RememberMe, false);
                     if (result.Succeeded)
                     {
-                        // --- ✅ HAFTA 3 MÜHÜRÜ: IP ADRESİ VE LOG KAYDI ---
                         string remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-
                         HttpContext.Session.SetString("UserIP", remoteIp);
                         HttpContext.Session.SetString("UserEmail", user.Email ?? "");
 
@@ -85,6 +88,7 @@ namespace StajSistemi.Controllers
             return View(model);
         }
 
+        // --- 📝 KAYIT İŞLEMLERİ (MANTIK DÜZELTİLDİ & ZIRHLANDI) ---
         [HttpGet]
         public IActionResult Register(string role)
         {
@@ -95,6 +99,8 @@ namespace StajSistemi.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
+            // 🛡️ SİBER MÜHÜR: ModelState.IsValid kontrolü, modeldeki [Required] alanlarını (Bölüm gibi) denetler.
+            // Eğer bir alan eksikse, kod bu bloğa girmez ve View'daki uyarıları tetikler! ✅
             if (ModelState.IsValid)
             {
                 var nameParts = model.FullName.Trim().Split(' ');
@@ -103,19 +109,20 @@ namespace StajSistemi.Controllers
 
                 var user = new AppUser
                 {
-                    // ✅ Username hâlâ öğrenci numarası (Student ise) veya Email olarak mühürleniyor
                     UserName = model.Role == "Student" ? model.StudentNo : model.Email,
                     Email = model.Email,
                     FullName = model.FullName,
                     FirstName = firstName,
                     LastName = lastName,
 
-                    // ❌ DÜZELTME: Eskiden burası "model.Role == 'Student' ? 1 : null" şeklindeydi.
-                    // Bu yüzden herkes 1 numaralı bölüme (İnternet ve Ağ) hapsoluyordu.
-                    // ✅ MÜHÜR: Burayı null yapıyoruz ki öğrenci girişte "Bölüm Seçilmedi" uyarısı alsın ve kendi bölümünü seçsin.
-                    DepartmentId = null,
-
+                    // 🚀 EĞİTİM BİLGİLERİ EŞLEŞTİRİLİYOR:
+                    EducationLevel = model.EducationLevel,
                     StudentNo = model.Role == "Student" ? model.StudentNo : null,
+
+                    // ✅ MÜHÜR: Burayı "null" bırakmıştık, şimdi modelden gelen bölüm ID'sini mühürlüyoruz.
+                    // Bu sayede seçilen bölüm hem kaydedilir hem de boş bırakıldığında sistem hata verir.
+                    DepartmentId = model.Role == "Student" ? model.DepartmentId : null,
+
                     IsDeleted = false
                 };
 
@@ -131,14 +138,17 @@ namespace StajSistemi.Controllers
 
                     return RedirectToAction("Index", "StudentPanel");
                 }
+
+                // Identity Hatalarını Yakala
                 foreach (var error in result.Errors) ModelState.AddModelError("", error.Description);
             }
+
+            // ⚠️ HATA DURUMUNDA: Formu hatalarla geri gönderirken rol bilgisini koruyoruz.
             ViewBag.SelectedRole = model.Role;
             return View(model);
         }
 
-        // --- 📧 ŞİFRE SIFIRLAMA VE DİĞER İŞLEMLER BOZULMADAN KORUNDU ---
-
+        // --- 🔑 ŞİFRE VE ÇIKIŞ İŞLEMLERİ (MEVCUT YAPI KORUNDU) ---
         [HttpGet] public IActionResult ForgotPassword() => View();
 
         [HttpPost]
@@ -213,5 +223,20 @@ namespace StajSistemi.Controllers
         }
 
         [HttpGet] public IActionResult AccessDenied() => View();
+
+        // --- 🛡️ HAFTA 9 MÜHÜRÜ: BÖLÜM FİLTRELEME MOTORU (HIZLI VE HATASIZ) ---
+        [HttpGet]
+        public async Task<JsonResult> GetBolumlerByDuzey(string duzey)
+        {
+            var bolumler = await _context.Departments
+                .Where(x => x.DegreeLevel == duzey)
+                .Select(x => new {
+                    id = x.Id,
+                    name = x.DepartmentName
+                })
+                .ToListAsync();
+
+            return Json(bolumler);
+        }
     }
 }

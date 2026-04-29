@@ -56,11 +56,13 @@
                             <div class="col-md-6 mb-3">
                                 <label asp-for="Name" class="form-label fw-bold text-muted small text-uppercase">Adınız</label>
                                 <input asp-for="Name" class="form-control rounded-pill border-2 input-focus" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="Surname" class="form-label fw-bold text-muted small text-uppercase">Soyadınız</label>
                                 <input asp-for="Surname" class="form-control rounded-pill border-2 input-focus" />
+                                <span asp-validation-for="Surname" class="text-danger small"></span>
                             </div>
                         </div>
 
@@ -69,14 +71,17 @@
                             <div class="col-md-4 mb-3">
                                 <label asp-for="DegreeType" class="form-label fw-bold text-muted small text-uppercase">Eğitim Düzeyi</label>
                                 <select asp-for="DegreeType" class="form-select rounded-pill border-2 input-focus" id="degreeSelect">
+                                    <option value="">Seçiniz...</option>
                                     <option value="Lisans">Lisans (4 Yıllık)</option>
                                     <option value="Önlisans">Önlisans (2 Yıllık)</option>
                                 </select>
+                                <span asp-validation-for="DegreeType" class="text-danger small"></span>
                             </div>
 
                             <div class="col-md-4 mb-3">
                                 <label asp-for="UniversityName" class="form-label fw-bold text-muted small text-uppercase">Üniversite Adı</label>
                                 <input asp-for="UniversityName" class="form-control rounded-pill border-2 input-focus" placeholder="Örn: Niğde Üniversitesi" />
+                                <span asp-validation-for="UniversityName" class="text-danger small"></span>
                             </div>
 
                             <div class="col-md-4 mb-3">
@@ -84,15 +89,18 @@
                                     @(Model.DegreeType == "Önlisans" ? "Meslek Yüksekokulu" : "Fakülte Adı")
                                 </label>
                                 <input asp-for="FacultyName" class="form-control rounded-pill border-2 input-focus" placeholder="Birim adını yazınız" />
+                                <span asp-validation-for="FacultyName" class="text-danger small"></span>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="DepartmentId" class="form-label fw-bold text-muted small text-uppercase">Okuduğunuz Bölüm</label>
                             <select asp-for="DepartmentId" class="form-select rounded-pill border-2 input-focus"
-                                    asp-items="ViewBag.Departments">
-                                <option value="">--- Bölümünüzü Seçiniz ---</option>
+                                    asp-items="ViewBag.Departments" id="DepartmentSelect">
+                                <option value="">--- Önce Eğitim Düzeyi Seçiniz ---</option>
                             </select>
+                            @* 🛡️ MÜHÜR: Hata burada parlayacak! *@
+                            <span asp-validation-for="DepartmentId" class="text-danger small fw-bold"></span>
                         </div>
 
                         <div class="mb-3">
@@ -101,6 +109,7 @@
                                     asp-items="ViewBag.Cities">
                                 <option value="">--- Şehir Seçiniz ---</option>
                             </select>
+                            <span asp-validation-for="CityId" class="text-danger small"></span>
                         </div>
 
                         @* 👶 DOĞUM VE AKADEMİK BİLGİLER *@
@@ -129,7 +138,6 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="GPA" class="form-label fw-bold text-muted small text-uppercase">GPA (Not Ort. Max: 4.00)</label>
-                                @* 🛡️ MÜHÜR: GPA KRİZİNİ BİTİREN KİLİT *@
                                 <input asp-for="GPA" type="number" step="0.01" min="0" max="4.00"
                                        class="form-control rounded-pill border-2 input-focus"
                                        placeholder="Örn: 3.50" required id="GPAInput" />
@@ -189,43 +197,79 @@
     }
 
     <script>
-        // ✅ SİHİRLİ ETİKET DEĞİŞTİRİCİ
-        document.getElementById('degreeSelect').addEventListener('change', function() {
-            const label = document.getElementById('facultyLabel');
-            label.innerText = this.value === "Önlisans" ? "Meslek Yüksekokulu" : "Fakülte Adı";
+        // ✅ SİHİRLİ ETİKET DEĞİŞTİRİCİ VE AKILLI FİLTRELEME MOTORU
+        $(document).ready(function() {
+            // Sayfa yüklendiğinde eğer bir seçim varsa otomatik tetikle!
+            if ($('#degreeSelect').val()) {
+                $('#degreeSelect').trigger('change');
+            }
         });
 
+        document.getElementById('degreeSelect').addEventListener('change', function() {
+            const label = document.getElementById('facultyLabel');
+            const selectedLevel = this.value;
+            const $deptSelect = $('#DepartmentSelect');
+
+            label.innerText = selectedLevel === "Önlisans" ? "Meslek Yüksekokulu" : "Fakülte Adı";
+
+            if (selectedLevel) {
+                $.getJSON('/Department/GetDepartmentsByLevel', { level: selectedLevel }, function (data) {
+                    // Mevcut seçimi sakla
+                    var currentDeptId = "@Model.DepartmentId";
+
+                    $deptSelect.empty();
+                    $deptSelect.append('<option value="">--- Bölümünüzü Seçiniz ---</option>');
+
+                    $.each(data, function (index, item) {
+                        var selectedAttr = (item.id == currentDeptId) ? ' selected' : '';
+                        $deptSelect.append('<option value="' + item.id + '"' + selectedAttr + '>' + item.departmentName + '</option>');
+                    });
+                });
+            } else {
+                $deptSelect.empty();
+                $deptSelect.append('<option value="">--- Önce Eğitim Düzeyi Seçiniz ---</option>');
+            }
+        });
+
+        // 🛡️ FORM DOĞRULAMA SİBER KALKANI (GELİŞTİRİLDİ)
         document.getElementById('profileEditForm').onsubmit = function (e) {
             const gpaInput = document.getElementById('GPAInput');
+            const deptSelect = document.getElementById('DepartmentSelect');
+            const cvInput = document.getElementById('CVFile');
+            const certInput = document.getElementById('CertificateFile');
+
             const izinliCV = /(\.pdf|\.doc|\.docx)$/i;
             const izinliSertifika = /(\.pdf|\.doc|\.docx|\.jpg|\.jpeg|\.png)$/i;
 
-            // 🛡️ GPA SİBER KALKANI: 4'ten büyükse durdur!
+            // 1. 🛡️ BÖLÜM KONTROLÜ (O İSTEDİĞİN UYARI!)
+            if (!deptSelect.value || deptSelect.value === "") {
+                alert("⚠️ Dikkat: Lütfen okuduğunuz bölümü listeden seçiniz!");
+                deptSelect.focus();
+                e.preventDefault();
+                return false;
+            }
+
+            // 2. GPA KONTROLÜ
             if (parseFloat(gpaInput.value.replace(',', '.')) > 4.00) {
-                alert("❌ Hata: Akademik ortalama (GPA) 4.00'den büyük olamaz!\nLütfen geçerli bir not giriniz (Örn: 2.80).");
+                alert("❌ Hata: Akademik ortalama (GPA) 4.00'den büyük olamaz!");
                 gpaInput.focus();
                 e.preventDefault();
                 return false;
             }
 
-            const cvInput = document.getElementById('CVFile');
-            const certInput = document.getElementById('CertificateFile');
-
-            if (cvInput.files.length > 0) {
-                if (!izinliCV.exec(cvInput.files[0].name)) {
-                    alert("❌ Hata: Uygun olmayan CV formatı!\nLütfen sadece PDF veya Word belgesi seçiniz.");
-                    e.preventDefault();
-                    return false;
-                }
+            // 3. DOSYA FORMAT KONTROLLERİ
+            if (cvInput.files.length > 0 && !izinliCV.exec(cvInput.files[0].name)) {
+                alert("❌ Hata: Uygun olmayan CV formatı! (Sadece PDF/Word)");
+                e.preventDefault();
+                return false;
             }
 
-            if (certInput.files.length > 0) {
-                if (!izinliSertifika.exec(certInput.files[0].name)) {
-                    alert("❌ Hata: Uygun olmayan Sertifika formatı!\nLütfen PDF, Word veya Resim (JPG/PNG) seçiniz.");
-                    e.preventDefault();
-                    return false;
-                }
+            if (certInput.files.length > 0 && !izinliSertifika.exec(certInput.files[0].name)) {
+                alert("❌ Hata: Uygun olmayan Sertifika formatı!");
+                e.preventDefault();
+                return false;
             }
+
             return true;
         };
     </script>

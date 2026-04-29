@@ -13,6 +13,10 @@ namespace StajSistemi.data
         public DbSet<Department> Departments { get; set; }
         public DbSet<Internship> Internships { get; set; }
         public DbSet<InternshipApplication> InternshipApplications { get; set; }
+
+        // 🚀 YENİ MÜHÜR: Çoklu Bölüm Desteği İçin Köprü Tablo
+        public DbSet<InternshipDepartment> InternshipDepartments { get; set; }
+
         public DbSet<City> Cities { get; set; }
         public DbSet<DailyReport> DailyReports { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
@@ -24,12 +28,26 @@ namespace StajSistemi.data
         {
             base.OnModelCreating(modelBuilder);
 
-            // ✅ 1. HASSAS AYARLAR
+            // 🛡️ 1. ÇOKTAN ÇOĞA İLİŞKİ YAPILANDIRMASI (İlan - Bölüm Köprüsü)
+            modelBuilder.Entity<InternshipDepartment>()
+                .HasKey(id => new { id.InternshipId, id.DepartmentId }); // Kompozit Anahtar
+
+            modelBuilder.Entity<InternshipDepartment>()
+                .HasOne(id => id.Internship)
+                .WithMany(i => i.InternshipDepartments)
+                .HasForeignKey(id => id.InternshipId);
+
+            modelBuilder.Entity<InternshipDepartment>()
+                .HasOne(id => id.Department)
+                .WithMany(d => d.InternshipDepartments)
+                .HasForeignKey(id => id.DepartmentId);
+
+            // ✅ 2. HASSAS AYARLAR (GPA Hassasiyeti)
             modelBuilder.Entity<Internship>()
                 .Property(i => i.MinGPA)
                 .HasPrecision(3, 2);
 
-            // 🛡️ 2. DAILYREPORT İLİŞKİLERİ
+            // 🛡️ 3. DAILYREPORT İLİŞKİLERİ
             modelBuilder.Entity<DailyReport>(entity =>
             {
                 entity.ToTable("DailyReports");
@@ -45,14 +63,14 @@ namespace StajSistemi.data
                     .OnDelete(DeleteBehavior.NoAction);
             });
 
-            // --- 3. ROLLERİ MÜHÜRLE ---
+            // --- 4. ROLLERİ MÜHÜRLE ---
             modelBuilder.Entity<AppRole>().HasData(
                 new AppRole { Id = 1, Name = "Admin", NormalizedName = "ADMIN" },
                 new AppRole { Id = 2, Name = "Student", NormalizedName = "STUDENT" },
                 new AppRole { Id = 3, Name = "Advisor", NormalizedName = "ADVISOR" }
             );
 
-            // --- 4. VARSAYILAN ADMİNİ MÜHÜRLE ---
+            // --- 5. VARSAYILAN ADMİNİ MÜHÜRLE ---
             var hasher = new PasswordHasher<AppUser>();
             modelBuilder.Entity<AppUser>().HasData(new AppUser
             {
@@ -76,20 +94,22 @@ namespace StajSistemi.data
 
             modelBuilder.Entity<IdentityUserRole<int>>().HasData(new IdentityUserRole<int> { RoleId = 1, UserId = 1 });
 
-            // --- ✅ 5. BÖLÜMLERİ GERİ UYANDIRDIK ---
+            // --- ✅ 6. BÖLÜMLERİ GÜNCELLE VE MÜHÜRLE ---
             modelBuilder.Entity<Department>().HasData(
-                new Department { Id = 1, DepartmentName = "İnternet ve Ağ Teknolojileri" },
-                new Department { Id = 2, DepartmentName = "Çocuk Gelişimi Programı" },
-                new Department { Id = 3, DepartmentName = "Dış Ticaret Programı" },
-                new Department { Id = 4, DepartmentName = "Kontrol ve Otomasyon Teknolojisi Programı" },
-                new Department { Id = 5, DepartmentName = "Ormancılık ve Orman Teknolojisi Programı" },
-                new Department { Id = 6, DepartmentName = "İç Mekan Tasarım Programı" },
-                new Department { Id = 7, DepartmentName = "Lojistik Programı" },
-                new Department { Id = 8, DepartmentName = "Yapay Zeka" },
-                new Department { Id = 9, DepartmentName = "Dijital Oyun Tasarımı ve Geliştirme" }
+                new Department { Id = 1, DepartmentName = "İnternet ve Ağ Teknolojileri", DegreeLevel = "Önlisans" },
+                new Department { Id = 2, DepartmentName = "Çocuk Gelişimi Programı", DegreeLevel = "Önlisans" },
+                new Department { Id = 3, DepartmentName = "Dış Ticaret Programı", DegreeLevel = "Önlisans" },
+                new Department { Id = 4, DepartmentName = "Kontrol ve Otomasyon Teknolojisi Programı", DegreeLevel = "Önlisans" },
+                new Department { Id = 5, DepartmentName = "Ormancılık ve Orman Teknolojisi Programı", DegreeLevel = "Önlisans" },
+                new Department { Id = 6, DepartmentName = "İç Mekan Tasarım Programı", DegreeLevel = "Önlisans" },
+                new Department { Id = 7, DepartmentName = "Lojistik Programı", DegreeLevel = "Önlisans" },
+                new Department { Id = 8, DepartmentName = "Yapay Zeka", DegreeLevel = "Lisans" },
+                new Department { Id = 9, DepartmentName = "Dijital Oyun Tasarımı ve Geliştirme", DegreeLevel = "Lisans" },
+                new Department { Id = 10, DepartmentName = "Ziraat Mühendisliği", DegreeLevel = "Lisans" },
+                new Department { Id = 11, DepartmentName = "Bilgisayar Mühendisliği", DegreeLevel = "Lisans" }
             );
 
-            // --- 🌍 8. GÜNCEL ŞEHİR LİSTESİ (15 ŞEHİR) ---
+            // --- 🌍 7. ŞEHİR LİSTESİ ---
             modelBuilder.Entity<City>().HasData(
                 new City { Id = 1, Name = "Sinop" },
                 new City { Id = 2, Name = "Samsun" },
@@ -100,15 +120,15 @@ namespace StajSistemi.data
                 new City { Id = 7, Name = "Bursa" },
                 new City { Id = 8, Name = "Sakarya" },
                 new City { Id = 9, Name = "Kastamonu" },
-                new City { Id = 10, Name = "Eskişehir" }, // Çorum yerine
+                new City { Id = 10, Name = "Eskişehir" },
                 new City { Id = 11, Name = "Ordu" },
-                new City { Id = 12, Name = "Aydın" },     // Giresun yerine
+                new City { Id = 12, Name = "Aydın" },
                 new City { Id = 13, Name = "Trabzon" },
-                new City { Id = 14, Name = "Muğla" },     // Rize yerine
+                new City { Id = 14, Name = "Muğla" },
                 new City { Id = 15, Name = "Antalya" }
             );
 
-            // --- 💬 6. SOHBET İLİŞKİLERİ ---
+            // --- 💬 8. SOHBET İLİŞKİLERİ ---
             modelBuilder.Entity<ChatMessage>()
                 .HasOne(m => m.Sender)
                 .WithMany()
@@ -121,7 +141,7 @@ namespace StajSistemi.data
                 .HasForeignKey(m => m.ReceiverId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // --- 🔥 7. TRIGGER ---
+            // --- 🔥 9. TRIGGER ---
             modelBuilder.Entity<InternshipApplication>()
                 .ToTable(tb => tb.HasTrigger("trg_ApplicationLog"));
         }

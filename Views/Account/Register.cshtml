@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Yeni Kayıt";
-    bool canRegister = true;
 }
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -56,18 +55,17 @@
                         <i class="fas fa-shield-alt fa-2x me-3 text-warning"></i>
                         <div>
                             <h6 class="fw-bold mb-1">Güvenlik Protokolü Aktif!</h6>
-                            <p class="small mb-0 opacity-75">Hızlı kayıt modundasın. Detaylı okul bilgilerini içeride profilinden mühürleyebilirsin. 🛡️</p>
+                            <p class="small mb-0 opacity-75">Sadece temel bilgilerle hızlıca kayıt ol. 🛡️</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="text-center mb-4">
                     <h3 class="fw-bold">Yeni Kullanıcı Kaydı</h3>
-                    <p class="text-muted small">Lütfen bilgilerinizi eksiksiz doldurun.</p>
+                    <p class="text-muted small">Hesabını oluştur ve mühürle.</p>
                 </div>
 
                 <form asp-action="Register" method="post" id="registerForm">
-                    @* 🛡️ KRİTİK DOKUNUŞ: 'ModelOnly' yerine 'All' yaptık ki tüm hataları (Şifre zayıf, Boş alan vs.) görelim *@
                     <div asp-validation-summary="All" class="text-danger mb-3 small"></div>
 
                     @* ✅ ROL SEÇİMİ *@
@@ -92,7 +90,7 @@
                         <span asp-validation-for="FullName" class="text-danger small"></span>
                     </div>
 
-                    @* 🆔 ÖĞRENCİ NUMARASI *@
+                    @* 🆔 ÖĞRENCİ NUMARASI (Sadece öğrenci seçilirse görünür) *@
                     <div class="mb-3" id="studentNoArea">
                         <label asp-for="StudentNo" class="form-label fw-bold small">Öğrenci Numarası</label>
                         <div class="input-group">
@@ -174,7 +172,6 @@
 
         const roleSelect = document.getElementById('roleSelect');
         const studentNoArea = document.getElementById('studentNoArea');
-        const studentNoInput = document.getElementById('studentNoInput');
 
         function updateFormFields() {
             if (roleSelect.value === 'Student') {
@@ -183,7 +180,6 @@
             } else {
                 studentNoArea.style.opacity = '0';
                 studentNoArea.style.display = 'none';
-                // studentNoInput.value = ""; // Rol değiştiğinde numarayı silmek istersen aktif edebilirsin
             }
         }
 

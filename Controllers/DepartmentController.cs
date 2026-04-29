@@ -40,5 +40,22 @@ namespace StajSistemi.Controllers
             }
             return View(department);
         }
+
+        // --- 🛡️ HAFTA 9: AKILLI BÖLÜM FİLTRELEME MOTORU ---
+        // Bu metod, AJAX çağrısı ile çalışır ve seçilen seviyeye göre bölümleri JSON olarak döner.
+        [HttpGet]
+        public async Task<JsonResult> GetDepartmentsByLevel(string level)
+        {
+            // Veritabanından DegreeLevel (Lisans/Önlisans) bilgisine göre süzüyoruz
+            var departments = await _context.Departments
+                .Where(d => d.DegreeLevel == level)
+                .Select(d => new {
+                    id = d.Id,
+                    departmentName = d.DepartmentName
+                })
+                .ToListAsync();
+
+            return Json(departments); // Veriyi siber bir paket (JSON) olarak yolluyoruz.
+        }
     }
 }

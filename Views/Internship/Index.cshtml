@@ -1,9 +1,8 @@
-﻿@using StajSistemi.Models @* 🛡️ Akıllı etiketleri tanımak için bu mühür şart! *@
+﻿@using StajSistemi.Models
 @model IEnumerable<StajSistemi.Models.Internship>
 
 @{
     ViewData["Title"] = "Staj İlanları";
-    // ✅ HAFTA 4 MÜHÜRÜ: Listeyi daha hızlı kontrol etmek için değişkeni burada tanımlıyoruz
     var appliedIds = ViewBag.AppliedIds as List<int> ?? new List<int>();
 }
 
@@ -38,7 +37,7 @@
                     <thead class="bg-light text-secondary">
                         <tr>
                             <th class="px-4 py-3">İlan Bilgisi / Şirket</th>
-                            <th class="py-3">Hedef Bölüm</th>
+                            <th class="py-3">Hedef Bölümler</th>
                             <th class="py-3">Staj Tarihleri</th>
                             <th class="py-3 text-center">Kontenjan</th>
                             <th class="py-3 text-center">Durum</th>
@@ -64,12 +63,25 @@
                                         <div class="fw-bold text-dark">@item.Name</div>
                                         <div class="small text-muted">@item.CompanyName (@item.CompanySector)</div>
                                     </td>
+
+                                    @* ✅ SİBER DÜZELTME: Bölüm kısmı döngüye alındı (Many-to-Many Destekli) *@
                                     <td class="py-3">
-                                        <span class="badge bg-soft-info text-info border border-info rounded-pill px-3">
-                                            <i class="fas fa-graduation-cap me-1"></i>
-                                            @(item.Department != null ? item.Department.DepartmentName : "Genel")
-                                        </span>
+                                        @if (item.InternshipDepartments != null && item.InternshipDepartments.Any())
+                                        {
+                                            foreach (var deptMap in item.InternshipDepartments)
+                                            {
+                                                <span class="badge bg-soft-info text-info border border-info rounded-pill px-3 m-1" style="font-size: 0.7rem; font-weight: 700;">
+                                                    <i class="fas fa-graduation-cap me-1"></i>
+                                                    @(deptMap.Department?.DepartmentName ?? "Bölüm")
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Bölüm Belirtilmemiş</span>
+                                        }
                                     </td>
+
                                     <td class="py-3">
                                         <div class="small fw-bold text-secondary">
                                             <i class="far fa-calendar-alt me-1"></i> @item.StartDate.ToString("dd.MM.yyyy")
@@ -78,18 +90,15 @@
                                             <i class="fas fa-long-arrow-alt-down ms-1"></i> @item.EndDate.ToString("dd.MM.yyyy")
                                         </div>
                                     </td>
+
+                                    @* 🛡️ SİBER MÜHÜR: Sayıların taşmasını engelleyen rozet yapısı *@
                                     <td class="py-3 text-center">
-                                        @if (item.Quota <= 0)
-                                        {
-                                            <span class="fw-bold text-danger">0</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="fw-bold text-primary">@item.Quota</span>
-                                        }
+                                        <span class="quota-badge border @(item.Quota <= 0 ? "text-danger border-danger" : "text-primary border-primary")">
+                                            @item.Quota
+                                        </span>
                                     </td>
+
                                     <td class="py-3 text-center">
-                                        @* ✅ AKILLI ENUM KONTROLÜ: Artık tırnak yok, akıllı etiket var! *@
                                         @if (item.Status == ApplicationStatus.Active)
                                         {
                                             if (item.Quota <= 0)
@@ -103,7 +112,6 @@
                                         }
                                         else
                                         {
-                                            @* Diğer durumlar (Deleted vb.) için güvenli bir gösterim *@
                                             <span class="badge bg-secondary rounded-pill">@item.Status.ToString()</span>
                                         }
                                     </td>
@@ -136,7 +144,6 @@
                                                 <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary border-0 px-3" title="Düzenle">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-
                                                 <form asp-action="DeleteInternship" asp-route-id="@item.Id" method="post"
                                                       onsubmit="return confirm('Bu ilanı sistemden kaldırmak üzeresiniz. Emin misiniz?');"
                                                       style="display: contents;">
@@ -160,12 +167,24 @@
 
 <style>
     .bg-soft-info {
-        background-color: #e0f7fa;
+        background-color: rgba(67, 97, 238, 0.1);
     }
 
     .table-hover tbody tr:hover {
         background-color: #f8f9fa;
         transition: 0.3s;
+    }
+
+    /* 📊 Kontenjan Rozeti: Sayıların taşmasını ve alt alta binmesini engelleyen Premium Mühür */
+    .quota-badge {
+        font-weight: 800;
+        font-size: 0.85rem;
+        padding: 5px 15px;
+        border-radius: 50px;
+        white-space: nowrap; /* Sayıların yan yana kalmasını sağlar */
+        display: inline-block;
+        min-width: 50px;
+        text-align: center;
     }
 
     .btn-group form {

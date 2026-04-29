@@ -7,6 +7,10 @@ using StajSistemi.Models;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace StajSistemi.Controllers
 {
@@ -39,7 +43,7 @@ namespace StajSistemi.Controllers
             }
 
             var query = _context.Internships
-                .Include(i => i.Department)
+                .Include(i => i.InternshipDepartments).ThenInclude(id => id.Department)
                 .Include(i => i.City)
                 .Where(x => !x.IsDeleted && x.Status == ApplicationStatus.Active);
 
@@ -55,10 +59,9 @@ namespace StajSistemi.Controllers
                 query = query.OrderByDescending(x => x.CreatedDate);
             }
 
-            // ✅ MÜHÜR: Gelen departmentId varsa listeyi sadece o bölüme göre süzer.
             if (departmentId.HasValue)
             {
-                query = query.Where(x => x.DepartmentId == departmentId.Value);
+                query = query.Where(x => x.InternshipDepartments.Any(d => d.DepartmentId == departmentId.Value));
                 ViewBag.SpecialMessage = "Bölümüne en uygun staj fırsatlarını senin için süzdüm! 🥂";
             }
 
@@ -80,7 +83,7 @@ namespace StajSistemi.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var internship = await _context.Internships
-                .Include(i => i.Department)
+                .Include(i => i.InternshipDepartments).ThenInclude(id => id.Department)
                 .Include(i => i.City)
                 .FirstOrDefaultAsync(i => i.Id == id);
 
@@ -95,7 +98,7 @@ namespace StajSistemi.Controllers
         public async Task<IActionResult> Archive()
         {
             var archived = await _context.Internships
-                .Include(i => i.Department)
+                .Include(i => i.InternshipDepartments).ThenInclude(id => id.Department)
                 .Include(i => i.City)
                 .Where(x => x.IsDeleted == true)
                 .OrderByDescending(x => x.CreatedDate)
@@ -141,8 +144,10 @@ namespace StajSistemi.Controllers
         [Authorize(Roles = "Admin,Advisor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Internship model, int weeklyWorkDays = 5)
+        public async Task<IActionResult> Create(Internship model, int[] selectedDepartmentIds, int weeklyWorkDays = 5)
         {
+            model.InternshipDepartments = new List<InternshipDepartment>();
+
             if (string.IsNullOrEmpty(model.Name))
             {
                 model.Name = model.CompanyName + " Staj İlanı";
@@ -152,41 +157,56 @@ namespace StajSistemi.Controllers
             ModelState.Remove("AppUser");
             ModelState.Remove("Name");
             ModelState.Remove("City");
+            ModelState.Remove("InternshipDepartments");
 
             if (ModelState.IsValid)
             {
                 int gercekIsGunu = IsGunuHesapla(model.StartDate, model.EndDate, weeklyWorkDays);
 
-                if (gercekIsGunu < 30)
+                if (gercekIsGunu >= 30)
                 {
-                    ModelState.AddModelError("", $"❌ Hata: Seçtiğiniz tarihler arasında sadece {gercekIsGunu} iş günü var. Staj en az 30 iş günü olmalıdır!");
-                    ViewBag.Departments = await _context.Departments.ToListAsync();
-                    ViewBag.Cities = await _context.Cities.OrderBy(x => x.Name).ToListAsync();
-                    return View(model);
+                    model.CreatedDate = DateTime.Now;
+                    model.Status = ApplicationStatus.Active;
+                    model.IsDeleted = false;
+
+                    _context.Internships.Add(model);
+                    await _context.SaveChangesAsync();
+
+                    if (selectedDepartmentIds != null && selectedDepartmentIds.Length > 0)
+                    {
+                        foreach (var deptId in selectedDepartmentIds)
+                        {
+                            _context.InternshipDepartments.Add(new InternshipDepartment
+                            {
+                                InternshipId = model.Id,
+                                DepartmentId = deptId
+                            });
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+
+                    TempData["SuccessMessage"] = "Yeni staj ilanı bölümleriyle birlikte başarıyla mühürlendi! 🥂";
+                    return RedirectToAction(nameof(Index));
                 }
 
-                model.CreatedDate = DateTime.Now;
-                model.Status = ApplicationStatus.Active;
-                model.IsDeleted = false;
-
-                _context.Internships.Add(model);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Yeni staj ilanı başarıyla mühürlendi! 🥂";
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError("", $"❌ Hata: Seçtiğiniz tarihler arasında sadece {gercekIsGunu} iş günü var. Staj en az 30 iş günü olmalıdır!");
             }
 
+            ViewBag.SelectedDeptIds = selectedDepartmentIds;
             ViewBag.Departments = await _context.Departments.ToListAsync();
             ViewBag.Cities = await _context.Cities.OrderBy(x => x.Name).ToListAsync();
             return View(model);
         }
 
-        // --- 4. İLAN DÜZENLEME VE SİLME ---
+        // --- 🛠️ 4. İLAN DÜZENLEME ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var internship = await _context.Internships.FindAsync(id);
+            var internship = await _context.Internships
+                .Include(i => i.InternshipDepartments)
+                .FirstOrDefaultAsync(i => i.Id == id);
+
             if (internship == null) return NotFound();
 
             ViewBag.Departments = await _context.Departments.ToListAsync();
@@ -197,7 +217,7 @@ namespace StajSistemi.Controllers
         [Authorize(Roles = "Admin,Advisor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Internship model)
+        public async Task<IActionResult> Edit(int id, Internship model, int[] selectedDepartmentIds)
         {
             if (id != model.Id) return NotFound();
 
@@ -205,14 +225,45 @@ namespace StajSistemi.Controllers
             ModelState.Remove("AppUser");
             ModelState.Remove("Name");
             ModelState.Remove("City");
+            ModelState.Remove("InternshipDepartments");
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(model);
+                    var existing = await _context.Internships
+                        .Include(i => i.InternshipDepartments)
+                        .FirstOrDefaultAsync(i => i.Id == id);
+
+                    if (existing == null) return NotFound();
+
+                    existing.CompanyName = model.CompanyName;
+                    existing.Description = model.Description;
+                    existing.Quota = model.Quota;
+                    existing.StartDate = model.StartDate;
+                    existing.EndDate = model.EndDate;
+                    existing.CityId = model.CityId;
+                    existing.Status = model.Status;
+                    existing.Name = string.IsNullOrEmpty(model.Name) ? model.CompanyName + " Staj İlanı" : model.Name;
+
+                    _context.InternshipDepartments.RemoveRange(existing.InternshipDepartments);
                     await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "İlan bilgileri başarıyla güncellendi! ✨";
+
+                    if (selectedDepartmentIds != null)
+                    {
+                        foreach (var deptId in selectedDepartmentIds)
+                        {
+                            _context.InternshipDepartments.Add(new InternshipDepartment
+                            {
+                                InternshipId = id,
+                                DepartmentId = deptId
+                            });
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "İlan bilgileri liyakatle güncellendi! ✨";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
@@ -221,6 +272,7 @@ namespace StajSistemi.Controllers
                     else throw;
                 }
             }
+            ViewBag.SelectedDeptIds = selectedDepartmentIds;
             ViewBag.Departments = await _context.Departments.ToListAsync();
             ViewBag.Cities = await _context.Cities.OrderBy(x => x.Name).ToListAsync();
             return View(model);
@@ -244,52 +296,48 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // --- 🚀 5. BAŞVURU SAYFASINI GÖSTER (GET) ---
+        // --- 🚀 5. BAŞVURU MANTIĞI ---
         [Authorize(Roles = "Student")]
         [HttpGet]
         public async Task<IActionResult> Apply(int id)
         {
             var userIdString = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdString)) return Challenge();
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(userIdString));
 
             var internship = await _context.Internships
-                .Include(i => i.Department)
+                .Include(i => i.InternshipDepartments).ThenInclude(id => id.Department)
                 .Include(i => i.City)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (internship == null) return NotFound();
 
-            // ✅ KRİTİK MÜHÜR: Yusuf'un (ve diğerlerinin) "Hatalı ID" sorununu burada bitiriyoruz.
-            // Sayfa her yüklendiğinde, o anki kullanıcının GERÇEK bölüm ID'sini TempData'ya taze olarak basıyoruz.
             if (user != null)
             {
                 TempData["UserDeptId"] = user.DepartmentId;
                 TempData.Keep("UserDeptId");
             }
 
-            // Ghost Warning Fix: Eğer öğrenci doğru ilana girmişse, eski hataları kafasından siliyoruz.
-            if (user != null && user.DepartmentId == internship.DepartmentId)
-            {
-                TempData["WrongDepartment"] = null;
-                TempData["ErrorMessage"] = null;
-            }
-
             return View(internship);
         }
 
-        // --- 🚀 5. BAŞVURU YAPMA (POST) ---
         [Authorize(Roles = "Student")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Apply(int internshipId, IFormFile cvFile, IFormFile certFile)
         {
-            var currentUserId = int.Parse(_userManager.GetUserId(User));
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == currentUserId);
+            var currentUserIdString = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(currentUserIdString)) return Challenge();
 
+            var currentUserId = int.Parse(currentUserIdString);
+
+            // 🛡️ SİBER DÜZELTME: Kullanıcıyı GPA verisiyle birlikte taze bir şekilde çekiyoruz
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
             if (user == null) return Challenge();
 
             var internship = await _context.Internships
-                .Include(i => i.Department)
+                .Include(i => i.InternshipDepartments)
                 .FirstOrDefaultAsync(i => i.Id == internshipId);
 
             if (internship == null || internship.Quota <= 0)
@@ -298,27 +346,16 @@ namespace StajSistemi.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // ✅ AKILLI BÖLÜM KONTROLÜ (Hata anında Yusuf'un taze ID'sini hafızada tut)
-            if (user.DepartmentId != internship.DepartmentId)
+            if (!internship.InternshipDepartments.Any(d => d.DepartmentId == user.DepartmentId))
             {
-                TempData["WrongDepartment"] = true;
-                TempData["UserDeptId"] = user.DepartmentId; // 🛡️ BU SATIR HAYATİ!
                 TempData["ErrorMessage"] = "Bu ilan senin bölümünle uyuşmuyor kardaşım! 🛡️";
                 return RedirectToAction("Apply", new { id = internshipId });
             }
 
-            // ✅ GÜVENLİK RADARI: Dosya Uzantı Kontrolü
-            string[] allowedExtensions = { ".pdf", ".doc", ".docx", ".ppt", ".pptx" };
-
+            string[] allowedExtensions = { ".pdf", ".doc", ".docx" };
             if (cvFile != null && !allowedExtensions.Contains(Path.GetExtension(cvFile.FileName).ToLower()))
             {
-                TempData["ErrorMessage"] = "❌ Geçersiz format! Özgeçmiş için sadece PDF veya Word kabul edilir.";
-                return RedirectToAction("Apply", new { id = internshipId });
-            }
-
-            if (certFile != null && !allowedExtensions.Contains(Path.GetExtension(certFile.FileName).ToLower()))
-            {
-                TempData["ErrorMessage"] = "❌ Geçersiz format! Sertifika için sadece PDF, Word veya PPT kabul edilir.";
+                TempData["ErrorMessage"] = "❌ Geçersiz format! Sadece PDF veya Word kabul edilir.";
                 return RedirectToAction("Apply", new { id = internshipId });
             }
 
@@ -331,14 +368,9 @@ namespace StajSistemi.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            string cvFileName = cvFile != null ? await SaveFileAsync(cvFile, "cv") : null;
+            string cvFileName = await SaveFileAsync(cvFile, "cv");
             string certFileName = certFile != null ? await SaveFileAsync(certFile, "certificates") : null;
 
-            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-            if (cvFileName != null) _context.FileLogs.Add(new FileLog { AppUserId = user.Id, FileName = cvFileName, FileType = "Özgeçmiş", UploadTime = DateTime.Now, IpAddress = userIp });
-            if (certFileName != null) _context.FileLogs.Add(new FileLog { AppUserId = user.Id, FileName = certFileName, FileType = "Sertifika", UploadTime = DateTime.Now, IpAddress = userIp });
-
-            // ✅ BAŞARI SKORU HESAPLAMA MÜHÜRÜ
             var application = new InternshipApplication
             {
                 AppUserId = user.Id,
@@ -348,18 +380,20 @@ namespace StajSistemi.Controllers
                 ApplicationDate = DateTime.Now,
                 Status = ApplicationStatus.Pending,
                 IsDeleted = false,
-                SuccessScore = (user.GPA ?? 0) * 100
+                // ✅ KRİTİK MÜHÜR: GPA'yı 100 ile çarparak pırlanta gibi kaydediyoruz
+                SuccessScore = (double)((user.GPA ?? 0) * 100)
             };
 
             internship.Quota -= 1;
+
             _context.InternshipApplications.Add(application);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Staj başvurunuz başarıyla mühürlendi! Başarılar dileriz. 🥂🔥";
+            TempData["SuccessMessage"] = "Staj başvurunuz başarıyla mühürlendi! 🥂🔥";
             return RedirectToAction(nameof(Index));
         }
 
-        // --- ✅ 6. DURUM GÜNCELLEME (Kara Kutu Loglama ve Kontenjan Yönetimi) ---
+        // --- 6. DURUM GÜNCELLEME (ONARILAN KISIM) ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -371,14 +405,15 @@ namespace StajSistemi.Controllers
 
             if (application == null) return NotFound();
 
+            // ✅ SİBER NİZAM: İsimler modeldeki yeni mühürlerle (LogDate, Comment, vb.) eşitlendi!
             var statusLog = new InternshipApplicationLog
             {
-                ApplicationId = application.Id,
+                InternshipApplicationId = application.Id, // Eskisi: ApplicationId
                 OldStatus = application.Status,
                 NewStatus = status,
                 ChangedBy = User.Identity?.Name ?? "Yetkili",
-                ChangeDate = DateTime.Now,
-                Note = "Başvuru durumu sistem üzerinden güncellendi."
+                LogDate = DateTime.Now,                   // Eskisi: ChangeDate
+                Comment = "Başvuru durumu sistem üzerinden güncellendi." // Eskisi: Note
             };
 
             if (status == ApplicationStatus.Rejected && application.Status != ApplicationStatus.Rejected)
@@ -388,7 +423,6 @@ namespace StajSistemi.Controllers
 
             application.Status = status;
             _context.InternshipApplicationLogs.Add(statusLog);
-
             _context.Update(application);
             await _context.SaveChangesAsync();
 
@@ -396,12 +430,12 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Applications));
         }
 
-        // --- LİSTELEME VE YARDIMCI METOTLAR ---
+        // --- YARDIMCI METOTLAR ---
         [Authorize(Roles = "Admin,Advisor")]
         public async Task<IActionResult> Applications()
         {
             var apps = await _context.InternshipApplications
-                .Include(a => a.Internship).ThenInclude(i => i.Department)
+                .Include(a => a.Internship).ThenInclude(i => i.InternshipDepartments).ThenInclude(id => id.Department)
                 .Include(a => a.Internship).ThenInclude(i => i.City)
                 .Include(a => a.AppUser)
                 .Where(a => !a.IsDeleted)
@@ -415,17 +449,16 @@ namespace StajSistemi.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             var myApps = await _context.InternshipApplications
-                .Include(a => a.Internship).ThenInclude(i => i.Department)
+                .Include(a => a.Internship).ThenInclude(i => i.InternshipDepartments).ThenInclude(id => id.Department)
                 .Include(a => a.Internship).ThenInclude(i => i.City)
-                .Where(a => a.AppUserId == user.Id && !a.IsDeleted)
-                .ToListAsync();
+                .Where(a => a.AppUserId == user.Id && !a.IsDeleted).ToListAsync();
             return View(myApps);
         }
 
         private int IsGunuHesapla(DateTime baslangic, DateTime bitis, int haftalikGun)
         {
             List<DateTime> tatiller = new List<DateTime> {
-                new DateTime(2026, 1, 1), new DateTime(2026, 3, 20), new DateTime(2026, 4, 23),
+                new DateTime(2026, 1, 1), new DateTime(2026, 4, 23),
                 new DateTime(2026, 5, 1), new DateTime(2026, 5, 19), new DateTime(2026, 7, 15),
                 new DateTime(2026, 8, 30), new DateTime(2026, 10, 29)
             };
@@ -442,6 +475,7 @@ namespace StajSistemi.Controllers
 
         private async Task<string> SaveFileAsync(IFormFile file, string subFolder)
         {
+            if (file == null) return null;
             string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName).ToLower();
             string uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads", subFolder);
             if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);

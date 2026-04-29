@@ -16,7 +16,7 @@
         </div>
         <div class="text-end">
             <span class="badge bg-primary text-white border rounded-pill px-4 py-2 shadow-sm fw-bold">
-                <i class="fas fa-users me-1"></i> Toplam: @Model.Count() Başvuru
+                <i class="fas fa-users me-1"></i> Toplam: @(Model?.Count() ?? 0) Başvuru
             </span>
         </div>
     </div>
@@ -34,106 +34,126 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model)
+                    @if (Model != null && Model.Any())
                     {
-                        <tr>
-                            <td class="ps-4">
-                                <div class="d-flex align-items-center">
-                                    @* Harf Avatarları *@
-                                    <div class="avatar-sm me-3 shadow-sm rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                                         style="width: 45px; height: 45px; background: linear-gradient(45deg, #4e73df, #224abe); font-size: 0.9rem;">
-                                        @if (item.AppUser != null && !string.IsNullOrEmpty(item.AppUser.FirstName))
-                                        {
-                                            @(item.AppUser.FirstName[0].ToString().ToUpper() + (item.AppUser.LastName?[0].ToString().ToUpper() ?? ""))
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-user"></i>
-                                        }
-                                    </div>
-                                    <div>
-                                        <div class="fw-bold text-dark">@item.AppUser?.FirstName @item.AppUser?.LastName</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">
-                                            <i class="fas fa-graduation-cap me-1"></i> @(item.Internship?.Department?.DepartmentName ?? "Bölüm Belirtilmemiş")
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        @* Harf Avatarları *@
+                                        <div class="avatar-sm me-3 shadow-sm rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                                             style="width: 45px; height: 45px; background: linear-gradient(45deg, #4e73df, #224abe); font-size: 0.9rem;">
+                                            @if (item.AppUser != null && !string.IsNullOrEmpty(item.AppUser.FirstName))
+                                            {
+                                                @(item.AppUser.FirstName[0].ToString().ToUpper() + (item.AppUser.LastName?[0].ToString().ToUpper() ?? ""))
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-user"></i>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">@item.AppUser?.FirstName @item.AppUser?.LastName</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">
+                                                <i class="fas fa-graduation-cap me-1"></i>
+                                                @* ✅ SİBER DÜZELTME: Artık tek bölüm yok, köprü üzerinden tüm bölümleri listeliyoruz *@
+                                                @if (item.Internship?.InternshipDepartments != null)
+                                                {
+                                                    foreach (var deptMap in item.Internship.InternshipDepartments)
+                                                    {
+                                                        <span>@deptMap.Department?.DepartmentName</span>
+                                                    }
+                                                }
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
+                                </td>
 
-                            <td>
-                                <div class="fw-bold text-primary">@item.Internship?.CompanyName</div>
-                                <div class="small text-secondary"><i class="fas fa-briefcase me-1"></i> Stajyer Kontenjanı: @item.Internship?.Quota</div>
-                            </td>
+                                <td>
+                                    <div class="fw-bold text-primary">@item.Internship?.CompanyName</div>
+                                    <div class="small text-secondary"><i class="fas fa-briefcase me-1"></i> Stajyer Kontenjanı: @item.Internship?.Quota</div>
+                                </td>
 
-                            <td class="text-center">
-                                @* ✅ BAŞARI SKORU MÜHÜRÜ *@
-                                <div class="badge bg-success text-white px-3 py-2 rounded-3 shadow-sm fw-bold" style="min-width: 60px; font-size: 1rem;">
-                                    @item.SuccessScore.ToString("0")
-                                </div>
-                            </td>
-
-                            <td class="text-center">
-                                @* ✅ DURUM ROZETLERİ (Tam Türkçe ve İkonlu) *@
-                                @if (item.Status == ApplicationStatus.Approved)
-                                {
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
-                                        <i class="fas fa-check-circle me-1"></i> Onaylandı
-                                    </span>
-                                }
-                                else if (item.Status == ApplicationStatus.Rejected)
-                                {
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-bold">
-                                        <i class="fas fa-times-circle me-1"></i> Reddedildi
-                                    </span>
-                                }
-                                else if (item.Status == ApplicationStatus.Pending)
-                                {
-                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-bold text-dark">
-                                        <i class="fas fa-clock me-1"></i> Beklemede
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-normal">
-                                        <i class="fas fa-minus-circle me-1"></i> Başvuru Yok
-                                    </span>
-                                }
-                            </td>
-
-                            <td class="text-end pe-4">
-                                <div class="d-flex justify-content-end align-items-center gap-2">
-                                    <div class="btn-group shadow-sm me-2">
-                                        <a href="/uploads/cv/@item.CVPath" target="_blank" class="btn btn-outline-secondary btn-sm" title="Özgeçmiş">
-                                            <i class="fas fa-file-pdf text-danger"></i>
-                                        </a>
-                                        @if (!string.IsNullOrEmpty(item.CertificatePath))
-                                        {
-                                            <a href="/uploads/certificates/@item.CertificatePath" target="_blank" class="btn btn-outline-secondary btn-sm" title="Sertifika">
-                                                <i class="fas fa-certificate text-warning"></i>
-                                            </a>
-                                        }
+                                <td class="text-center">
+                                    <div class="badge bg-success text-white px-3 py-2 rounded-3 shadow-sm fw-bold" style="min-width: 60px; font-size: 1rem;">
+                                        @item.SuccessScore.ToString("0")
                                     </div>
+                                </td>
 
-                                    @if (item.Status == ApplicationStatus.Pending)
+                                <td class="text-center">
+                                    @if (item.Status == ApplicationStatus.Approved)
                                     {
-                                        <form asp-action="UpdateStatus" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@item.Id" />
-                                            <input type="hidden" name="status" value="@ApplicationStatus.Approved" />
-                                            <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm fw-bold">Onayla</button>
-                                        </form>
-
-                                        <form asp-action="UpdateStatus" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@item.Id" />
-                                            <input type="hidden" name="status" value="@ApplicationStatus.Rejected" />
-                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">Reddet</button>
-                                        </form>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+                                            <i class="fas fa-check-circle me-1"></i> Onaylandı
+                                        </span>
+                                    }
+                                    else if (item.Status == ApplicationStatus.Rejected)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-bold">
+                                            <i class="fas fa-times-circle me-1"></i> Reddedildi
+                                        </span>
+                                    }
+                                    else if (item.Status == ApplicationStatus.Pending)
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-bold text-dark">
+                                            <i class="fas fa-clock me-1"></i> Beklemede
+                                        </span>
                                     }
                                     else
                                     {
-                                        <span class="text-muted small fst-italic">İşlem Tamam</span>
+                                        <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-normal">
+                                            <i class="fas fa-minus-circle me-1"></i> Başvuru Yok
+                                        </span>
                                     }
+                                </td>
+
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end align-items-center gap-2">
+                                        <div class="btn-group shadow-sm me-2">
+                                            <a href="/uploads/cv/@item.CVPath" target="_blank" class="btn btn-outline-secondary btn-sm" title="Özgeçmiş">
+                                                <i class="fas fa-file-pdf text-danger"></i>
+                                            </a>
+                                            @if (!string.IsNullOrEmpty(item.CertificatePath))
+                                            {
+                                                <a href="/uploads/certificates/@item.CertificatePath" target="_blank" class="btn btn-outline-secondary btn-sm" title="Sertifika">
+                                                    <i class="fas fa-certificate text-warning"></i>
+                                                </a>
+                                            }
+                                        </div>
+
+                                        @if (item.Status == ApplicationStatus.Pending)
+                                        {
+                                            <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <input type="hidden" name="status" value="@ApplicationStatus.Approved" />
+                                                <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm fw-bold">Onayla</button>
+                                            </form>
+
+                                            <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <input type="hidden" name="status" value="@ApplicationStatus.Rejected" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">Reddet</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small fst-italic">İşlem Tamam</span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="py-5 text-center">
+                                <div class="opacity-50">
+                                    <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
+                                    <p class="mb-0 fw-bold">Henüz aktif bir staj başvurusu bulunmamaktadır.</p>
                                 </div>
                             </td>
                         </tr>

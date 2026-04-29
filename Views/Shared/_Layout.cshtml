@@ -8,20 +8,21 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>@ViewData["Title"] - StajSistemi</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
-    @* ✅ PROFESYONEL TOAST BİLDİRİMİ İÇİN (SweetAlert2) *@
+    @* ✅ SweetAlert2 ve Google Fonts *@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
             overflow-x: hidden;
             background-color: #f4f7f6;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         #wrapper {
@@ -30,21 +31,25 @@
             align-items: stretch;
         }
 
+        /* 🛡️ SİBER MENÜ ZIRHI */
         #sidebar-wrapper {
             min-height: 100vh;
             width: 260px;
-            margin-left: -260px;
-            transition: margin .25s ease-out;
             background: #2c3e50;
             color: white;
             position: fixed;
-            z-index: 1000;
+            left: 0;
+            top: 0;
+            z-index: 1050 !important;
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(-260px);
+            box-shadow: 5px 0 15px rgba(0,0,0,0.1);
         }
 
             #sidebar-wrapper .sidebar-heading {
                 padding: 1.5rem 1.25rem;
                 font-size: 1.3rem;
-                font-weight: bold;
+                font-weight: 800;
                 border-bottom: 1px solid rgba(255,255,255,0.1);
                 text-align: center;
             }
@@ -63,33 +68,56 @@
                     padding-left: 2rem;
                 }
 
-                #sidebar-wrapper .list-group-item i {
-                    width: 25px;
+                #sidebar-wrapper .list-group-item.active-link {
+                    background: rgba(67, 97, 238, 0.2);
+                    color: white;
+                    border-left: 4px solid #4361ee;
                 }
-
-        .badge-notify {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-            border-radius: 50px;
-            box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
-            font-weight: bold;
-        }
 
         #page-content-wrapper {
             width: 100%;
+            flex: 1;
+            transition: all 0.3s ease-in-out;
             margin-left: 0;
-            transition: margin .25s ease-out;
         }
 
         .navbar {
             background: white;
             border-bottom: 1px solid #e3e6f0;
-            padding: 0.8rem 1.5rem;
+            padding: 0.8rem 1rem;
         }
 
+        /* 📱 MOBİL TETİKLEYİCİ VE DÜZELTME (768px ALTI) */
+        @@media (max-width: 767.98px) {
+            body.sb-sidenav-toggled #sidebar-wrapper {
+                transform: translateX(0) !important;
+            }
+            /* Karartma Overlay'i */
+            body.sb-sidenav-toggled #wrapper::after {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0,0,0,0.4);
+                z-index: 1040;
+            }
+            /* Mobilde kartların ve başlıkların taşmasını önleyen siber yama */
+            .container-fluid {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+
+            h2, h3, .display-4 {
+                font-size: 1.5rem !important; /* Büyük başlıkları mobilde dizginliyoruz */
+            }
+        }
+
+        /* 💻 MASAÜSTÜ GÖRÜNÜM (768px ÜSTÜ) */
         @@media (min-width: 768px) {
             #sidebar-wrapper {
-                margin-left: 0;
+                transform: translateX(0);
             }
 
             #page-content-wrapper {
@@ -97,13 +125,22 @@
             }
 
             body.sb-sidenav-toggled #sidebar-wrapper {
-                margin-left: -260px;
+                transform: translateX(-260px) !important;
             }
 
             body.sb-sidenav-toggled #page-content-wrapper {
-                margin-left: 0;
+                margin-left: 0 !important;
             }
         }
+
+        .menu-locked {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
+
+            .menu-locked i {
+                color: #95a5a6 !important;
+            }
     </style>
 </head>
 <body>
@@ -119,7 +156,6 @@
 
                 @if (User.Identity.IsAuthenticated)
                 {
-                    @* --- 🛡️ HOCA/ADMİN ÖZEL MENÜSÜ --- *@
                     if (User.IsInRole("Advisor") || User.IsInRole("Admin"))
                     {
                         <a asp-controller="Advisor" asp-action="InternshipApplications" class="list-group-item list-group-item-action bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
@@ -129,47 +165,48 @@
                                 <span class="badge rounded-pill bg-danger shadow-sm">@ViewBag.NewApplicationsCount</span>
                             }
                         </a>
-
                         <a asp-controller="Advisor" asp-action="Index" class="list-group-item list-group-item-action">
                             <i class="fas fa-users me-2 text-danger"></i> Öğrenci Listesi
                         </a>
+                        <a asp-controller="Advisor" asp-action="Archive" class="list-group-item list-group-item-action">
+                            <i class="fas fa-archive me-2 text-warning"></i> Siber Arşiv
+                        </a>
                     }
 
-                    @* --- 🎓 ÖĞRENCİ ÖZEL MENÜSÜ --- *@
                     if (User.IsInRole("Student"))
                     {
                         <a asp-controller="StudentPanel" asp-action="Index" class="list-group-item list-group-item-action">
                             <i class="fas fa-user-graduate me-2 text-primary"></i> Kariyer Panelim
                         </a>
-
                         <a asp-controller="StudentPanel" asp-action="Applications" class="list-group-item list-group-item-action">
                             <i class="fas fa-file-contract me-2 text-warning"></i> Başvurularım
                         </a>
-
                         <a asp-controller="StudentPanel" asp-action="Results" class="list-group-item list-group-item-action">
                             <i class="fas fa-poll me-2 text-info"></i> Başvuru Sonuçlarım
                         </a>
 
-                        @* 🛡️ MÜHÜR: AKILLI DURUM KONTROLÜ (RZ1010 hatası giderildi) *@
                         var currentUserId = UserManager.GetUserId(User);
-                        var isInternshipApproved = currentUserId != null && _context.InternshipApplications
-                        .Any(a => a.AppUserId == int.Parse(currentUserId) && a.Status == ApplicationStatus.Approved);
+                        bool isInternshipApproved = false;
+                        if (currentUserId != null)
+                        {
+                            isInternshipApproved = _context.InternshipApplications
+                            .Any(a => a.AppUserId == int.Parse(currentUserId) && a.Status == ApplicationStatus.Approved);
+                        }
 
                         if (isInternshipApproved)
                         {
-                            <a asp-controller="StudentPanel" asp-action="Documents" class="list-group-item list-group-item-action animate__animated animate__fadeIn">
-                                <i class="fas fa-file-signature me-2 text-success"></i> Staj Dosyam (Belgelerim)
+                            <a asp-controller="StudentPanel" asp-action="Documents" class="list-group-item list-group-item-action">
+                                <i class="fas fa-file-signature me-2 text-success"></i> <strong>Staj Defterim (Aktif)</strong>
                             </a>
                         }
                         else
                         {
-                            <div class="list-group-item list-group-item-action text-muted" style="cursor: not-allowed; opacity: 0.6;" title="Stajınız onaylandığında aktif olacaktır.">
-                                <i class="fas fa-lock me-2"></i> <span style="font-size: 0.9rem;">Staj Dosyası (Onay Bekliyor)</span>
+                            <div class="list-group-item menu-locked" title="Stajınız onaylandığında açılacaktır.">
+                                <i class="fas fa-lock me-2"></i> <span class="small">Staj Defterim (Kilitli)</span>
                             </div>
                         }
                     }
 
-                    @* 🔥 AKILLI BİLDİRİM MÜHÜRÜ *@
                     @await Component.InvokeAsync("Sidebar")
 
                     <div class="border-top my-2 opacity-25"></div>
@@ -183,7 +220,10 @@
         <div id="page-content-wrapper" class="d-flex flex-column">
             <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top">
                 <div class="container-fluid">
-                    <button class="btn btn-light border shadow-sm" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                    <button class="btn btn-primary shadow-sm border-0" id="sidebarToggle" type="button" style="background: linear-gradient(to right, #2c3e50, #4ca1af);">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
                     <div class="ms-auto d-flex align-items-center">
                         @if (User.Identity.IsAuthenticated)
                         {
@@ -199,8 +239,10 @@
                 </div>
             </nav>
 
-            <div class="container-fluid p-4">
-                <main role="main" class="pb-3">@RenderBody()</main>
+            <div class="container-fluid p-2 p-md-4">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
             </div>
         </div>
     </div>
@@ -211,16 +253,23 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        window.addEventListener('DOMContentLoaded', event => {
-            const sidebarToggle = document.body.querySelector('#sidebarToggle');
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', event => {
-                    event.preventDefault();
-                    document.body.classList.toggle('sb-sidenav-toggled');
-                });
-            }
+        $(document).ready(function () {
+            $(document).on("click", "#sidebarToggle", function (e) {
+                e.preventDefault();
+                $("body").toggleClass("sb-sidenav-toggled");
+            });
+
+            // ✅ Mobilde menü açıkken dışarıya tıklandığında menüyü kapatan liyakatli dokunuş
+            $(document).on("click", function (e) {
+                if ($("body").hasClass("sb-sidenav-toggled") && window.innerWidth < 768) {
+                    if (!$(e.target).closest("#sidebar-wrapper, #sidebarToggle").length) {
+                        $("body").removeClass("sb-sidenav-toggled");
+                    }
+                }
+            });
         });
 
+        // 🛰️ SIGNALR SİBER BAĞLANTI
         const connectionGlobal = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
             .withAutomaticReconnect()
@@ -229,29 +278,12 @@
         connectionGlobal.start().catch(err => console.error(err.toString()));
 
         connectionGlobal.on("ReceiveNewMessage", function (senderId, content) {
-            const badges = ["unread-badge-advisor", "unread-badge-student"];
-            badges.forEach(id => {
-                let badge = document.getElementById(id);
-                if (badge) {
-                    let currentCount = parseInt(badge.innerText) || 0;
-                    badge.innerText = currentCount + 1;
-                    badge.classList.remove("d-none");
-                }
-            });
-
-            let audio = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3');
-            audio.play().catch(e => {});
+            new Audio('https://www.soundjay.com/buttons/beep-07a.mp3').play().catch(e => {});
 
             Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 4000,
-                timerProgressBar: true
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true
             }).fire({
-                icon: 'info',
-                title: 'Yeni Mesaj!',
-                text: content.length > 40 ? content.substring(0, 40) + "..." : content
+                icon: 'info', title: 'Yeni Mesaj!', text: content.length > 40 ? content.substring(0, 40) + "..." : content
             });
         });
     </script>

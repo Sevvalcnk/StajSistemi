@@ -19,5 +19,9 @@ namespace StajSistemi.Models
         // ✅ İLİŞKİ MÜHÜRÜ: Bu başvuru hangi staj ilanı için?
         public int InternshipId { get; set; }
         public virtual Internship? Internship { get; set; }
+        // 🛡️ HAFTA 9: İzlenebilirlik Mühürleri
+        public DateTime? ApprovedDate { get; set; }    // Danışman hocanın onayladığı tarih
+        public DateTime? StartedDate { get; set; }     // Stajın fiilen başladığı tarih
+        public DateTime? CompletedDate { get; set; }   // Stajın başarıyla bittiği tarih
     }
 }

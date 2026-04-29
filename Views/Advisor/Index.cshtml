@@ -71,7 +71,6 @@
             transform: scale(1.05);
         }
 
-    /* 🛡️ YENİ: DASHBOARD BUTON STİLİ */
     .btn-view-dashboard {
         background-color: #1cc88a;
         color: white;
@@ -140,25 +139,36 @@
         </div>
     </div>
 
-    @* --- 🔍 FİLTRELEME --- *@
+    @* --- 🔍 FİLTRELEME (GELİŞTİRİLMİŞ) --- *@
     <div class="card tech-card shadow-sm mb-4 border" style="background: #f8f9fc;">
         <div class="card-body p-4">
             <h6 class="fw-bold text-dark mb-3"><i class="fas fa-search me-2 text-primary"></i>Öğrenci Sorgulama</h6>
             <form method="get" class="row g-3">
-                <div class="col-lg-3">
+                <div class="col-lg-2">
                     <select name="cityId" class="form-select shadow-none border-secondary-subtle" asp-items="ViewBag.Cities">
                         <option value="">Tüm Şehirler</option>
                     </select>
                 </div>
+
+                @* 🛡️ 🚀 YENİ MÜHÜR: EĞİTİM DÜZEYİ SEÇİMİ *@
                 <div class="col-lg-3">
-                    <select name="departmentId" class="form-select shadow-none border-secondary-subtle" asp-items="ViewBag.Departments">
-                        <option value="">Tüm Bölümler</option>
+                    <select id="EducationLevelDropdown" class="form-select shadow-none border-primary">
+                        <option value="Hepsi">Eğitim Düzeyi (Hepsi)</option>
+                        <option value="Lisans">Lisans (4 Yıllık)</option>
+                        <option value="Önlisans">Ön Lisans (2 Yıllık)</option>
                     </select>
                 </div>
+
                 <div class="col-lg-3">
+                    <select id="DepartmentIdDropdown" name="departmentId" class="form-select shadow-none border-secondary-subtle" asp-items="ViewBag.Departments">
+                        <option value="">Bölüm Seçiniz</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-2">
                     <input type="number" name="minGpa" step="0.1" class="form-control shadow-none border-secondary-subtle" placeholder="Min. GPA" />
                 </div>
-                <div class="col-lg-3">
+                <div class="col-lg-2">
                     <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm">Filtrele</button>
                 </div>
             </form>
@@ -191,9 +201,9 @@
                             <tr>
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
-                                        <img src="https://ui-avatars.com/api/?name=@(student.Name)+@(student.Surname)&background=random&size=45" class="rounded-circle me-3 shadow-sm" />
+                                        <img src="https://ui-avatars.com/api/?name=@(student.FullName)&background=random&size=45" class="rounded-circle me-3 shadow-sm" />
                                         <div>
-                                            <div class="fw-bold text-dark">@student.Name @student.Surname</div>
+                                            <div class="fw-bold text-dark">@student.FullName</div>
                                             <small class="text-muted fw-bold">No: @student.StudentNo</small>
                                         </div>
                                     </div>
@@ -218,12 +228,10 @@
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="d-flex justify-content-end gap-2">
-                                        @* 🛡️ 🚀 YENİ MÜHÜR: Hocanın öğrenci Dashboard çizelgesini görebilmesi için *@
                                         <a asp-action="ViewStudentDashboard" asp-route-studentId="@student.Id" class="btn btn-view-dashboard btn-sm px-3 shadow-sm" title="Süreç Çizelgesini İzle">
                                             <i class="fas fa-chart-line me-1"></i> İzle
                                         </a>
 
-                                        @* 🚀 ✅ Dosyayı Gör butonu (Kapak sayfası ve 31 sayfa PDF) *@
                                         <a asp-action="ViewStudentFile" asp-route-studentId="@student.Id" class="btn btn-view-file btn-sm px-3 shadow-sm">
                                             <i class="fas fa-file-invoice me-1"></i> Dosyayı Gör
                                         </a>
@@ -248,3 +256,34 @@
         </div>
     </div>
 </div>
+
+@* 🛡️ 🚀 YENİ MÜHÜR: AKILLI DROPDOWN MOTORU (AJAX) *@
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#EducationLevelDropdown').change(function () {
+                var selectedLevel = $(this).val();
+                var departmentSelect = $('#DepartmentIdDropdown');
+
+                departmentSelect.empty();
+                departmentSelect.append('<option value="">Bölümler Yükleniyor...</option>');
+
+                $.ajax({
+                    url: '/Advisor/GetDepartmentsByLevel', // Controller'daki yeni metodun yolu
+                    type: 'GET',
+                    data: { level: selectedLevel },
+                    success: function (data) {
+                        departmentSelect.empty();
+                        departmentSelect.append('<option value="">-- Bölüm Seçiniz --</option>');
+                        $.each(data, function (i, item) {
+                            departmentSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+                    },
+                    error: function () {
+                        alert("Bölümler getirilirken siber bir hata oluştu!");
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace StajSistemi.Models
 {
@@ -23,30 +24,30 @@ namespace StajSistemi.Models
         public int? CityId { get; set; }
         public City? City { get; set; }
         public bool IsDeleted { get; set; } = false;
+
+        // 🛡️ SİBER DÜZELTME: [Required] mühürü buradan kaldırıldı.
+        // Neden? Çünkü Admin ve Hocaların bölümü olmaz, sistem açılışta hata vermesin diye.
         public int? DepartmentId { get; set; }
         public Department? Department { get; set; }
 
-        // 🛡️ BÖLÜM ADI (ADMIN PANELİ VE ÇIKTILAR İÇİN)
         public string? DepartmentName { get; set; }
-
         public int? AdvisorId { get; set; }
 
-        // 🏛️ GENEL ÜNİVERSİTE VE KAPAK SAYFASI MÜHÜRLERİ (DİNAMİK HALE GELDİ)
-        public string? UniversityName { get; set; } // ✅ Sabit yazı kaldırıldı, artık Türkiye geneli!
+        public string? UniversityName { get; set; }
         public string? FacultyName { get; set; }
         public string? AcademicYear { get; set; }
 
-        // 👤 RESMİ KİMLİK KÜNYESİ (PDF ÇIKTISI İÇİN ŞART)
         public string? BirthPlace { get; set; }
         public DateTime? BirthDate { get; set; }
 
-        // 🏢 STAJ YAPILAN KURUM KÜNYESİ
         public string? CompanyName { get; set; }
         public string? CompanySector { get; set; }
         public string? CompanyTaxNumber { get; set; }
-        // AppUser.cs veya Student.cs içine diğer özelliklerin yanına ekle:
         public string? DegreeType { get; set; }
-        // ✅ İLİŞKİLER
-        public ICollection<InternshipApplication>? Applications { get; set; } // Model ismin neyse (Application veya InternshipApplication) ona göre güncelleyebilirsin.
+
+        // 🛡️ SİBER DÜZELTME: [Required] buradan da kaldırıldı.
+        public string? EducationLevel { get; set; }
+
+        public ICollection<InternshipApplication>? Applications { get; set; }
     }
 }

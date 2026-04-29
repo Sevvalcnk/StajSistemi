@@ -18,7 +18,7 @@
         </div>
     }
 
-    <div class="card shadow-lg border-0 rounded-4 p-5 bg-white">
+    <div class="card shadow-lg border-0 rounded-4 p-4 p-md-5 bg-white">
         <div class="text-center mb-5">
             <div class="icon-circle bg-warning-subtle text-warning mb-3 mx-auto" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
                 <i class="fas fa-user-shield fa-3x"></i>
@@ -27,22 +27,42 @@
             <p class="text-muted">Hoş geldiniz Sayın Yönetici. Tüm sistemi buradan mühürleyip denetleyebilirsiniz.</p>
         </div>
 
+        @* 🛡️ MÜHÜR: SİBER İSTATİSTİK KARTLARI *@
+        <div class="row g-3 mb-5">
+            <div class="col-6 col-md-4">
+                <div class="p-3 border-start border-primary border-4 bg-light rounded-3 shadow-sm h-100">
+                    <small class="text-muted fw-bold d-block" style="font-size: 0.7rem;">TOPLAM ÖĞRENCİ</small>
+                    <h3 class="fw-bold mb-0 text-primary">@(ViewBag.TotalStudentsCount ?? 0)</h3>
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <div class="p-3 border-start border-success border-4 bg-light rounded-3 shadow-sm h-100">
+                    <small class="text-muted fw-bold d-block" style="font-size: 0.7rem;">AKTİF İLANLAR</small>
+                    <h3 class="fw-bold mb-0 text-success">@ViewBag.ActiveInternships</h3>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="p-3 border-start border-danger border-4 bg-light rounded-3 shadow-sm h-100">
+                    <small class="text-muted fw-bold d-block" style="font-size: 0.7rem;">BEKLEYEN BAŞVURULAR</small>
+                    <h3 class="fw-bold mb-0 text-danger">@ViewBag.PendingApplications</h3>
+                </div>
+            </div>
+        </div>
+
         @* 🚀 HIZLI ERİŞİM BUTONLARI *@
-        <div class="row g-4 mb-5">
+        <div class="row g-4 mb-5 text-center">
             <div class="col-md-4">
                 <a asp-controller="Student" asp-action="Index" class="btn btn-outline-primary btn-lg w-100 py-4 rounded-4 shadow-sm transition-all">
                     <i class="fas fa-users-cog d-block fa-2x mb-2"></i>
                     <span class="fw-bold">Öğrenci Yönetimi</span>
                 </a>
             </div>
-
             <div class="col-md-4">
                 <a asp-controller="Department" asp-action="Index" class="btn btn-outline-secondary btn-lg w-100 py-4 rounded-4 shadow-sm transition-all">
                     <i class="fas fa-university d-block fa-2x mb-2"></i>
                     <span class="fw-bold">Bölüm Ayarları</span>
                 </a>
             </div>
-
             <div class="col-md-4">
                 <a asp-controller="Internship" asp-action="Index" class="btn btn-outline-success btn-lg w-100 py-4 rounded-4 shadow-sm transition-all">
                     <i class="fas fa-briefcase d-block fa-2x mb-2"></i>
@@ -51,18 +71,40 @@
             </div>
         </div>
 
-        @* 📊 KÜÇÜK BİR ÖZET TABLOSU (Hoca bunu görünce bayılacak!) *@
-        <div class="bg-light p-4 rounded-4 border">
-            <h5 class="fw-bold mb-3"><i class="fas fa-chart-line me-2 text-primary"></i> Sistem Özeti</h5>
-            <p class="small text-muted">Öğrenci durumlarını ve başarı skorlarını ilgili menüden detaylıca görebilirsiniz.</p>
-            <div class="alert alert-info border-0 shadow-sm rounded-3 mb-0">
-                <i class="fas fa-info-circle me-2"></i>
-                <strong>Bilgi:</strong> Şu an sistemde onaylanmış stajyerlerin durumu <strong>"Onaylandı"</strong> olarak mühürlenmektedir.
+        @* 🛡️ MÜHÜR: SİBER ANALİZ GRAFİKLERİ *@
+        <div class="row g-4 mb-5">
+            <div class="col-xl-5">
+                <div class="p-4 rounded-4 border bg-white shadow-sm h-100">
+                    <h6 class="fw-bold mb-4 text-primary"><i class="fas fa-chart-pie me-2"></i> Bölüm Bazlı İlan Oranı</h6>
+                    <div style="position: relative; height: 320px;">
+                        <canvas id="bolumChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-7">
+                <div class="p-4 rounded-4 border bg-white shadow-sm h-100">
+                    <h6 class="fw-bold mb-4 text-success"><i class="fas fa-chart-bar me-2"></i> En Çok Başvuru Alan Firmalar</h6>
+                    <div style="position: relative; height: 320px;">
+                        <canvas id="ilanChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="p-4 rounded-4 border bg-white shadow-sm">
+                    <h6 class="fw-bold mb-4 text-info">
+                        <i class="fas fa-chart-line me-2"></i> Haftalık Başvuru Trafiği (Siber Trend)
+                    </h6>
+                    <div style="position: relative; height: 220px;">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
 
         @* GÜVENLİ ÇIKIŞ *@
-        <div class="text-center mt-5">
+        <div class="text-center mt-2">
             <form asp-controller="Account" asp-action="Logout" method="post">
                 <button type="submit" class="btn btn-danger btn-sm px-5 rounded-pill shadow-sm py-2 fw-bold">
                     <i class="fas fa-sign-out-alt me-2"></i> Güvenli Çıkış Yap
@@ -76,5 +118,91 @@
     .transition-all:hover {
         transform: translateY(-5px);
         background-color: rgba(0,0,0,0.02);
+        border-color: #2c3e50 !important;
+    }
+
+    canvas {
+        width: 100% !important;
+        height: 100% !important;
     }
 </style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const siberPalette = ['#4361ee', '#4cc9f0', '#4895ef', '#3f37c9', '#560bad', '#b5179e', '#f72585', '#3a0ca3'];
+
+        // 📊 1. BÖLÜM GRAFİĞİ
+        new Chart(document.getElementById('bolumChart'), {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(Json.Serialize(ViewBag.BolumLabels)),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(ViewBag.BolumCounts)),
+                    backgroundColor: siberPalette,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: window.innerWidth > 1200 ? 'right' : 'bottom',
+                        labels: { boxWidth: 10, padding: 15, font: { size: 10, weight: '600' } }
+                    }
+                }
+            }
+        });
+
+        // 📊 2. İLAN POPÜLERLİK (YATAY BAR)
+        new Chart(document.getElementById('ilanChart'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(ViewBag.CompanyLabels)),
+                datasets: [{
+                    label: 'Başvuru Sayısı',
+                    data: @Html.Raw(Json.Serialize(ViewBag.AppCounts)),
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderRadius: 8,
+                    barThickness: 20
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, grid: { display: false } },
+                    y: { ticks: { font: { size: 10, weight: '700' } }, grid: { display: false } }
+                }
+            }
+        });
+
+        // 📊 3. BAŞVURU TRENDİ
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(ViewBag.TrendLabels)),
+                datasets: [{
+                    label: 'Günlük Başvuru',
+                    data: @Html.Raw(Json.Serialize(ViewBag.TrendCounts)),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.5,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#3b82f6'
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+}

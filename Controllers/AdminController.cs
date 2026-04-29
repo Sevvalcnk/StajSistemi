@@ -2,7 +2,14 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using StajSistemi.data;
 using StajSistemi.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace StajSistemi.Controllers
 {
@@ -11,16 +18,80 @@ namespace StajSistemi.Controllers
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly IEmailSender _emailSender;
+        private readonly ApplicationDbContext _context;
 
-        public AdminController(UserManager<AppUser> userManager, IEmailSender emailSender)
+        public AdminController(UserManager<AppUser> userManager, IEmailSender emailSender, ApplicationDbContext context)
         {
             _userManager = userManager;
             _emailSender = emailSender;
+            _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            // Burası genellikle admin ana sayfasıdır, istersen öğrenci listesine yönlendirebilirsin
+            // 📊 1. ANALİZ: Bölüm Bazlı İlan Dağılımı (SADELEŞTİRİLDİ!)
+            // 🛡️ SİBER DÜZELTME: Sadece 'Aktif' ve 'Silinmemiş' ilanı olan bölümleri getiriyoruz.
+            var bolumVerileriRaw = await _context.Departments
+                .Select(d => new {
+                    BolumAdi = d.DepartmentName,
+                    IlanSayisi = _context.Internships.Count(i => !i.IsDeleted &&
+                                                                 i.Status == ApplicationStatus.Active &&
+                                                                 i.InternshipDepartments.Any(id => id.DepartmentId == d.Id))
+                })
+                .ToListAsync();
+
+            // Sadece IlanSayisi 0'dan büyük olanları filtreleyerek o karışık grafiği pırlanta gibi yapıyoruz.
+            var bolumVerileri = bolumVerileriRaw.Where(x => x.IlanSayisi > 0).ToList();
+
+            // 📊 2. ANALİZ: En Çok Başvuru Alan Şirketler (HAYALET VERİ TEMİZLİĞİ!)
+            // 🛡️ SİBER FİLTRE: Sadece yayında olan (Silinmemiş ve Aktif) ilanların başvurularını sayıyoruz.
+            // Bu sayede "Technode" gibi hayalet şirketler grafikten temizlenir.
+            var popülerIlanlar = await _context.InternshipApplications
+                .Include(a => a.Internship)
+                .Where(a => !a.Internship.IsDeleted && a.Internship.Status == ApplicationStatus.Active)
+                .GroupBy(a => a.Internship.CompanyName)
+                .Select(g => new {
+                    SirketAdi = g.Key,
+                    BasvuruSayisi = g.Count()
+                })
+                .OrderByDescending(x => x.BasvuruSayisi)
+                .Take(5).ToListAsync();
+
+            // 📊 3. ANALİZ: Son 7 Günlük Başvuru Trendi
+            var yediGunOnce = DateTime.Now.Date.AddDays(-7);
+            var rawTrendData = await _context.InternshipApplications
+                .Where(a => a.ApplicationDate >= yediGunOnce)
+                .GroupBy(a => a.ApplicationDate.Date)
+                .Select(g => new {
+                    TarihDate = g.Key,
+                    Sayi = g.Count()
+                })
+                .OrderBy(x => x.TarihDate)
+                .ToListAsync();
+
+            var gunlukBasvuru = rawTrendData.Select(x => new {
+                Tarih = x.TarihDate.ToString("dd/MM"),
+                Sayi = x.Sayi
+            }).ToList();
+
+            // 📊 4. ANALİZ: Genel İstatistik Kartları
+            var students = await _userManager.GetUsersInRoleAsync("Student");
+            ViewBag.TotalStudentsCount = students.Count;
+
+            // Kartlardaki sayıyı da aktif ilanlara göre güncelliyoruz.
+            ViewBag.ActiveInternships = await _context.Internships.CountAsync(x => !x.IsDeleted && x.Status == ApplicationStatus.Active);
+            ViewBag.PendingApplications = await _context.InternshipApplications.CountAsync(a => a.Status == ApplicationStatus.Pending);
+
+            // 🛡️ VERİLERİ VİEW'A FIRLATMA
+            ViewBag.BolumLabels = bolumVerileri.Select(x => x.BolumAdi).ToArray();
+            ViewBag.BolumCounts = bolumVerileri.Select(x => x.IlanSayisi).ToArray();
+
+            ViewBag.CompanyLabels = popülerIlanlar.Select(x => x.SirketAdi).ToArray();
+            ViewBag.AppCounts = popülerIlanlar.Select(x => x.BasvuruSayisi).ToArray();
+
+            ViewBag.TrendLabels = gunlukBasvuru.Select(x => x.Tarih).ToArray();
+            ViewBag.TrendCounts = gunlukBasvuru.Select(x => x.Sayi).ToArray();
+
             return View();
         }
 
@@ -34,28 +105,23 @@ namespace StajSistemi.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddStudent(AppUser model)
         {
-            // 1. Şifre Üretme: GUID'deki çizgileri kaldırıp daha güvenli hale getirdik
             string rawGuid = Guid.NewGuid().ToString().Replace("-", "");
             string temporaryPassword = "Staj" + rawGuid.Substring(0, 5).ToUpper() + "1!";
 
-            // 2. Yeni Kullanıcı Hazırlığı
             var newStudent = new AppUser
             {
-                UserName = model.UserName, // Okul No
+                UserName = model.UserName,
                 Email = model.Email,
                 FullName = model.FullName,
                 EmailConfirmed = true
             };
 
-            // 3. Veritabanına Kayıt
             var result = await _userManager.CreateAsync(newStudent, temporaryPassword);
 
             if (result.Succeeded)
             {
-                // 4. Rol Atama
                 await _userManager.AddToRoleAsync(newStudent, "Student");
 
-                // 5. Mail Şablonu (Daha şık ve garanti)
                 string subject = "Staj Takip Sistemi - Giriş Bilgileriniz";
                 string message = $@"
                     <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;'>
@@ -71,19 +137,16 @@ namespace StajSistemi.Controllers
                 try
                 {
                     await _emailSender.SendEmailAsync(newStudent.Email, subject, message);
-                    TempData["SuccessMessage"] = $"{newStudent.FullName} başarıyla eklendi. Şifre: {temporaryPassword}"; // Admin panelinde de görsün diye ekledik
+                    TempData["SuccessMessage"] = $"{newStudent.FullName} başarıyla eklendi. Şifre: {temporaryPassword}";
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // Mail gitmese bile en azından admin şifreyi ekranda görebilsin diye TempData'ya ekledik
                     TempData["WarningMessage"] = $"Öğrenci eklendi fakat mail gönderilemedi. Şifre: {temporaryPassword}";
                 }
 
-                // StudentController'daki Index'e (Öğrenci listesi) yönlendiriyoruz
-                return RedirectToAction("Index", "Student");
+                return RedirectToAction("Index", "Admin");
             }
 
-            // Hata Durumu (Şifre politikasına uymazsa veya kullanıcı zaten varsa)
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError("", error.Description);

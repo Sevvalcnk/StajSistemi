@@ -1,14 +1,18 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using StajSistemi.DTOs;
 using StajSistemi.Models;
 using StajSistemi.Repositories.Abstract;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Linq;
+using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace StajSistemi.Controllers
 {
@@ -32,45 +36,65 @@ namespace StajSistemi.Controllers
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return RedirectToAction("Login", "Account");
 
+            var allApplications = await _unitOfWork.InternshipApplications.GetAllAsync();
+            var approvedCounts = allApplications
+                .Where(a => a.Status == ApplicationStatus.Approved)
+                .GroupBy(a => a.InternshipId)
+                .ToDictionary(g => g.Key, g => g.Count());
+            ViewBag.ApprovedCounts = approvedCounts;
+
             var allAppsForTimeline = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(a => a.Internship);
             var activeAppForTimeline = allAppsForTimeline
-                .OrderByDescending(a => a.ApplicationDate)
-                .FirstOrDefault(a => a.AppUserId == studentDto.Id && !a.IsDeleted);
-
+                .Where(a => a.AppUserId == studentDto.Id && !a.IsDeleted)
+                .OrderByDescending(a => a.Status == ApplicationStatus.Approved)
+                .ThenByDescending(a => a.ApplicationDate)
+                .FirstOrDefault();
             ViewBag.ActiveAppForTimeline = activeAppForTimeline;
 
-            // 🛡️ MÜHÜR: Profildeki skor direkt öğrencinin ortalaması (2.80 -> 280)
             double currentGpa = (double)(studentDto.GPA > 4 ? studentDto.GPA / 10.0 : studentDto.GPA);
             ViewBag.TotalScore = (int)(currentGpa * 100);
 
-            var internshipsQuery = await _unitOfWork.Internships.GetAllIncludingAsync(i => i.Department, i => i.City);
-            var allInternships = internshipsQuery.Where(i => !i.IsDeleted && i.Status == ApplicationStatus.Active);
+            var internshipsQuery = await _unitOfWork.Internships.GetAllIncludingAsync(
+                i => i.InternshipDepartments,
+                i => i.City);
 
-            var appliedApps = await _unitOfWork.InternshipApplications.GetAllAsync();
-            ViewBag.AppliedInternshipIds = appliedApps
+            var allInternships = internshipsQuery.Where(i => !i.IsDeleted && i.Status == ApplicationStatus.Active).ToList();
+
+            foreach (var ilan in allInternships)
+            {
+                foreach (var deptMap in ilan.InternshipDepartments)
+                {
+                    if (deptMap.Department == null)
+                        deptMap.Department = await _unitOfWork.Departments.GetByIdAsync(deptMap.DepartmentId);
+                }
+            }
+
+            ViewBag.RecommendedInternships = allInternships
+                .Where(i => i.InternshipDepartments.Any(id => id.DepartmentId == studentDto.DepartmentId))
+                .ToList();
+
+            ViewBag.AppliedInternshipIds = allAppsForTimeline
                 .Where(a => a.AppUserId == studentDto.Id)
                 .Select(a => a.InternshipId)
                 .ToList();
 
+            var filteredInternships = allInternships.AsEnumerable();
             if (filter == "suitable")
             {
-                allInternships = allInternships.Where(i => i.DepartmentId == studentDto.DepartmentId);
+                filteredInternships = filteredInternships.Where(i => i.InternshipDepartments.Any(id => id.DepartmentId == studentDto.DepartmentId));
                 ViewBag.FilterMode = "suitable";
             }
 
-            var smartMatches = allInternships
+            var smartMatches = filteredInternships
                 .Select(ilan => new
                 {
                     Ilan = ilan,
-                    Score = (ilan.DepartmentId == studentDto.DepartmentId ? 50 : 0) +
+                    Score = (ilan.InternshipDepartments.Any(id => id.DepartmentId == studentDto.DepartmentId) ? 50 : 0) +
                             (ilan.CityId == studentDto.CityId ? 30 : 0) +
-                            (int)(currentGpa * 5) +
-                            (string.IsNullOrEmpty(studentDto.PersonalSkills) ? 0 :
-                                studentDto.PersonalSkills.Split(',').Count(s => ilan.Description != null && ilan.Description.Contains(s.Trim(), StringComparison.OrdinalIgnoreCase)) * 5)
+                            (int)(currentGpa * 5)
                 })
                 .OrderByDescending(x => x.Score)
                 .Take(6).ToList();
-
             ViewBag.SmartMatches = smartMatches;
 
             var allMessages = await _unitOfWork.ChatMessages.GetAllIncludingAsync(m => m.Sender);
@@ -81,30 +105,46 @@ namespace StajSistemi.Controllers
             return View(studentDto);
         }
 
-        // --- 🛡️ GÜVENLİK KAPISI ---
+        // --- 2. GÜVENLİK KAPISI (APPLY) ---
         public async Task<IActionResult> Apply(int id)
         {
             var studentDto = await GetLoggedInStudentDto();
+            if (studentDto == null) return RedirectToAction("Login", "Account");
+
             var allApps = await _unitOfWork.InternshipApplications.GetAllAsync();
-            if (allApps.Any(a => a.AppUserId == studentDto.Id && a.InternshipId == id))
+
+            if (allApps.Any(a => a.AppUserId == studentDto.Id && a.InternshipId == id && !a.IsDeleted))
             {
                 TempData["AlreadyApplied"] = "True";
                 return RedirectToAction(nameof(Index));
             }
 
-            var ilan = await _unitOfWork.Internships.GetByIdAsync(id);
+            var ilanlar = await _unitOfWork.Internships.GetAllIncludingAsync(i => i.InternshipDepartments);
+            var ilan = ilanlar.FirstOrDefault(x => x.Id == id);
+
             if (ilan == null) return NotFound();
 
-            if (studentDto.DepartmentId != ilan.DepartmentId)
+            if (ilan.InternshipDepartments != null && ilan.InternshipDepartments.Any())
             {
-                TempData["DeptMismatch"] = "True";
+                bool isCompatible = ilan.InternshipDepartments.Any(id => id.DepartmentId == studentDto.DepartmentId);
+                if (!isCompatible)
+                {
+                    TempData["DeptMismatch"] = "True";
+                    return RedirectToAction(nameof(Index), new { filter = "suitable" });
+                }
+            }
+
+            int currentApproved = allApps.Count(a => a.InternshipId == id && a.Status == ApplicationStatus.Approved);
+            if (currentApproved >= ilan.Quota)
+            {
+                TempData["QuotaFull"] = "True";
                 return RedirectToAction(nameof(Index));
             }
 
             return RedirectToAction(nameof(Details), new { id = id });
         }
 
-        // --- 🚀 BAŞVURU KAYIT METODU ---
+        // --- 3. BAŞVURU KAYIT METODU (POST) ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmApplication(int InternshipId, IFormFile CVFile, IFormFile? CertificateFile)
@@ -112,11 +152,10 @@ namespace StajSistemi.Controllers
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return Unauthorized();
 
-            var existingApps = await _unitOfWork.InternshipApplications.GetAllAsync();
-            if (existingApps.Any(a => a.AppUserId == studentDto.Id && a.InternshipId == InternshipId))
+            if (CVFile == null || CVFile.Length == 0)
             {
-                TempData["AlreadyApplied"] = "True";
-                return RedirectToAction(nameof(Index));
+                TempData["FileError"] = "Lütfen geçerli bir CV dosyası yükleyiniz.";
+                return RedirectToAction("Details", new { id = InternshipId });
             }
 
             string[] allowedExtensions = { ".pdf", ".doc", ".docx" };
@@ -124,7 +163,7 @@ namespace StajSistemi.Controllers
 
             if (!allowedExtensions.Contains(extension))
             {
-                TempData["FileError"] = "Akademik standart dışı format! Lütfen sadece PDF veya Word yükleyiniz.";
+                TempData["FileError"] = "Siber format hatası! Lütfen sadece PDF veya Word yükleyiniz.";
                 return RedirectToAction("Details", new { id = InternshipId });
             }
 
@@ -134,63 +173,82 @@ namespace StajSistemi.Controllers
                 InternshipId = InternshipId,
                 Status = ApplicationStatus.Pending,
                 ApplicationDate = DateTime.Now,
-                CVPath = await SaveFile(CVFile, "cvs")
+                CVPath = await SaveFile(CVFile, "cvs"),
+                SuccessScore = (double)(studentDto.GPA * 100)
             };
 
-            if (CertificateFile != null) application.CertificatePath = await SaveFile(CertificateFile, "certs");
+            if (CertificateFile != null)
+                application.CertificatePath = await SaveFile(CertificateFile, "certs");
 
             await _unitOfWork.InternshipApplications.AddAsync(application);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = "Başvurunuz ve belgeleriniz asaletle sisteme kaydedilmiştir! 🥂";
+            TempData["SuccessMessage"] = "Başvurunuz liyakatle kaydedilmiştir! 🥂";
             return RedirectToAction(nameof(Applications));
         }
 
-        // --- 🚀 ✅ BAŞARI SKORUNU (SADECE GPA) HESAPLAYAN METOT ---
+        // --- 4. BAŞVURULARIM LİSTESİ ---
         public async Task<IActionResult> Applications()
         {
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return RedirectToAction("Login", "Account");
 
             var apps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(
-                a => a.Internship, a => a.Internship.Department, a => a.Internship.City);
+                a => a.Internship,
+                a => a.Internship.InternshipDepartments,
+                a => a.Internship.City,
+                a => a.AppUser);
 
             var myApplications = apps.Where(a => a.AppUserId == studentDto.Id && !a.IsDeleted).ToList();
 
             foreach (var app in myApplications)
             {
-                // 🛡️ MÜHÜR: Ek puanlar silindi. GPA neyse skor o! (28 krizine karşı korumalı)
-                double baseGpa = (double)(studentDto.GPA > 4 ? studentDto.GPA / 10.0 : studentDto.GPA);
-                app.SuccessScore = (int)(baseGpa * 100);
+                if (app.Internship?.InternshipDepartments != null)
+                {
+                    foreach (var deptMap in app.Internship.InternshipDepartments)
+                    {
+                        if (deptMap.Department == null)
+                            deptMap.Department = await _unitOfWork.Departments.GetByIdAsync(deptMap.DepartmentId);
+                    }
+                }
             }
 
             return View(myApplications);
         }
 
-        // --- 🏆 SONUÇLARIM EKRANI ---
+        // --- 5. BAŞVURU SONUÇLARIM ---
         public async Task<IActionResult> Results()
         {
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return RedirectToAction("Login", "Account");
 
             var apps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(
-                a => a.Internship, a => a.Internship.Department, a => a.Internship.City);
+                a => a.Internship,
+                a => a.Internship.InternshipDepartments,
+                a => a.Internship.City,
+                a => a.AppUser);
 
             var myResults = apps.Where(a => a.AppUserId == studentDto.Id &&
-                                           (a.Status == ApplicationStatus.Approved || a.Status == ApplicationStatus.Rejected))
-                                 .ToList();
+                                           (a.Status == ApplicationStatus.Approved ||
+                                            a.Status == ApplicationStatus.Rejected ||
+                                            a.Status.ToString() == "Completed")).ToList();
 
             foreach (var app in myResults)
             {
-                // 🛡️ MÜHÜR: Buradaki skorlar da artık sadece ham ortalamayı gösteriyor.
-                double baseGpa = (double)(studentDto.GPA > 4 ? studentDto.GPA / 10.0 : studentDto.GPA);
-                app.SuccessScore = (int)(baseGpa * 100);
+                if (app.Internship?.InternshipDepartments != null)
+                {
+                    foreach (var deptMap in app.Internship.InternshipDepartments)
+                    {
+                        if (deptMap.Department == null)
+                            deptMap.Department = await _unitOfWork.Departments.GetByIdAsync(deptMap.DepartmentId);
+                    }
+                }
             }
 
             return View(myResults);
         }
 
-        // --- 👤 3. PROFİL DÜZENLEME ---
+        // --- 6. PROFİL DÜZENLEME (GET) ---
         [HttpGet]
         public async Task<IActionResult> EditProfile()
         {
@@ -199,12 +257,14 @@ namespace StajSistemi.Controllers
 
             var departments = await _unitOfWork.Departments.GetAllAsync();
             ViewBag.Departments = new SelectList(departments, "Id", "DepartmentName");
+
             var cities = await _unitOfWork.Cities.GetAllAsync();
             ViewBag.Cities = new SelectList(cities.OrderBy(x => x.Name), "Id", "Name");
 
             return View(studentDto);
         }
 
+        // --- 7. PROFİL DÜZENLEME (POST) ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProfile(StudentDto studentDto, IFormFile? CVFile, IFormFile? CertificateFile)
@@ -213,28 +273,29 @@ namespace StajSistemi.Controllers
             ModelState.Remove("DepartmentName");
             ModelState.Remove("City");
 
-            // 🛡️ MÜHÜR: Tip uyuşmazlığı hatası giderildi (decimal 'm' kaldırıldı, double yapıldı)
             if (studentDto.GPA > 4.00)
-            {
                 ModelState.AddModelError("GPA", "Not ortalaması (GPA) 4.00 değerinden büyük olamaz.");
-            }
 
             if (ModelState.IsValid)
             {
                 var student = await _unitOfWork.Students.GetByIdAsync(studentDto.Id);
                 if (student == null) return NotFound();
 
-                student.FirstName = studentDto.Name; student.LastName = studentDto.Surname;
-                student.GPA = studentDto.GPA; student.PhoneNumber = studentDto.PhoneNumber;
-                student.PersonalSkills = studentDto.PersonalSkills; student.EducationSummary = studentDto.EducationSummary;
-                student.DepartmentId = studentDto.DepartmentId; student.CityId = studentDto.CityId;
-                student.UniversityName = studentDto.UniversityName; student.FacultyName = studentDto.FacultyName;
-                student.DegreeType = studentDto.DegreeType; student.BirthPlace = studentDto.BirthPlace;
-                student.BirthDate = studentDto.BirthDate; student.AcademicYear = studentDto.AcademicYear;
+                student.FirstName = studentDto.Name;
+                student.LastName = studentDto.Surname;
+                student.GPA = studentDto.GPA;
+                student.PhoneNumber = studentDto.PhoneNumber;
+                student.PersonalSkills = studentDto.PersonalSkills;
+                student.DepartmentId = studentDto.DepartmentId;
+                student.CityId = studentDto.CityId;
+                student.UniversityName = studentDto.UniversityName;
                 student.StudentNo = studentDto.StudentNo;
 
-                if (CVFile != null && CVFile.Length > 0) student.CVPath = await SaveFile(CVFile, "cvs");
-                if (CertificateFile != null && CertificateFile.Length > 0) student.CertificatePath = await SaveFile(CertificateFile, "certs");
+                if (CVFile != null && CVFile.Length > 0)
+                    student.CVPath = await SaveFile(CVFile, "cvs");
+
+                if (CertificateFile != null && CertificateFile.Length > 0)
+                    student.CertificatePath = await SaveFile(CertificateFile, "certs");
 
                 _unitOfWork.Students.Update(student);
                 await _unitOfWork.SaveAsync();
@@ -243,21 +304,22 @@ namespace StajSistemi.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var departments = await _unitOfWork.Departments.GetAllAsync();
-            ViewBag.Departments = new SelectList(departments, "Id", "DepartmentName");
+            var depts = await _unitOfWork.Departments.GetAllAsync();
+            ViewBag.Departments = new SelectList(depts, "Id", "DepartmentName");
             var cities = await _unitOfWork.Cities.GetAllAsync();
             ViewBag.Cities = new SelectList(cities.OrderBy(x => x.Name), "Id", "Name");
+
             return View(studentDto);
         }
 
-        // --- 🛡️ 4. STAJ DOSYASI (BELGELERİM) ---
+        // --- 8. STAJ DEFTERİ VE BELGELER ---
         public async Task<IActionResult> Documents()
         {
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return RedirectToAction("Login", "Account");
 
             var approvedApps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(
-                a => a.Internship, a => a.Internship.City, a => a.Internship.Department);
+                a => a.Internship, a => a.Internship.City, a => a.Internship.InternshipDepartments);
 
             var activeInternship = approvedApps.FirstOrDefault(a =>
                 a.AppUserId == studentDto.Id &&
@@ -270,13 +332,13 @@ namespace StajSistemi.Controllers
             }
 
             ViewBag.ActiveInternship = activeInternship;
-
             var reports = await _unitOfWork.DailyReports.GetAllAsync();
             ViewBag.DailyReports = reports.Where(r => r.AppUserId == studentDto.Id).OrderBy(r => r.DayNumber).ToList();
 
             return View(studentDto);
         }
 
+        // --- 9. GÜNLÜK RAPOR KAYDETME ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveDailyReport(int dayNumber, string? content, IFormFile? reportImage)
@@ -284,15 +346,16 @@ namespace StajSistemi.Controllers
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return Unauthorized();
 
-            string finalContent = string.IsNullOrWhiteSpace(content) ? "Bu gün için faaliyet girişi yapılmadı." : content;
-
             var apps = await _unitOfWork.InternshipApplications.GetAllAsync();
             var activeApp = apps.FirstOrDefault(a => a.AppUserId == studentDto.Id && a.Status == ApplicationStatus.Approved);
 
-            if (activeApp == null)
+            if (activeApp == null) return RedirectToAction(nameof(Index));
+
+            if (activeApp.StartedDate == null)
             {
-                TempData["ErrorMessage"] = "Rapor kaydedebilmek için önce onaylı bir stajınızın olması gerekmektedir.";
-                return RedirectToAction(nameof(Index));
+                activeApp.StartedDate = DateTime.Now;
+                _unitOfWork.InternshipApplications.Update(activeApp);
+                await _unitOfWork.SaveAsync();
             }
 
             var allReports = await _unitOfWork.DailyReports.GetAllAsync();
@@ -305,16 +368,20 @@ namespace StajSistemi.Controllers
                     AppUserId = studentDto.Id,
                     InternshipApplicationId = activeApp.Id,
                     DayNumber = dayNumber,
-                    Content = finalContent,
+                    Content = content ?? "Giriş yapılmadı.",
                     CreatedDate = DateTime.Now
                 };
-                if (reportImage != null) newReport.ImagePath = await SaveFile(reportImage, "reports");
+                if (reportImage != null)
+                    newReport.ImagePath = await SaveFile(reportImage, "reports");
+
                 await _unitOfWork.DailyReports.AddAsync(newReport);
             }
             else
             {
-                existingReport.Content = finalContent;
-                if (reportImage != null) existingReport.ImagePath = await SaveFile(reportImage, "reports");
+                existingReport.Content = content ?? existingReport.Content;
+                if (reportImage != null)
+                    existingReport.ImagePath = await SaveFile(reportImage, "reports");
+
                 _unitOfWork.DailyReports.Update(existingReport);
             }
 
@@ -323,7 +390,55 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Documents));
         }
 
-        // --- 🛡️ 6. VERİ TOPLAMA MOTORU ---
+        // --- 10. İLAN DETAYLARI (NİHAİ ONARIM) ---
+        public async Task<IActionResult> Details(int id)
+        {
+            var studentDto = await GetLoggedInStudentDto();
+            if (studentDto == null) return RedirectToAction("Login", "Account");
+
+            // ✅ SİBER MÜHÜR: InternshipApplicationLogs eklendi, artık hata vermeyecek!
+            var appsQuery = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(
+                a => a.Internship,
+                a => a.Internship.InternshipDepartments,
+                a => a.Internship.City,
+                a => a.AppUser,
+                a => a.InternshipApplicationLogs // 👈 Kırmızı çizginin sebebi burasıydı, artık onarıldı
+            );
+
+            var mySpecificApp = appsQuery.FirstOrDefault(a => a.InternshipId == id && a.AppUserId == studentDto.Id && !a.IsDeleted);
+
+            Internship? internship = null;
+            if (mySpecificApp != null)
+            {
+                internship = mySpecificApp.Internship;
+            }
+            else
+            {
+                var internships = await _unitOfWork.Internships.GetAllIncludingAsync(i => i.InternshipDepartments, i => i.City);
+                internship = internships.FirstOrDefault(i => i.Id == id);
+            }
+
+            if (internship == null) return NotFound();
+
+            foreach (var deptMap in internship.InternshipDepartments)
+            {
+                if (deptMap.Department == null)
+                    deptMap.Department = await _unitOfWork.Departments.GetByIdAsync(deptMap.DepartmentId);
+            }
+
+            ViewBag.SelectedInternship = internship;
+            ViewBag.MyApplication = mySpecificApp;
+            ViewBag.IsApplied = (mySpecificApp != null);
+
+            // Hocanın son notunu (açıklamayı) çekiyoruz
+            ViewBag.AdvisorNote = mySpecificApp?.InternshipApplicationLogs?
+                .OrderByDescending(l => l.LogDate)
+                .FirstOrDefault()?.Comment ?? "Başvurunuz değerlendirme aşamasındadır.";
+
+            return View(studentDto);
+        }
+
+        // --- HELPERS ---
         private async Task<StudentDto> GetLoggedInStudentDto()
         {
             var currentUserName = User.Identity?.Name;
@@ -336,63 +451,24 @@ namespace StajSistemi.Controllers
 
             var dto = _mapper.Map<StudentDto>(student);
             dto.Id = student.Id;
+            dto.GPA = student.GPA;
+            dto.DepartmentId = student.DepartmentId;
             dto.DepartmentName = student.Department?.DepartmentName ?? "Bölüm Belirtilmemiş";
-            dto.UniversityName = student.UniversityName; dto.FacultyName = student.FacultyName;
-            dto.DegreeType = student.DegreeType; dto.BirthPlace = student.BirthPlace;
-            dto.BirthDate = student.BirthDate; dto.AcademicYear = student.AcademicYear;
             dto.StudentNo = !string.IsNullOrWhiteSpace(student.StudentNo) ? student.StudentNo : student.UserName;
 
             return dto;
         }
 
-        // --- 🚀 ✅ AKILLI DETAILS METODU ---
-        public async Task<IActionResult> Details(int id)
-        {
-            var studentDto = await GetLoggedInStudentDto();
-            if (studentDto == null) return RedirectToAction("Login", "Account");
-
-            var allApps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(
-                a => a.Internship, a => a.Internship.Department, a => a.Internship.City);
-
-            var mySpecificApp = allApps.FirstOrDefault(a => a.Id == id && a.AppUserId == studentDto.Id);
-
-            Internship? internship = null;
-            InternshipApplication? existingApp = null;
-
-            if (mySpecificApp != null)
-            {
-                existingApp = mySpecificApp;
-                internship = mySpecificApp.Internship;
-            }
-            else
-            {
-                var internships = await _unitOfWork.Internships.GetAllIncludingAsync(i => i.Department, i => i.City);
-                internship = internships.FirstOrDefault(i => i.Id == id);
-
-                if (internship != null)
-                {
-                    existingApp = allApps.FirstOrDefault(a => a.AppUserId == studentDto.Id && a.InternshipId == internship.Id);
-                }
-            }
-
-            if (internship == null) return NotFound();
-
-            ViewBag.SelectedInternship = internship;
-            ViewBag.IsApplied = (existingApp != null);
-            ViewBag.ApplicationDetail = existingApp;
-            ViewBag.AppliedInternshipIds = allApps.Where(a => a.AppUserId == studentDto.Id).Select(a => a.InternshipId).ToList();
-
-            return View(studentDto);
-        }
-
-        // --- 💾 DOSYA KAYDETME MOTORU ---
         private async Task<string> SaveFile(IFormFile file, string subFolder)
         {
             string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", subFolder);
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
             string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
             string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-            using (var fileStream = new FileStream(filePath, FileMode.Create)) { await file.CopyToAsync(fileStream); }
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
             return uniqueFileName;
         }
 

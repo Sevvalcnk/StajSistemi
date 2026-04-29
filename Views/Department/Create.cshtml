@@ -5,12 +5,27 @@
         <h2 class="fw-bold text-primary mb-4"><i class="fas fa-plus-circle me-2"></i>Yeni Bölüm Tanımla</h2>
         <hr>
         <form asp-action="Create" method="post">
+            @* 🛡️ BÖLÜM ADI *@
             <div class="mb-3">
                 <label class="form-label fw-bold">Bölüm Adı</label>
                 <input asp-for="DepartmentName" class="form-control form-control-lg rounded-pill" placeholder="Örn: İç Mekan Tasarımı" required />
                 <span asp-validation-for="DepartmentName" class="text-danger"></span>
             </div>
 
+            @* 🎓 YENİ MÜHÜR: EĞİTİM DÜZEYİ SEÇİMİ *@
+            @* Bu alan, "Akıllı Filtreleme" sisteminin doğru çalışmasını garanti altına alır. *@
+            <div class="mb-4">
+                <label class="form-label fw-bold">Eğitim Düzeyi (Derece)</label>
+                <select asp-for="DegreeLevel" class="form-select form-select-lg rounded-pill" required>
+                    <option value="">--- Seviye Seçiniz ---</option>
+                    <option value="Lisans">Lisans (4 Yıllık)</option>
+                    <option value="Önlisans">Önlisans (2 Yıllık)</option>
+                </select>
+                <span asp-validation-for="DegreeLevel" class="text-danger"></span>
+                <small class="text-muted ms-2">Öğrenci panelindeki filtreleme bu seçime göre yapılır.</small>
+            </div>
+
+            @* 🚀 BUTONLAR *@
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-success btn-lg px-5 rounded-pill shadow-sm">
                     <i class="fas fa-save me-2"></i>Kaydet ve Mühürle
@@ -20,3 +35,9 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

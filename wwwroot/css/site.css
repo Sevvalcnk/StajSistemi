@@ -112,3 +112,77 @@ body {
         transform: translateY(0);
     }
 }
+/* Gündüz/Gece Modu Temel Renkleri */
+:root {
+    --bg-color: #f3f6f9;
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --nav-bg: #ffffff;
+}
+
+[data-theme="dark"] {
+    --bg-color: #0f172a; /* Siber Koyu Lacivert */
+    --card-bg: #1e293b;
+    --text-color: #f8fafc;
+    --nav-bg: #1e293b;
+}
+
+/* Değişkenleri Sisteme Giydir */
+body {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color);
+    transition: background-color 0.4s ease, color 0.4s ease; /* Yumuşak geçiş */
+}
+
+.card, .staj-nav-top, .navbar {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    transition: 0.4s;
+}
+/* 🌙 SİBER GECE MODU - MUTLAK HAKİMİYET (site.css sonuna ekle) */
+
+[data-theme="dark"] {
+    --bg-color: #0f172a !important;
+    --card-bg: #1e293b !important;
+    --text-color: #f1f5f9 !important;
+    --nav-bg: #1e293b !important;
+}
+
+    /* 1. Tüm Arka Planları Zorla Karart */
+    [data-theme="dark"] .card,
+    [data-theme="dark"] .bg-white,
+    [data-theme="dark"] .bg-light,
+    [data-theme="dark"] .kokpit-card,
+    [data-theme="dark"] .profile-card,
+    [data-theme="dark"] .timeline-wrapper,
+    [data-theme="dark"] .staj-list-card,
+    [data-theme="dark"] .list-group-item {
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* 2. Tüm Yazıları Görünür Yap (Görseldeki en büyük sorundu) */
+    /* Sadece H1-H5 değil, her şeyi kapsıyoruz */
+    [data-theme="dark"] body,
+    [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+    [data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6,
+    [data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] div,
+    [data-theme="dark"] label, [data-theme="dark"] td, [data-theme="dark"] th,
+    [data-theme="dark"] .text-dark, [data-theme="dark"] .fw-bold {
+        color: var(--text-color) !important;
+    }
+
+    /* 3. Özel Durumlar: Inputlar ve Formlar */
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-select {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border-color: #334155 !important;
+    }
+
+    /* 4. Tablo Satırları (İlan listesi için) */
+    [data-theme="dark"] .staj-table tr td {
+        background-color: var(--card-bg) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }

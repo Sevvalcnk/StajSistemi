@@ -36,6 +36,23 @@ namespace StajSistemi.Controllers
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return RedirectToAction("Login", "Account");
 
+            var allDailyReports = await _unitOfWork.DailyReports.GetAllAsync();
+            var myReports = allDailyReports.Where(r => r.AppUserId == studentDto.Id).ToList();
+
+            int totalReportsCount = myReports.Count;
+            int approvedReportsCount = myReports.Count(r => r.IsApproved);
+            int pendingReportsCount = totalReportsCount - approvedReportsCount;
+
+            int targetDays = 30;
+            double progressPercent = ((double)totalReportsCount / targetDays) * 100;
+
+            ViewBag.TotalReportsCount = totalReportsCount;
+            ViewBag.ApprovedReportsCount = approvedReportsCount;
+            ViewBag.PendingReportsCount = pendingReportsCount;
+
+            ViewBag.ProgressPercent = Math.Round(Math.Min(progressPercent, 100), 0);
+            ViewBag.RemainingDays = Math.Max(targetDays - totalReportsCount, 0);
+
             var allApplications = await _unitOfWork.InternshipApplications.GetAllAsync();
             var approvedCounts = allApplications
                 .Where(a => a.Status == ApplicationStatus.Approved)
@@ -69,6 +86,32 @@ namespace StajSistemi.Controllers
                 }
             }
 
+            // 🚀 SMART MATCH (AKILLI EŞLEŞME) MOTORU BURADA ÇALIŞIYOR
+            if (studentDto != null)
+            {
+                foreach (var ilan in allInternships)
+                {
+                    int score = 0;
+
+                    // 1. Bölüm Uyumu (%50)
+                    if (ilan.InternshipDepartments.Any(id => id.DepartmentId == studentDto.DepartmentId))
+                        score += 50;
+
+                    // 2. Şehir Uyumu (%30)
+                    if (ilan.CityId == studentDto.CityId)
+                        score += 30;
+
+                    // 3. GPA Uyumu (%20) - Liyakatli Tip Dönüşümü ile
+                    if ((decimal?)studentDto.GPA >= ilan.MinGPA)
+                        score += 20;
+
+                    ilan.MatchScore = score;
+                }
+
+                // Listeyi puana göre yeniden sıralıyoruz
+                allInternships = allInternships.OrderByDescending(x => x.MatchScore).ThenByDescending(x => x.CreatedDate).ToList();
+            }
+
             ViewBag.RecommendedInternships = allInternships
                 .Where(i => i.InternshipDepartments.Any(id => id.DepartmentId == studentDto.DepartmentId))
                 .ToList();
@@ -85,17 +128,15 @@ namespace StajSistemi.Controllers
                 ViewBag.FilterMode = "suitable";
             }
 
+            // Siber Güncelleme: Artık anonim nesne yerine doğrudan 'ilan.MatchScore' kullanıyoruz
             var smartMatches = filteredInternships
-                .Select(ilan => new
-                {
-                    Ilan = ilan,
-                    Score = (ilan.InternshipDepartments.Any(id => id.DepartmentId == studentDto.DepartmentId) ? 50 : 0) +
-                            (ilan.CityId == studentDto.CityId ? 30 : 0) +
-                            (int)(currentGpa * 5)
-                })
-                .OrderByDescending(x => x.Score)
+                .OrderByDescending(x => x.MatchScore)
                 .Take(6).ToList();
+
             ViewBag.SmartMatches = smartMatches;
+
+            // 🛡️ ÖZEL MESAJ: Index sayfasındaki gibi akıllı mesajı buraya da mühürledik
+            ViewBag.SpecialMessage = $"Kardaşım, senin için en uygun {smartMatches.Count} staj ilanı siber radara takıldı! 🥂🛡️";
 
             var allMessages = await _unitOfWork.ChatMessages.GetAllIncludingAsync(m => m.Sender);
             ViewBag.StudentMessages = allMessages
@@ -105,14 +146,12 @@ namespace StajSistemi.Controllers
             return View(studentDto);
         }
 
-        // --- 2. GÜVENLİK KAPISI (APPLY) ---
         public async Task<IActionResult> Apply(int id)
         {
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return RedirectToAction("Login", "Account");
 
             var allApps = await _unitOfWork.InternshipApplications.GetAllAsync();
-
             if (allApps.Any(a => a.AppUserId == studentDto.Id && a.InternshipId == id && !a.IsDeleted))
             {
                 TempData["AlreadyApplied"] = "True";
@@ -121,7 +160,6 @@ namespace StajSistemi.Controllers
 
             var ilanlar = await _unitOfWork.Internships.GetAllIncludingAsync(i => i.InternshipDepartments);
             var ilan = ilanlar.FirstOrDefault(x => x.Id == id);
-
             if (ilan == null) return NotFound();
 
             if (ilan.InternshipDepartments != null && ilan.InternshipDepartments.Any())
@@ -144,7 +182,6 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Details), new { id = id });
         }
 
-        // --- 3. BAŞVURU KAYIT METODU (POST) ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmApplication(int InternshipId, IFormFile CVFile, IFormFile? CertificateFile)
@@ -174,7 +211,8 @@ namespace StajSistemi.Controllers
                 Status = ApplicationStatus.Pending,
                 ApplicationDate = DateTime.Now,
                 CVPath = await SaveFile(CVFile, "cvs"),
-                SuccessScore = (double)(studentDto.GPA * 100)
+                SuccessScore = (double)(studentDto.GPA * 100),
+                IsReadByStudent = false
             };
 
             if (CertificateFile != null)
@@ -187,7 +225,6 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Applications));
         }
 
-        // --- 4. BAŞVURULARIM LİSTESİ ---
         public async Task<IActionResult> Applications()
         {
             var studentDto = await GetLoggedInStudentDto();
@@ -212,11 +249,9 @@ namespace StajSistemi.Controllers
                     }
                 }
             }
-
             return View(myApplications);
         }
 
-        // --- 5. BAŞVURU SONUÇLARIM ---
         public async Task<IActionResult> Results()
         {
             var studentDto = await GetLoggedInStudentDto();
@@ -233,6 +268,17 @@ namespace StajSistemi.Controllers
                                             a.Status == ApplicationStatus.Rejected ||
                                             a.Status.ToString() == "Completed")).ToList();
 
+            var unreadApps = myResults.Where(a => !a.IsReadByStudent).ToList();
+            if (unreadApps.Any())
+            {
+                foreach (var app in unreadApps)
+                {
+                    app.IsReadByStudent = true;
+                    _unitOfWork.InternshipApplications.Update(app);
+                }
+                await _unitOfWork.SaveAsync();
+            }
+
             foreach (var app in myResults)
             {
                 if (app.Internship?.InternshipDepartments != null)
@@ -244,19 +290,14 @@ namespace StajSistemi.Controllers
                     }
                 }
             }
-
             return View(myResults);
         }
 
-        // --- 6. PROFİL DÜZENLEME (GET) ---
         [HttpGet]
         public async Task<IActionResult> EditProfile()
         {
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return NotFound();
-
-            var departments = await _unitOfWork.Departments.GetAllAsync();
-            ViewBag.Departments = new SelectList(departments, "Id", "DepartmentName");
 
             var cities = await _unitOfWork.Cities.GetAllAsync();
             ViewBag.Cities = new SelectList(cities.OrderBy(x => x.Name), "Id", "Name");
@@ -264,7 +305,6 @@ namespace StajSistemi.Controllers
             return View(studentDto);
         }
 
-        // --- 7. PROFİL DÜZENLEME (POST) ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProfile(StudentDto studentDto, IFormFile? CVFile, IFormFile? CertificateFile)
@@ -290,6 +330,12 @@ namespace StajSistemi.Controllers
                 student.CityId = studentDto.CityId;
                 student.UniversityName = studentDto.UniversityName;
                 student.StudentNo = studentDto.StudentNo;
+                student.FacultyName = studentDto.FacultyName;
+                student.BirthPlace = studentDto.BirthPlace;
+                student.BirthDate = studentDto.BirthDate;
+                student.AcademicYear = studentDto.AcademicYear;
+                student.EducationSummary = studentDto.EducationSummary;
+                student.DegreeType = studentDto.DegreeType;
 
                 if (CVFile != null && CVFile.Length > 0)
                     student.CVPath = await SaveFile(CVFile, "cvs");
@@ -304,15 +350,11 @@ namespace StajSistemi.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var depts = await _unitOfWork.Departments.GetAllAsync();
-            ViewBag.Departments = new SelectList(depts, "Id", "DepartmentName");
             var cities = await _unitOfWork.Cities.GetAllAsync();
             ViewBag.Cities = new SelectList(cities.OrderBy(x => x.Name), "Id", "Name");
-
             return View(studentDto);
         }
 
-        // --- 8. STAJ DEFTERİ VE BELGELER ---
         public async Task<IActionResult> Documents()
         {
             var studentDto = await GetLoggedInStudentDto();
@@ -333,12 +375,15 @@ namespace StajSistemi.Controllers
 
             ViewBag.ActiveInternship = activeInternship;
             var reports = await _unitOfWork.DailyReports.GetAllAsync();
-            ViewBag.DailyReports = reports.Where(r => r.AppUserId == studentDto.Id).OrderBy(r => r.DayNumber).ToList();
+
+            ViewBag.DailyReports = reports
+                .Where(r => r.AppUserId == studentDto.Id)
+                .OrderBy(r => r.DayNumber)
+                .ToList();
 
             return View(studentDto);
         }
 
-        // --- 9. GÜNLÜK RAPOR KAYDETME ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveDailyReport(int dayNumber, string? content, IFormFile? reportImage)
@@ -371,7 +416,8 @@ namespace StajSistemi.Controllers
                     Content = content ?? "Giriş yapılmadı.",
                     CreatedDate = DateTime.Now
                 };
-                if (reportImage != null)
+
+                if (reportImage != null && reportImage.Length > 0)
                     newReport.ImagePath = await SaveFile(reportImage, "reports");
 
                 await _unitOfWork.DailyReports.AddAsync(newReport);
@@ -379,7 +425,8 @@ namespace StajSistemi.Controllers
             else
             {
                 existingReport.Content = content ?? existingReport.Content;
-                if (reportImage != null)
+
+                if (reportImage != null && reportImage.Length > 0)
                     existingReport.ImagePath = await SaveFile(reportImage, "reports");
 
                 _unitOfWork.DailyReports.Update(existingReport);
@@ -390,19 +437,17 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Documents));
         }
 
-        // --- 10. İLAN DETAYLARI (NİHAİ ONARIM) ---
         public async Task<IActionResult> Details(int id)
         {
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return RedirectToAction("Login", "Account");
 
-            // ✅ SİBER MÜHÜR: InternshipApplicationLogs eklendi, artık hata vermeyecek!
             var appsQuery = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(
                 a => a.Internship,
                 a => a.Internship.InternshipDepartments,
                 a => a.Internship.City,
                 a => a.AppUser,
-                a => a.InternshipApplicationLogs // 👈 Kırmızı çizginin sebebi burasıydı, artık onarıldı
+                a => a.InternshipApplicationLogs
             );
 
             var mySpecificApp = appsQuery.FirstOrDefault(a => a.InternshipId == id && a.AppUserId == studentDto.Id && !a.IsDeleted);
@@ -430,7 +475,6 @@ namespace StajSistemi.Controllers
             ViewBag.MyApplication = mySpecificApp;
             ViewBag.IsApplied = (mySpecificApp != null);
 
-            // Hocanın son notunu (açıklamayı) çekiyoruz
             ViewBag.AdvisorNote = mySpecificApp?.InternshipApplicationLogs?
                 .OrderByDescending(l => l.LogDate)
                 .FirstOrDefault()?.Comment ?? "Başvurunuz değerlendirme aşamasındadır.";
@@ -438,7 +482,6 @@ namespace StajSistemi.Controllers
             return View(studentDto);
         }
 
-        // --- HELPERS ---
         private async Task<StudentDto> GetLoggedInStudentDto()
         {
             var currentUserName = User.Identity?.Name;
@@ -455,21 +498,32 @@ namespace StajSistemi.Controllers
             dto.DepartmentId = student.DepartmentId;
             dto.DepartmentName = student.Department?.DepartmentName ?? "Bölüm Belirtilmemiş";
             dto.StudentNo = !string.IsNullOrWhiteSpace(student.StudentNo) ? student.StudentNo : student.UserName;
+            dto.FacultyName = student.FacultyName;
+            dto.BirthPlace = student.BirthPlace;
+            dto.BirthDate = student.BirthDate;
+            dto.AcademicYear = student.AcademicYear;
+            dto.EducationSummary = student.EducationSummary;
+            dto.DegreeType = student.DegreeType;
 
             return dto;
         }
 
         private async Task<string> SaveFile(IFormFile file, string subFolder)
         {
-            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", subFolder);
+            string folderRelativePath = Path.Combine("uploads", subFolder);
+            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, folderRelativePath);
+
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
             string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            string uniqueFilePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(uniqueFilePath, FileMode.Create))
             {
                 await file.CopyToAsync(fileStream);
             }
-            return uniqueFileName;
+
+            return $"/{folderRelativePath.Replace("\\", "/")}/{uniqueFileName}";
         }
 
         public async Task<IActionResult> About() => View(await GetLoggedInStudentDto());

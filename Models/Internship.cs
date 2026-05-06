@@ -62,5 +62,7 @@ namespace StajSistemi.Models
 
         [ForeignKey("CityId")]
         public virtual City? City { get; set; }
+        [NotMapped]
+        public int MatchScore { get; set; }
     }
 }

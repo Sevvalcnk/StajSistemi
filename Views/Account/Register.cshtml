@@ -7,10 +7,48 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
 <style>
+    /* 🌓 SİBER GECE UYUMLULUĞU */
+    body {
+        background-color: #f3f6f9;
+        font-family: 'Inter', sans-serif;
+        transition: all 0.3s ease;
+    }
+
+    html[data-theme="dark"] body {
+        background-color: #0f172a !important;
+    }
+
     .glass-card {
         background: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    html[data-theme="dark"] .glass-card {
+        background: rgba(30, 41, 59, 0.8) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #f1f5f9 !important;
+    }
+
+    /* Input ve Yazı Renkleri */
+    html[data-theme="dark"] .text-dark,
+    html[data-theme="dark"] .fw-bold,
+    html[data-theme="dark"] h2,
+    html[data-theme="dark"] h3 {
+        color: #f1f5f9 !important;
+    }
+
+    html[data-theme="dark"] .premium-input,
+    html[data-theme="dark"] .form-select {
+        background-color: #1e293b !important;
+        color: white !important;
+        border-color: #334155 !important;
+    }
+
+    html[data-theme="dark"] .input-group-text {
+        background-color: #334155 !important;
+        border-color: #334155 !important;
+        color: #cbd5e1 !important;
     }
 
     .premium-input:focus {
@@ -41,7 +79,7 @@
             <img src="https://cdni.iconscout.com/illustration/premium/thumb/online-registration-4488061-3738526.png"
                  alt="Kayıt Ol" class="img-fluid" style="max-height: 450px;">
             <div class="mt-4">
-                <h2 class="fw-bold" style="color: #2c3e50;">Aramıza Katıl!</h2>
+                <h2 class="fw-bold">Aramıza Katıl!</h2>
                 <p class="text-muted fs-5">Sisteme kayıt olarak staj sürecini profesyonelce yönetmeye başla.</p>
             </div>
         </div>
@@ -72,7 +110,7 @@
                     <div class="mb-3">
                         <label asp-for="Role" class="form-label fw-bold small">Kayıt Tipi (Yetki)</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-user-tag text-muted"></i></span>
+                            <span class="input-group-text border-end-0"><i class="fas fa-user-tag"></i></span>
                             <select asp-for="Role" id="roleSelect" class="form-select border-start-0 premium-input">
                                 <option value="Student">Öğrenci</option>
                                 <option value="Advisor">Danışman (Hoca)</option>
@@ -84,7 +122,7 @@
                     <div class="mb-3">
                         <label asp-for="FullName" class="form-label fw-bold small">Ad Soyad</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-user text-muted"></i></span>
+                            <span class="input-group-text border-end-0"><i class="fas fa-user"></i></span>
                             <input asp-for="FullName" class="form-control border-start-0 premium-input" placeholder="Adınız Soyadınız" />
                         </div>
                         <span asp-validation-for="FullName" class="text-danger small"></span>
@@ -94,7 +132,7 @@
                     <div class="mb-3" id="studentNoArea">
                         <label asp-for="StudentNo" class="form-label fw-bold small">Öğrenci Numarası</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-id-card text-muted"></i></span>
+                            <span class="input-group-text border-end-0"><i class="fas fa-id-card"></i></span>
                             <input asp-for="StudentNo" id="studentNoInput" class="form-control border-start-0 premium-input" placeholder="Örn: 247017029" />
                         </div>
                         <span asp-validation-for="StudentNo" class="text-danger small"></span>
@@ -103,7 +141,7 @@
                     <div class="mb-3">
                         <label asp-for="Email" class="form-label fw-bold small">E-posta Adresi</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-envelope text-muted"></i></span>
+                            <span class="input-group-text border-end-0"><i class="fas fa-envelope"></i></span>
                             <input asp-for="Email" class="form-control border-start-0 premium-input" placeholder="ornek@alanadi.com" />
                         </div>
                         <span asp-validation-for="Email" class="text-danger small"></span>
@@ -114,9 +152,9 @@
                         <div class="col-md-6 mb-3">
                             <label asp-for="Password" class="form-label fw-bold small">Şifre</label>
                             <div class="input-group">
-                                <input asp-for="Password" type="password" id="passInput" class="form-control premium-input border-end-0 rounded-start" placeholder="******" />
-                                <span class="input-group-text bg-white border-start-0" onclick="togglePassword('passInput', 'toggleIcon')">
-                                    <i class="fas fa-eye text-muted" id="toggleIcon"></i>
+                                <input asp-for="Password" type="password" id="passInput" class="form-control premium-input border-end-0" placeholder="******" />
+                                <span class="input-group-text border-start-0" onclick="togglePassword('passInput', 'toggleIcon')">
+                                    <i class="fas fa-eye" id="toggleIcon"></i>
                                 </span>
                             </div>
                             <span asp-validation-for="Password" class="text-danger small"></span>
@@ -124,9 +162,9 @@
                         <div class="col-md-6 mb-3">
                             <label asp-for="ConfirmPassword" class="form-label fw-bold small">Şifre Tekrar</label>
                             <div class="input-group">
-                                <input asp-for="ConfirmPassword" type="password" id="confirmPassInput" class="form-control premium-input border-end-0 rounded-start" placeholder="******" />
-                                <span class="input-group-text bg-white border-start-0" onclick="togglePassword('confirmPassInput', 'confirmToggleIcon')">
-                                    <i class="fas fa-eye text-muted" id="confirmToggleIcon"></i>
+                                <input asp-for="ConfirmPassword" type="password" id="confirmPassInput" class="form-control premium-input border-end-0" placeholder="******" />
+                                <span class="input-group-text border-start-0" onclick="togglePassword('confirmPassInput', 'confirmToggleIcon')">
+                                    <i class="fas fa-eye" id="confirmToggleIcon"></i>
                                 </span>
                             </div>
                             <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
@@ -179,7 +217,7 @@
                 setTimeout(() => { studentNoArea.style.opacity = '1'; }, 10);
             } else {
                 studentNoArea.style.opacity = '0';
-                studentNoArea.style.display = 'none';
+                setTimeout(() => { studentNoArea.style.display = 'none'; }, 300);
             }
         }
 

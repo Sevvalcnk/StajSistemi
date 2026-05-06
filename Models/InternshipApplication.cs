@@ -24,9 +24,12 @@ namespace StajSistemi.Models
         public DateTime ApplicationDate { get; set; } = DateTime.Now;
 
         // 📅 KRİTİK EKLEME: Stajın Gerçek Zaman Çizelgesi
-        // Bu iki satır Documents sayfasındaki o kırmızı hataları silecek! 🚀
         public DateTime? StartDate { get; set; } // Staj Başlangıç Tarihi
         public DateTime? EndDate { get; set; }   // Staj Bitiş Tarihi
+
+        // 🚀 KRAL MÜHÜR: BİLDİRİM SÖNDÜRME ANAHTARI
+        // Bu satır sayesinde sen sonuçlara baktığında o "5" sayısı asaletle sönecek!
+        public bool IsReadByStudent { get; set; } = false;
 
         // ESKİ string Status SİLİNDİ! Artık akıllı Enum mühürü var:
         public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
@@ -37,11 +40,13 @@ namespace StajSistemi.Models
 
         // ✅ HAFTA 7 MÜHÜRÜ: Dijital Staj Defteri Bağlantısı
         public virtual ICollection<DailyReport> DailyReports { get; set; } = new List<DailyReport>();
-        // 🛡️ HAFTA 9: İzlenebilirlik Mühürleri (Hata buradaydı!)
-        public DateTime? ApprovedDate { get; set; }    // Onay tarihi
-        public DateTime? StartedDate { get; set; }     // Staj başlama tarihi
-        public DateTime? CompletedDate { get; set; }   // Staj bitiş tarihi
-                                                       // ✅ NİHAİ MÜHÜR: Hocanın notlarını (Açıklamaları) bu bağlantı sayesinde çekeceğiz!
+
+        // 🛡️ HAFTA 9: İzlenebilirlik Mühürleri
+        public DateTime? ApprovedDate { get; set; }     // Onay tarihi
+        public DateTime? StartedDate { get; set; }      // Staj başlama tarihi
+        public DateTime? CompletedDate { get; set; }    // Staj bitiş tarihi
+
+        // ✅ NİHAİ MÜHÜR: Hocanın notlarını bu bağlantı sayesinde çekeceğiz!
         public virtual ICollection<InternshipApplicationLog> InternshipApplicationLogs { get; set; } = new List<InternshipApplicationLog>();
     }
 }

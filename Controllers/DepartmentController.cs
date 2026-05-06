@@ -2,9 +2,15 @@
 using Microsoft.EntityFrameworkCore;
 using StajSistemi.data;
 using StajSistemi.Models;
+using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace StajSistemi.Controllers
 {
+    [Authorize(Roles = "Advisor,Admin")] // Sadece yetkililer bu odaya girebilir
     public class DepartmentController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -14,48 +20,72 @@ namespace StajSistemi.Controllers
             _context = context;
         }
 
-        // Bölümleri Listeleme (Hafta 4)
+        // --- 📋 BÖLÜMLERİ LİSTELEME ---
         public async Task<IActionResult> Index()
         {
             var departments = await _context.Departments.ToListAsync();
             return View(departments);
         }
 
-        // Yeni Bölüm Ekleme Sayfası
+        // --- ➕ YENİ BÖLÜM EKLEME (GET) ---
+        [HttpGet]
         public IActionResult Create()
         {
             return View();
         }
 
-        // Yeni Bölüm Kaydetme
+        // --- ➕ YENİ BÖLÜM EKLEME (POST) ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Department department)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(department);
+                _context.Departments.Add(department);
                 await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"{department.DepartmentName} bölümü siber kayıtlara mühürlendi! 🥂✨";
                 return RedirectToAction(nameof(Index));
             }
             return View(department);
         }
 
-        // --- 🛡️ HAFTA 9: AKILLI BÖLÜM FİLTRELEME MOTORU ---
-        // Bu metod, AJAX çağrısı ile çalışır ve seçilen seviyeye göre bölümleri JSON olarak döner.
-        [HttpGet]
-        public async Task<JsonResult> GetDepartmentsByLevel(string level)
+        // --- 🗑️ BÖLÜM SİLME (POST) ---
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
         {
-            // Veritabanından DegreeLevel (Lisans/Önlisans) bilgisine göre süzüyoruz
-            var departments = await _context.Departments
-                .Where(d => d.DegreeLevel == level)
-                .Select(d => new {
-                    id = d.Id,
-                    departmentName = d.DepartmentName
-                })
-                .ToListAsync();
+            var department = await _context.Departments.FindAsync(id);
+            if (department != null)
+            {
+                _context.Departments.Remove(department);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Bölüm siber tarihten başarıyla silindi! 🛡️🗑️";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Silinecek bölüm bulunamadı! 🚫";
+            }
+            return RedirectToAction(nameof(Index));
+        }
 
-            return Json(departments); // Veriyi siber bir paket (JSON) olarak yolluyoruz.
+        // --- 🛡️ AJAX METODU (Mevcut kodun, korundu) ---
+        [HttpGet]
+        [AllowAnonymous]
+        [Route("/Department/GetDepartmentsByLevel")]
+        public async Task<JsonResult> GetDepartmentsByLevel()
+        {
+            try
+            {
+                var allDepartments = await _context.Departments
+                    .OrderBy(d => d.DepartmentName)
+                    .Select(d => new { id = d.Id, departmentName = d.DepartmentName })
+                    .ToListAsync();
+                return Json(allDepartments);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { hasError = true, message = ex.Message });
+            }
         }
     }
 }

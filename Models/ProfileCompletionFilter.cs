@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Security.Claims;
 using System.Linq;
-using StajSistemi.data; // Küçük 'd' mühürü korundu
+using StajSistemi.data;
 
 namespace StajSistemi.Filters
 {
@@ -21,13 +21,15 @@ namespace StajSistemi.Filters
             var actionName = context.RouteData.Values["action"]?.ToString();
             var controllerName = context.RouteData.Values["controller"]?.ToString();
 
-            // 🛡️ 2. ADIM: SONSUZ DÖNGÜ KIRICI (KRİTİK)
-            // Eğer öğrenci zaten "Profil Düzenleme" sayfasındaysa veya çıkış yapıyorsa dokunma!
+            // 🛡️ 2. ADIM: SONSUZ DÖNGÜ VE AJAX KIRICI (SİBER BAYPAS)
+            // Eğer öğrenci zaten "Profil Düzenleme" sayfasındaysa, çıkış yapıyorsa 
+            // VEYA dropdown için "Department" verisi çekiyorsa filtreyi DURDUR!
             if ((controllerName == "StudentPanel" && actionName == "EditProfile") ||
+                 controllerName == "Department" ||  // 🚀 İŞTE KRİTİK EKLEME BURASI!
                  controllerName == "Account" ||
                  actionName == "Error")
             {
-                return; // Polise "İşlem yapma, doğru yerdeler" diyoruz.
+                return; // Polis: "Geçiş serbest, bu güvenli bir yol" diyor.
             }
 
             // 👮‍♂️ 3. ADIM: Kimlik ve Rol Kontrolü
@@ -43,10 +45,15 @@ namespace StajSistemi.Filters
                     var student = _context.Users.FirstOrDefault(s => s.Id == userId);
 
                     // Bölüm veya Üniversite bilgisi boş mu?
-                    if (student != null && (student.DepartmentId == null || string.IsNullOrEmpty(student.UniversityName)))
+                    if (student != null && (student.DepartmentId == null || student.DepartmentId == 0 || string.IsNullOrEmpty(student.UniversityName)))
                     {
                         // 🔐 5. ADIM: KİLİTLEME VE YÖNLENDİRME
-                        // Eğer bilgileri eksikse ve EditProfile dışında bir yerdeyse (Dashboard dahil), oraya şutla!
+                        // AJAX isteklerini kontrol et: Eğer bir AJAX isteği ise yönlendirme yapma, 401 dön.
+                        if (context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        {
+                            return;
+                        }
+
                         context.Result = new RedirectToActionResult("EditProfile", "StudentPanel", null);
                     }
                 }

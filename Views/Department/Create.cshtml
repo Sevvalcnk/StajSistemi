@@ -4,16 +4,22 @@
     <div class="card shadow border-0 rounded-4 p-4">
         <h2 class="fw-bold text-primary mb-4"><i class="fas fa-plus-circle me-2"></i>Yeni Bölüm Tanımla</h2>
         <hr>
+
         <form asp-action="Create" method="post">
-            @* 🛡️ BÖLÜM ADI *@
+            @* 🛡️ SİBER KALKAN: TÜM HATA MESAJLARINI TOPLUCA GÖSTEREN KISIM *@
+            @* Model genelindeki hataları burada yakalıyoruz *@
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold"></div>
+
+            @* 🖋️ BÖLÜM ADI *@
             <div class="mb-3">
                 <label class="form-label fw-bold">Bölüm Adı</label>
                 <input asp-for="DepartmentName" class="form-control form-control-lg rounded-pill" placeholder="Örn: İç Mekan Tasarımı" required />
+                @* Tekil hata uyarısı *@
                 <span asp-validation-for="DepartmentName" class="text-danger"></span>
             </div>
 
-            @* 🎓 YENİ MÜHÜR: EĞİTİM DÜZEYİ SEÇİMİ *@
-            @* Bu alan, "Akıllı Filtreleme" sisteminin doğru çalışmasını garanti altına alır. *@
+            @* 🎓 EĞİTİM DÜZEYİ SEÇİMİ *@
+            @* Bu alan, Akıllı Filtreleme algoritması için hayati önem taşır *@
             <div class="mb-4">
                 <label class="form-label fw-bold">Eğitim Düzeyi (Derece)</label>
                 <select asp-for="DegreeLevel" class="form-select form-select-lg rounded-pill" required>
@@ -21,16 +27,19 @@
                     <option value="Lisans">Lisans (4 Yıllık)</option>
                     <option value="Önlisans">Önlisans (2 Yıllık)</option>
                 </select>
+                @* Tekil hata uyarısı *@
                 <span asp-validation-for="DegreeLevel" class="text-danger"></span>
                 <small class="text-muted ms-2">Öğrenci panelindeki filtreleme bu seçime göre yapılır.</small>
             </div>
 
-            @* 🚀 BUTONLAR *@
+            @* 🚀 OPERASYON BUTONLARI *@
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-success btn-lg px-5 rounded-pill shadow-sm">
                     <i class="fas fa-save me-2"></i>Kaydet ve Mühürle
                 </button>
-                <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4 rounded-pill">İptal</a>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4 rounded-pill">
+                    <i class="fas fa-times me-1"></i> İptal
+                </a>
             </div>
         </form>
     </div>
@@ -38,6 +47,7 @@
 
 @section Scripts {
     @{
+        // İstemci tarafında (Client-side) doğrulama yapması için siber scriptler
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }

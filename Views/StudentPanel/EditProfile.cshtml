@@ -18,6 +18,35 @@
         box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
     }
 
+    /* Gece Modu Uyumu */
+    [data-theme="dark"] .card {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
+
+    [data-theme="dark"] .card-body {
+        background-color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .bg-white {
+        background-color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .bg-light {
+        background-color: #0f172a !important;
+        color: #f1f5f9 !important;
+    }
+
+    [data-theme="dark"] .text-muted {
+        color: #94a3b8 !important;
+    }
+
+    [data-theme="dark"] .form-control, [data-theme="dark"] .form-select {
+        background-color: #0f172a !important;
+        color: white !important;
+        border-color: #334155 !important;
+    }
+
     .input-focus:focus {
         border-color: #2c3e50 !important;
         box-shadow: 0 0 10px rgba(44, 62, 80, 0.1) !important;
@@ -30,7 +59,8 @@
 
 <div class="container py-5 techNode-fade-in">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
+        <div class="col-md-10 col-lg-9">
+            @* Genişliği biraz artırdık ki yan yana alanlar rahatlasın *@
             <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
                 <div class="card-header bg-dark text-white text-center py-4">
                     <h3 class="fw-bold mb-0"><i class="fas fa-user-edit me-2"></i>Kariyer Profilini Güncelle</h3>
@@ -39,139 +69,143 @@
                     <form asp-action="EditProfile" method="post" enctype="multipart/form-data" id="profileEditForm">
                         @Html.AntiForgeryToken()
 
-                        @* 🛡️ GİZLİ ALANLAR *@
                         <input type="hidden" asp-for="Id" />
                         <input type="hidden" asp-for="Email" />
                         <input type="hidden" asp-for="StudentNo" />
 
                         <div class="mb-4 text-center">
-                            <img src="https://ui-avatars.com/api/?name=@(Model.Name)+@(Model.Surname)&background=2c3e50&color=fff&size=100"
+                            <img src="https://ui-avatars.com/api/?name=@Model.Name+@Model.Surname&background=2c3e50&color=fff&size=100"
                                  class="rounded-circle shadow-sm mb-2" alt="Avatar">
                             <p class="text-muted small mb-0">@Model.Email</p>
                             <span class="badge bg-light text-dark border">No: @Model.StudentNo</span>
                         </div>
 
-                        @* 👤 TEMEL BİLGİLER *@
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                        @* 👤 AD VE SOYAD (YAN YANA) *@
+                        <div class="row mb-3">
+                            <div class="col-md-6">
                                 <label asp-for="Name" class="form-label fw-bold text-muted small text-uppercase">Adınız</label>
                                 <input asp-for="Name" class="form-control rounded-pill border-2 input-focus" />
                                 <span asp-validation-for="Name" class="text-danger small"></span>
                             </div>
-
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-6">
                                 <label asp-for="Surname" class="form-label fw-bold text-muted small text-uppercase">Soyadınız</label>
                                 <input asp-for="Surname" class="form-control rounded-pill border-2 input-focus" />
                                 <span asp-validation-for="Surname" class="text-danger small"></span>
                             </div>
                         </div>
 
-                        @* 🎓 EĞİTİM DÜZEYİ VE ÜNİVERSİTE *@
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
+                        @* 🎓 EĞİTİM DÜZEYİ VE ÜNİVERSİTE (YAN YANA) *@
+                        <div class="row mb-3">
+                            <div class="col-md-6">
                                 <label asp-for="DegreeType" class="form-label fw-bold text-muted small text-uppercase">Eğitim Düzeyi</label>
                                 <select asp-for="DegreeType" class="form-select rounded-pill border-2 input-focus" id="degreeSelect">
                                     <option value="">Seçiniz...</option>
-                                    <option value="Lisans">Lisans (4 Yıllık)</option>
-                                    <option value="Önlisans">Önlisans (2 Yıllık)</option>
+                                    <option value="Lisans">Lisans</option>
+                                    <option value="Önlisans">Önlisans</option>
                                 </select>
                                 <span asp-validation-for="DegreeType" class="text-danger small"></span>
                             </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="UniversityName" class="form-label fw-bold text-muted small text-uppercase">Üniversite Adı</label>
-                                <input asp-for="UniversityName" class="form-control rounded-pill border-2 input-focus" placeholder="Örn: Niğde Üniversitesi" />
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small text-uppercase">Üniversite Seçiniz</label>
+                                <select asp-for="UniversityName" class="form-select rounded-pill border-2 input-focus shadow-sm">
+                                    <option value="">Seçiniz...</option>
+                                    <option value="Sinop Üniversitesi">Sinop Üniversitesi</option>
+                                    <option value="Ordu Üniversitesi">Ordu Üniversitesi</option>
+                                    <option value="Samsun Ondokuz Mayıs Üniversitesi">Samsun Ondokuz Mayıs Üniversitesi</option>
+                                    <option value="Ankara Üniversitesi">Ankara Üniversitesi</option>
+                                    <option value="İstanbul Üniversitesi">İstanbul Üniversitesi</option>
+                                    <option value="İzmir Ege Üniversitesi">İzmir Ege Üniversitesi</option>
+                                    <option value="Aydın Üniversitesi">Aydın Üniversitesi</option>
+                                    <option value="Bursa Uludağ Üniversitesi">Bursa Uludağ Üniversitesi</option>
+                                    <option value="Eskişehir Üniversitesi">Eskişehir Üniversitesi</option>
+                                    <option value="Kastamonu Üniversitesi">Kastamonu Üniversitesi</option>
+                                    <option value="Kocaeli Üniversitesi">Kocaeli Üniversitesi</option>
+                                    <option value="Muğla Üniversitesi">Muğla Üniversitesi</option>
+                                    <option value="Sakarya Üniversitesi">Sakarya Üniversitesi</option>
+                                    <option value="Antalya Akdeniz Üniversitesi">Antalya Akdeniz Üniversitesi</option>
+                                    <option value="Trabzon Karadeniz Teknik Üniversitesi">Trabzon Karadeniz Teknik Üniversitesi</option>
+                                </select>
                                 <span asp-validation-for="UniversityName" class="text-danger small"></span>
                             </div>
+                        </div>
 
-                            <div class="col-md-4 mb-3">
+                        @* 🏛️ FAKÜLTE VE BÖLÜM (YAN YANA) *@
+                        <div class="row mb-3">
+                            <div class="col-md-6">
                                 <label id="facultyLabel" class="form-label fw-bold text-muted small text-uppercase">
                                     @(Model.DegreeType == "Önlisans" ? "Meslek Yüksekokulu" : "Fakülte Adı")
                                 </label>
-                                <input asp-for="FacultyName" class="form-control rounded-pill border-2 input-focus" placeholder="Birim adını yazınız" />
+                                <input asp-for="FacultyName" class="form-control rounded-pill border-2 input-focus" placeholder="Birim adı" />
                                 <span asp-validation-for="FacultyName" class="text-danger small"></span>
                             </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="DepartmentId" class="form-label fw-bold text-muted small text-uppercase">Okuduğunuz Bölüm</label>
-                            <select asp-for="DepartmentId" class="form-select rounded-pill border-2 input-focus"
-                                    asp-items="ViewBag.Departments" id="DepartmentSelect">
-                                <option value="">--- Önce Eğitim Düzeyi Seçiniz ---</option>
-                            </select>
-                            @* 🛡️ MÜHÜR: Hata burada parlayacak! *@
-                            <span asp-validation-for="DepartmentId" class="text-danger small fw-bold"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="CityId" class="form-label fw-bold text-muted small text-uppercase">Yaşadığınız Şehir</label>
-                            <select asp-for="CityId" class="form-select rounded-pill border-2 input-focus"
-                                    asp-items="ViewBag.Cities">
-                                <option value="">--- Şehir Seçiniz ---</option>
-                            </select>
-                            <span asp-validation-for="CityId" class="text-danger small"></span>
-                        </div>
-
-                        @* 👶 DOĞUM VE AKADEMİK BİLGİLER *@
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="BirthPlace" class="form-label fw-bold text-muted small text-uppercase">Doğum Yeri</label>
-                                <input asp-for="BirthPlace" class="form-control rounded-pill border-2 input-focus" placeholder="Şehir" />
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="BirthDate" class="form-label fw-bold text-muted small text-uppercase">Doğum Tarihi</label>
-                                <input asp-for="BirthDate" type="date" class="form-control rounded-pill border-2 input-focus" />
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="AcademicYear" class="form-label fw-bold text-muted small text-uppercase">Akademik Yıl</label>
-                                <input asp-for="AcademicYear" class="form-control rounded-pill border-2 input-focus" placeholder="2025-2029" />
+                            <div class="col-md-6">
+                                <label asp-for="DepartmentId" class="form-label fw-bold text-muted small text-uppercase">Okuduğunuz Bölüm</label>
+                                <select asp-for="DepartmentId" class="form-select rounded-pill border-2 input-focus" id="DepartmentSelect">
+                                    <option value="">--- Bölüm Listesi Bekleniyor ---</option>
+                                </select>
+                                <span asp-validation-for="DepartmentId" class="text-danger small fw-bold"></span>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                        @* 🌍 ŞEHİR VE YETENEKLER *@
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="CityId" class="form-label fw-bold text-muted small text-uppercase">Yaşadığınız Şehir</label>
+                                <select asp-for="CityId" class="form-select rounded-pill border-2 input-focus" asp-items="ViewBag.Cities">
+                                    <option value="">--- Şehir Seçiniz ---</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
                                 <label asp-for="PhoneNumber" class="form-label fw-bold text-muted small text-uppercase">Telefon</label>
                                 <input asp-for="PhoneNumber" class="form-control rounded-pill border-2 input-focus" placeholder="05XX..." />
                             </div>
+                        </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="GPA" class="form-label fw-bold text-muted small text-uppercase">GPA (Not Ort. Max: 4.00)</label>
-                                <input asp-for="GPA" type="number" step="0.01" min="0" max="4.00"
-                                       class="form-control rounded-pill border-2 input-focus"
-                                       placeholder="Örn: 3.50" required id="GPAInput" />
+                        @* 📅 DOĞUM VE AKADEMİK BİLGİLER (ÜÇLÜ) *@
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label asp-for="BirthPlace" class="form-label fw-bold text-muted small text-uppercase">Doğum Yeri</label>
+                                <input asp-for="BirthPlace" class="form-control rounded-pill border-2 input-focus" placeholder="Şehir" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="BirthDate" class="form-label fw-bold text-muted small text-uppercase">Doğum Tarihi</label>
+                                <input asp-for="BirthDate" type="date" class="form-control rounded-pill border-2 input-focus" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="AcademicYear" class="form-label fw-bold text-muted small text-uppercase">Akademik Yıl</label>
+                                <input asp-for="AcademicYear" class="form-control rounded-pill border-2 input-focus" placeholder="2024-2026" />
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label asp-for="GPA" class="form-label fw-bold text-muted small text-uppercase">GPA (Maks: 4.00)</label>
+                                <input asp-for="GPA" type="number" step="0.01" min="0" max="4.00" class="form-control rounded-pill border-2 input-focus" placeholder="3.50" required id="GPAInput" />
                                 <span asp-validation-for="GPA" class="text-danger small"></span>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="EducationSummary" class="form-label fw-bold text-muted small text-uppercase">Eğitim Özeti</label>
-                            <input asp-for="EducationSummary" class="form-control rounded-pill border-2 input-focus" placeholder="Örn: 3. Sınıf Öğrencisi" />
-                        </div>
-
-                        <div class="mb-3">
                             <label asp-for="PersonalSkills" class="form-label fw-bold text-muted small text-uppercase">Yetenekler</label>
-                            <textarea asp-for="PersonalSkills" class="form-control rounded-4 border-2 input-focus" rows="3" placeholder="C#, SQL, Office..."></textarea>
+                            <textarea asp-for="PersonalSkills" class="form-control rounded-4 border-2 input-focus" rows="2" placeholder="Yazılım, Dil, Ofis Araçları..."></textarea>
                         </div>
 
                         <hr class="my-4">
 
-                        @* DOSYA YÜKLEME ALANLARI *@
+                        @* 🛡️ DOSYA YÜKLEME ALANLARI *@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="p-3 border-2 border-dashed rounded-4 bg-light text-center h-100 shadow-sm">
                                     <i class="fas fa-file-pdf text-danger mb-2 fa-2x"></i>
                                     <label class="d-block fw-bold small text-uppercase mb-2">CV Yükle (PDF/Word)</label>
-                                    <input type="file" name="CVFile" id="CVFile" class="form-control form-control-sm rounded-pill" accept=".pdf,.doc,.docx" />
+                                    <input type="file" name="CVFile" id="CVFile" class="form-control form-control-sm rounded-pill" accept=".pdf,.doc,.docx" onchange="validateFileType(this)" />
                                 </div>
                             </div>
-
                             <div class="col-md-6 mb-3">
                                 <div class="p-3 border-2 border-dashed rounded-4 bg-light text-center h-100 shadow-sm">
                                     <i class="fas fa-award text-warning mb-2 fa-2x"></i>
-                                    <label class="d-block fw-bold small text-uppercase mb-2">Sertifikalar (PDF/Resim/Word)</label>
-                                    <input type="file" name="CertificateFile" id="CertificateFile" class="form-control form-control-sm rounded-pill" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                    <label class="d-block fw-bold small text-uppercase mb-2">Sertifikalar (PDF/PPT)</label>
+                                    <input type="file" name="CertificateFile" id="CertificateFile" class="form-control form-control-sm rounded-pill" accept=".pdf,.doc,.docx,.ppt,.pptx" onchange="validateFileType(this)" />
                                 </div>
                             </div>
                         </div>
@@ -180,9 +214,7 @@
                             <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow">
                                 <i class="fas fa-save me-2"></i>Değişiklikleri Mühürle
                             </button>
-                            <a asp-action="Index" class="btn btn-link text-muted mt-2 text-decoration-none text-center">
-                                Vazgeç ve Geri Dön
-                            </a>
+                            <a asp-action="Index" class="btn btn-link text-muted mt-2 text-decoration-none text-center">Vazgeç ve Geri Dön</a>
                         </div>
                     </form>
                 </div>
@@ -197,79 +229,61 @@
     }
 
     <script>
-        // ✅ SİHİRLİ ETİKET DEĞİŞTİRİCİ VE AKILLI FİLTRELEME MOTORU
-        $(document).ready(function() {
-            // Sayfa yüklendiğinde eğer bir seçim varsa otomatik tetikle!
-            if ($('#degreeSelect').val()) {
-                $('#degreeSelect').trigger('change');
+        function validateFileType(input) {
+            const fileName = input.value;
+            const allowedExtensions = /(\.pdf|\.doc|\.docx|\.ppt|\.pptx)$/i;
+            if (fileName && !allowedExtensions.exec(fileName)) {
+                Swal.fire({ title: 'Geçersiz Format!', text: 'Lütfen sadece PDF, Word veya PowerPoint dosyası seçiniz.', icon: 'warning', confirmButtonColor: '#2c3e50', confirmButtonText: 'Anladım' });
+                input.value = '';
+                return false;
             }
-        });
+            return true;
+        }
 
-        document.getElementById('degreeSelect').addEventListener('change', function() {
-            const label = document.getElementById('facultyLabel');
-            const selectedLevel = this.value;
+        function loadAllDepartments() {
             const $deptSelect = $('#DepartmentSelect');
+            $deptSelect.html('<option value="">⏳ Bölümler dökülüyor...</option>');
+            const url = '/Department/GetDepartmentsByLevel';
+            const currentDeptId = "@(Model?.DepartmentId ?? 0)";
 
-            label.innerText = selectedLevel === "Önlisans" ? "Meslek Yüksekokulu" : "Fakülte Adı";
-
-            if (selectedLevel) {
-                $.getJSON('/Department/GetDepartmentsByLevel', { level: selectedLevel }, function (data) {
-                    // Mevcut seçimi sakla
-                    var currentDeptId = "@Model.DepartmentId";
-
+            $.ajax({
+                url: url, type: 'GET', dataType: 'json',
+                success: function (data) {
                     $deptSelect.empty();
                     $deptSelect.append('<option value="">--- Bölümünüzü Seçiniz ---</option>');
+                    if (Array.isArray(data) && data.length > 0) {
+                        $.each(data, function (index, item) {
+                            const itemId = item.id || item.Id;
+                            const itemName = item.departmentName || item.DepartmentName;
+                            const isSelected = (itemId.toString() === currentDeptId.toString()) ? ' selected' : '';
+                            $deptSelect.append('<option value="' + itemId + '"' + isSelected + '>' + itemName + '</option>');
+                        });
+                    } else { $deptSelect.append('<option value="">⚠️ Liste boş!</option>'); }
+                },
+                error: function (xhr) { $deptSelect.html('<option value="">❌ Bağlantı Hatası!</option>'); }
+            });
+        }
 
-                    $.each(data, function (index, item) {
-                        var selectedAttr = (item.id == currentDeptId) ? ' selected' : '';
-                        $deptSelect.append('<option value="' + item.id + '"' + selectedAttr + '>' + item.departmentName + '</option>');
-                    });
-                });
-            } else {
-                $deptSelect.empty();
-                $deptSelect.append('<option value="">--- Önce Eğitim Düzeyi Seçiniz ---</option>');
-            }
+        $(document).ready(function() {
+            loadAllDepartments();
+            $('#degreeSelect').on('change', function() {
+                const label = document.getElementById('facultyLabel');
+                const val = $(this).val();
+                if(label) { label.innerText = (val === "Önlisans") ? "Meslek Yüksekokulu" : "Fakülte Adı"; }
+            });
         });
 
-        // 🛡️ FORM DOĞRULAMA SİBER KALKANI (GELİŞTİRİLDİ)
         document.getElementById('profileEditForm').onsubmit = function (e) {
             const gpaInput = document.getElementById('GPAInput');
             const deptSelect = document.getElementById('DepartmentSelect');
-            const cvInput = document.getElementById('CVFile');
-            const certInput = document.getElementById('CertificateFile');
-
-            const izinliCV = /(\.pdf|\.doc|\.docx)$/i;
-            const izinliSertifika = /(\.pdf|\.doc|\.docx|\.jpg|\.jpeg|\.png)$/i;
-
-            // 1. 🛡️ BÖLÜM KONTROLÜ (O İSTEDİĞİN UYARI!)
-            if (!deptSelect.value || deptSelect.value === "") {
-                alert("⚠️ Dikkat: Lütfen okuduğunuz bölümü listeden seçiniz!");
-                deptSelect.focus();
-                e.preventDefault();
-                return false;
+            if (!deptSelect.value || deptSelect.value === "" || deptSelect.value.includes("---")) {
+                Swal.fire({ title: 'Eksik Bilgi!', text: 'Lütfen bölümünüzü seçiniz.', icon: 'error' });
+                e.preventDefault(); return false;
             }
-
-            // 2. GPA KONTROLÜ
-            if (parseFloat(gpaInput.value.replace(',', '.')) > 4.00) {
-                alert("❌ Hata: Akademik ortalama (GPA) 4.00'den büyük olamaz!");
-                gpaInput.focus();
-                e.preventDefault();
-                return false;
+            if (gpaInput.value && parseFloat(gpaInput.value.replace(',', '.')) > 4.00) {
+                Swal.fire({ title: 'Hatalı GPA!', text: 'GPA 4.00\'den büyük olamaz!', icon: 'error' });
+                e.preventDefault(); return false;
             }
-
-            // 3. DOSYA FORMAT KONTROLLERİ
-            if (cvInput.files.length > 0 && !izinliCV.exec(cvInput.files[0].name)) {
-                alert("❌ Hata: Uygun olmayan CV formatı! (Sadece PDF/Word)");
-                e.preventDefault();
-                return false;
-            }
-
-            if (certInput.files.length > 0 && !izinliSertifika.exec(certInput.files[0].name)) {
-                alert("❌ Hata: Uygun olmayan Sertifika formatı!");
-                e.preventDefault();
-                return false;
-            }
-
             return true;
         };
     </script>

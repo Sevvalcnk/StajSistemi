@@ -28,7 +28,7 @@ namespace StajSistemi.Controllers
             _cache = cache;
         }
 
-        // --- 1. LİSTELEME: Akıllı Sıralama ve Akıllı Filtre Kapısı ---
+        // --- 1. LİSTELEME: Akıllı Sıralama ve Smart Match Mührü ---
         [HttpGet]
         public async Task<IActionResult> Index(int? departmentId)
         {
@@ -47,18 +47,7 @@ namespace StajSistemi.Controllers
                 .Include(i => i.City)
                 .Where(x => !x.IsDeleted && x.Status == ApplicationStatus.Active);
 
-            if (user != null && user.CityId != 0)
-            {
-                query = query.OrderByDescending(x => x.CityId == user.CityId)
-                             .ThenByDescending(x => x.CreatedDate);
-
-                ViewBag.SpecialMessage = $"Kardaşım, {user.City?.Name} şehrindeki ilanları senin için mühürledim! 🛡️";
-            }
-            else
-            {
-                query = query.OrderByDescending(x => x.CreatedDate);
-            }
-
+            // Başlangıç Filtrelemeleri
             if (departmentId.HasValue)
             {
                 query = query.Where(x => x.InternshipDepartments.Any(d => d.DepartmentId == departmentId.Value));
@@ -66,6 +55,39 @@ namespace StajSistemi.Controllers
             }
 
             var internships = await query.ToListAsync();
+
+            // 🚀 SMART MATCH (AKILLI EŞLEŞME) ALGORİTMASI
+            if (user != null)
+            {
+                foreach (var item in internships)
+                {
+                    int score = 0;
+
+                    // 1. Bölüm Uyumu (%50)
+                    if (item.InternshipDepartments.Any(d => d.DepartmentId == user.DepartmentId))
+                        score += 50;
+
+                    // 2. Şehir Uyumu (%30)
+                    if (item.CityId == user.CityId)
+                        score += 30;
+
+                    // 3. GPA Uyumu (%20)
+                    if ((decimal?)user.GPA >= item.MinGPA)
+                    {
+                        score += 20;
+                    }
+
+                    item.MatchScore = score;
+                }
+
+                // İlanları puana göre sırala (En uyumlu en üstte)
+                internships = internships.OrderByDescending(x => x.MatchScore).ThenByDescending(x => x.CreatedDate).ToList();
+
+                if (user.CityId != 0 && string.IsNullOrEmpty(ViewBag.SpecialMessage))
+                {
+                    ViewBag.SpecialMessage = $"Kardaşım, {user.City?.Name} şehrindeki ve profiline en uygun ilanları mühürledim! 🛡️";
+                }
+            }
 
             if (user != null)
             {
@@ -244,6 +266,7 @@ namespace StajSistemi.Controllers
                     existing.EndDate = model.EndDate;
                     existing.CityId = model.CityId;
                     existing.Status = model.Status;
+                    existing.MinGPA = model.MinGPA; // GPA Güncelleme desteği eklendi
                     existing.Name = string.IsNullOrEmpty(model.Name) ? model.CompanyName + " Staj İlanı" : model.Name;
 
                     _context.InternshipDepartments.RemoveRange(existing.InternshipDepartments);
@@ -296,7 +319,7 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // --- 🚀 5. BAŞVURU MANTIĞI ---
+        // --- 🚀 5. BAŞVURU MANTIĞI: Kontenjan ve Bölüm Denetimi ---
         [Authorize(Roles = "Student")]
         [HttpGet]
         public async Task<IActionResult> Apply(int id)
@@ -312,6 +335,13 @@ namespace StajSistemi.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (internship == null) return NotFound();
+
+            // Kontenjan kontrolü
+            if (internship.Quota <= 0)
+            {
+                TempData["ErrorMessage"] = "Bu ilanın kontenjanı dolmuştur!";
+                return RedirectToAction(nameof(Index));
+            }
 
             if (user != null)
             {
@@ -331,8 +361,6 @@ namespace StajSistemi.Controllers
             if (string.IsNullOrEmpty(currentUserIdString)) return Challenge();
 
             var currentUserId = int.Parse(currentUserIdString);
-
-            // 🛡️ SİBER DÜZELTME: Kullanıcıyı GPA verisiyle birlikte taze bir şekilde çekiyoruz
             var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
             if (user == null) return Challenge();
 
@@ -340,6 +368,7 @@ namespace StajSistemi.Controllers
                 .Include(i => i.InternshipDepartments)
                 .FirstOrDefaultAsync(i => i.Id == internshipId);
 
+            // 🛡️ SİBER DENETİM: Kontenjan sıfırsa başvuruyu engelle
             if (internship == null || internship.Quota <= 0)
             {
                 TempData["ErrorMessage"] = "Üzgünüz, kontenjan dolmuş veya ilan kaldırılmış!";
@@ -380,20 +409,21 @@ namespace StajSistemi.Controllers
                 ApplicationDate = DateTime.Now,
                 Status = ApplicationStatus.Pending,
                 IsDeleted = false,
-                // ✅ KRİTİK MÜHÜR: GPA'yı 100 ile çarparak pırlanta gibi kaydediyoruz
                 SuccessScore = (double)((user.GPA ?? 0) * 100)
             };
 
+            // ✅ LİYAKAT MÜHÜRÜ: Kontenjanı 1 azaltıyoruz
             internship.Quota -= 1;
 
             _context.InternshipApplications.Add(application);
+            _context.Update(internship); // Quota değiştiği için güncelleme
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Staj başvurunuz başarıyla mühürlendi! 🥂🔥";
             return RedirectToAction(nameof(Index));
         }
 
-        // --- 6. DURUM GÜNCELLEME (ONARILAN KISIM) ---
+        // --- 6. DURUM GÜNCELLEME ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -405,17 +435,17 @@ namespace StajSistemi.Controllers
 
             if (application == null) return NotFound();
 
-            // ✅ SİBER NİZAM: İsimler modeldeki yeni mühürlerle (LogDate, Comment, vb.) eşitlendi!
             var statusLog = new InternshipApplicationLog
             {
-                InternshipApplicationId = application.Id, // Eskisi: ApplicationId
+                InternshipApplicationId = application.Id,
                 OldStatus = application.Status,
                 NewStatus = status,
                 ChangedBy = User.Identity?.Name ?? "Yetkili",
-                LogDate = DateTime.Now,                   // Eskisi: ChangeDate
-                Comment = "Başvuru durumu sistem üzerinden güncellendi." // Eskisi: Note
+                LogDate = DateTime.Now,
+                Comment = "Başvuru durumu sistem üzerinden güncellendi."
             };
 
+            // Reddedilirse kontenjanı geri ver, tekrar onaylanırsa geri al
             if (status == ApplicationStatus.Rejected && application.Status != ApplicationStatus.Rejected)
                 application.Internship.Quota += 1;
             else if (status == ApplicationStatus.Approved && application.Status == ApplicationStatus.Rejected)

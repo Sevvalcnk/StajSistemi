@@ -21,6 +21,8 @@
         }
     </div>
 
+    @* 🛡️ 🚀 AKILLI ASİSTAN NOTU BURADAN KALDIRILDI (İSTEĞİN ÜZERİNE) *@
+
     @* Bildirim Mesajları *@
     @if (TempData["SuccessMessage"] != null)
     {
@@ -61,10 +63,23 @@
                                 <tr>
                                     <td class="px-4 py-3">
                                         <div class="fw-bold text-dark">@item.Name</div>
-                                        <div class="small text-muted">@item.CompanyName (@item.CompanySector)</div>
+                                        <div class="small text-muted mb-2">@item.CompanyName (@item.CompanySector)</div>
+
+                                        @if (User.IsInRole("Student") && item.MatchScore > 0)
+                                        {
+                                            <div class="progress" title="Profiline Uyumluluk Oranı" style="height: 12px; border-radius: 6px; background-color: #e9ecef; width: 160px;">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated @(item.MatchScore >= 70 ? "bg-success" : item.MatchScore >= 50 ? "bg-primary" : "bg-warning")"
+                                                     role="progressbar"
+                                                     style="width: @item.MatchScore%;"
+                                                     aria-valuenow="@item.MatchScore"
+                                                     aria-valuemin="0"
+                                                     aria-valuemax="100">
+                                                    <span style="font-size: 0.6rem; font-weight: bold; line-height: 12px;">%@item.MatchScore Uyumluluk</span>
+                                                </div>
+                                            </div>
+                                        }
                                     </td>
 
-                                    @* ✅ SİBER DÜZELTME: Bölüm kısmı döngüye alındı (Many-to-Many Destekli) *@
                                     <td class="py-3">
                                         @if (item.InternshipDepartments != null && item.InternshipDepartments.Any())
                                         {
@@ -91,7 +106,6 @@
                                         </div>
                                     </td>
 
-                                    @* 🛡️ SİBER MÜHÜR: Sayıların taşmasını engelleyen rozet yapısı *@
                                     <td class="py-3 text-center">
                                         <span class="quota-badge border @(item.Quota <= 0 ? "text-danger border-danger" : "text-primary border-primary")">
                                             @item.Quota
@@ -115,6 +129,7 @@
                                             <span class="badge bg-secondary rounded-pill">@item.Status.ToString()</span>
                                         }
                                     </td>
+
                                     <td class="py-3 text-end px-4">
                                         @if (User.IsInRole("Student"))
                                         {
@@ -175,13 +190,12 @@
         transition: 0.3s;
     }
 
-    /* 📊 Kontenjan Rozeti: Sayıların taşmasını ve alt alta binmesini engelleyen Premium Mühür */
     .quota-badge {
         font-weight: 800;
         font-size: 0.85rem;
         padding: 5px 15px;
         border-radius: 50px;
-        white-space: nowrap; /* Sayıların yan yana kalmasını sağlar */
+        white-space: nowrap;
         display: inline-block;
         min-width: 50px;
         text-align: center;

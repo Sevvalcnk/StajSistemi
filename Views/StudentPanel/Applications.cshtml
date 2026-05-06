@@ -5,6 +5,85 @@
     ViewData["Title"] = "Başvurularım";
 }
 
+@* 🎨 EK CSS: Tikli Mühürlerin Tasarımı *@
+<style>
+    .status-badge-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        min-width: 130px;
+        justify-content: center;
+        transition: 0.3s;
+    }
+
+    /* Aydınlık Mod Renkleri */
+    .status-approved {
+        background-color: #dcfce7;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+    }
+
+    .status-rejected {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+    }
+
+    .status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+
+    .status-inreview {
+        background-color: #e0f2fe;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+    }
+
+    /* 🌙 GECE MODU UYUMU (SİBER NEON) */
+    html[data-theme="dark"] .status-approved {
+        background-color: rgba(16, 185, 129, 0.15) !important;
+        color: #10b981 !important;
+        border-color: rgba(16, 185, 129, 0.3) !important;
+    }
+
+    html[data-theme="dark"] .status-rejected {
+        background-color: rgba(239, 68, 68, 0.15) !important;
+        color: #ef4444 !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
+    }
+
+    html[data-theme="dark"] .status-pending {
+        background-color: rgba(245, 158, 11, 0.15) !important;
+        color: #f59e0b !important;
+        border-color: rgba(245, 158, 11, 0.3) !important;
+    }
+
+    html[data-theme="dark"] .status-inreview {
+        background-color: rgba(14, 165, 233, 0.15) !important;
+        color: #38bdf8 !important;
+        border-color: rgba(14, 165, 233, 0.3) !important;
+    }
+
+    html[data-theme="dark"] .glass-card {
+        background: #1e293b !important;
+        border: 1px solid rgba(255,255,255,0.05) !important;
+    }
+
+    html[data-theme="dark"] .table {
+        color: #f1f5f9 !important;
+    }
+
+        html[data-theme="dark"] .table tr:hover {
+            background-color: rgba(255,255,255,0.02) !important;
+        }
+</style>
+
 <div class="container py-4 techNode-fade-in">
     @* --- 🛡️ ÜST BAŞLIK VE ÖZET KARTI --- *@
     <div class="glass-card p-4 shadow-lg border-0 rounded-4 bg-white mb-4">
@@ -45,7 +124,7 @@
                                     <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i> @(item.Internship?.City?.Name ?? "Konum Bilgisi Yok")</small>
                                 </td>
 
-                                @* ✅ SİBER DÜZELTME: Bölüm kısmı pırlanta gibi onarıldı *@
+                                @* ✅ SİBER DÜZELTME KORUNDU *@
                                 <td class="py-3 text-center">
                                     @if (item.Internship?.InternshipDepartments != null && item.Internship.InternshipDepartments.Any())
                                     {
@@ -62,10 +141,9 @@
                                     }
                                 </td>
 
-                                @* ✅ KRİTİK MÜHÜR: Başarı Skoru Onarma (0.00 Fallback) *@
+                                @* ✅ KRİTİK MÜHÜR KORUNDU *@
                                 <td class="py-3 text-center">
                                     @{
-                                        // Eğer veritabanındaki skor 0 geliyorsa (eski veri), öğrencinin profilindeki güncel GPA'yı kullanıyoruz.
                                         double academicScore = item.SuccessScore > 0 ? (item.SuccessScore / 100.0) : (item.AppUser?.GPA ?? 0.0);
                                     }
                                     <div class="badge @(academicScore >= 3.0 ? "bg-success" : "bg-dark") text-white px-3 py-2 rounded-3 shadow-sm fw-bold">
@@ -73,32 +151,38 @@
                                     </div>
                                 </td>
 
+                                @* 🚀 136-137. RESİM GÜNCELLEMESİ: TİKLİ MÜHÜRLER *@
                                 <td class="py-3 text-center">
                                     @if (item.Status == ApplicationStatus.Approved)
                                     {
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
-                                            <i class="fas fa-check-circle me-1"></i> Onaylandı
-                                        </span>
+                                        <div class="status-badge-wrapper status-approved">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Onaylandı</span>
+                                        </div>
                                     }
                                     else if (item.Status == ApplicationStatus.Rejected)
                                     {
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-bold">
-                                            <i class="fas fa-times-circle me-1"></i> Sonuçlandı
-                                        </span>
+                                        <div class="status-badge-wrapper status-rejected">
+                                            <i class="fas fa-times-circle"></i>
+                                            <span>Sonuçlandı</span>
+                                        </div>
                                     }
                                     else if (item.Status == ApplicationStatus.InReview)
                                     {
-                                        <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2 rounded-pill fw-bold">
-                                            <i class="fas fa-search me-1"></i> İnceleniyor
-                                        </span>
+                                        <div class="status-badge-wrapper status-inreview">
+                                            <i class="fas fa-search"></i>
+                                            <span>İnceleniyor</span>
+                                        </div>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-bold text-dark">
-                                            <i class="fas fa-clock me-1"></i> Beklemede
-                                        </span>
+                                        <div class="status-badge-wrapper status-pending">
+                                            <i class="fas fa-clock"></i>
+                                            <span>Beklemede</span>
+                                        </div>
                                     }
                                 </td>
+
                                 <td class="pe-4 py-3 text-end">
                                     <a asp-action="Details" asp-route-id="@item.InternshipId"
                                        class="btn btn-outline-primary btn-sm rounded-pill px-4 transition hover-up fw-bold">
@@ -111,7 +195,6 @@
                     else
                     {
                         <tr>
-                            @* ✅ SİBER FIX: Colspan 5'ten 6'ya çekildi (Sütun sayısı uyuşmazlığı giderildi) *@
                             <td colspan="6" class="py-5 text-center">
                                 <div class="opacity-50">
                                     <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
@@ -130,22 +213,6 @@
 <style>
     .bg-soft-primary {
         background-color: rgba(67, 97, 238, 0.1);
-    }
-
-    .bg-success-subtle {
-        background-color: #e8f5e9 !important;
-    }
-
-    .bg-danger-subtle {
-        background-color: #ffebee !important;
-    }
-
-    .bg-warning-subtle {
-        background-color: #fff9c4 !important;
-    }
-
-    .bg-info-subtle {
-        background-color: #e3f2fd !important;
     }
 
     .transition {

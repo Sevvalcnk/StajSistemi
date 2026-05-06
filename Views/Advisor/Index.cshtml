@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Danışman Yönetim Merkezi";
+    var internships = ViewBag.Internships as IEnumerable<StajSistemi.Models.Internship> ?? new List<StajSistemi.Models.Internship>();
 }
 
 <style>
@@ -86,14 +87,58 @@
             transform: scale(1.05);
         }
 
+    .btn-recommend {
+        background: linear-gradient(135deg, #6610f2, #6f42c1);
+        color: white;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: 0.3s;
+        border: none;
+    }
+
+        .btn-recommend:hover {
+            background: linear-gradient(135deg, #520dc2, #59359a);
+            color: white;
+            transform: scale(1.05);
+        }
+
     .avatar-text {
         font-weight: 700;
         color: #4e73df;
     }
+
+    .bg-soft-primary {
+        background-color: rgba(37, 140, 251, 0.1);
+    }
+
+    /* 🌙 MODAL GECE MODU UYUMU */
+    [data-theme="dark"] .modal-content {
+        background-color: #1a2235 !important;
+        color: #e2e8f0 !important;
+        border: 1px solid #2d3748 !important;
+    }
+
+    [data-theme="dark"] .modal-header {
+        border-bottom: 1px solid #2d3748;
+    }
+
+    [data-theme="dark"] .modal-footer {
+        border-top: 1px solid #2d3748;
+    }
+
+    [data-theme="dark"] .form-select {
+        background-color: #111827 !important;
+        color: white !important;
+        border-color: #4a5568 !important;
+    }
+
+    [data-theme="dark"] .alert-dark {
+        background-color: #2d3748 !important;
+        color: #cbd5e0 !important;
+    }
 </style>
 
 <div class="container-fluid py-4 px-4 techNode-fade-in">
-
     @* --- 📊 İSTATİSTİKLER --- *@
     <div class="row mb-4">
         <div class="col-xl-4 col-md-6 mb-4">
@@ -109,7 +154,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card tech-card stat-card border-success shadow-sm h-100 py-2">
                 <div class="card-body">
@@ -123,7 +167,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card tech-card stat-card border-info shadow-sm h-100 py-2">
                 <div class="card-body">
@@ -139,7 +182,7 @@
         </div>
     </div>
 
-    @* --- 🔍 FİLTRELEME (GELİŞTİRİLMİŞ) --- *@
+    @* --- 🔍 FİLTRELEME --- *@
     <div class="card tech-card shadow-sm mb-4 border" style="background: #f8f9fc;">
         <div class="card-body p-4">
             <h6 class="fw-bold text-dark mb-3"><i class="fas fa-search me-2 text-primary"></i>Öğrenci Sorgulama</h6>
@@ -149,8 +192,6 @@
                         <option value="">Tüm Şehirler</option>
                     </select>
                 </div>
-
-                @* 🛡️ 🚀 YENİ MÜHÜR: EĞİTİM DÜZEYİ SEÇİMİ *@
                 <div class="col-lg-3">
                     <select id="EducationLevelDropdown" class="form-select shadow-none border-primary">
                         <option value="Hepsi">Eğitim Düzeyi (Hepsi)</option>
@@ -158,13 +199,11 @@
                         <option value="Önlisans">Ön Lisans (2 Yıllık)</option>
                     </select>
                 </div>
-
                 <div class="col-lg-3">
                     <select id="DepartmentIdDropdown" name="departmentId" class="form-select shadow-none border-secondary-subtle" asp-items="ViewBag.Departments">
                         <option value="">Bölüm Seçiniz</option>
                     </select>
                 </div>
-
                 <div class="col-lg-2">
                     <input type="number" name="minGpa" step="0.1" class="form-control shadow-none border-secondary-subtle" placeholder="Min. GPA" />
                 </div>
@@ -186,7 +225,7 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
+                    <thead class="bg-light text-dark">
                         <tr>
                             <th class="ps-4">Öğrenci Bilgileri</th>
                             <th>Bölüm / Şehir</th>
@@ -228,23 +267,27 @@
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="d-flex justify-content-end gap-2">
-                                        <a asp-action="ViewStudentDashboard" asp-route-studentId="@student.Id" class="btn btn-view-dashboard btn-sm px-3 shadow-sm" title="Süreç Çizelgesini İzle">
+                                        <button type="button" class="btn btn-recommend btn-sm px-3 shadow-sm" onclick="openRecommendModal(@student.Id, '@student.FullName')">
+                                            <i class="fas fa-lightbulb me-1"></i> Öner
+                                        </button>
+                                        <a asp-action="ViewStudentDashboard" asp-route-studentId="@student.Id" class="btn btn-view-dashboard btn-sm px-3 shadow-sm">
                                             <i class="fas fa-chart-line me-1"></i> İzle
                                         </a>
-
                                         <a asp-action="ViewStudentFile" asp-route-studentId="@student.Id" class="btn btn-view-file btn-sm px-3 shadow-sm">
                                             <i class="fas fa-file-invoice me-1"></i> Dosyayı Gör
                                         </a>
 
-                                        <a asp-action="StudentDetails" asp-route-id="@student.Id" class="btn btn-outline-secondary btn-sm rounded-circle" title="Hızlı Detay">
-                                            <i class="fas fa-info-circle"></i>
+                                        @* 🛡️ 🚀 GERİ GELEN KRİTİK BUTON: İNCELE (CV/SERTİFİKA) *@
+                                        <a asp-action="StudentDetails" asp-route-id="@student.Id"
+                                           class="btn btn-warning btn-sm rounded-circle shadow-sm"
+                                           style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"
+                                           title="Öğrenci Bilgilerini İncele">
+                                            <i class="fas fa-search text-white"></i>
                                         </a>
 
                                         <form asp-action="Delete" asp-route-id="@student.Id" method="post" onsubmit="return confirm('Öğrenci arşive kaldırılsın mı?')">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
+                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-trash-alt"></i></button>
                                         </form>
                                     </div>
                                 </td>
@@ -257,33 +300,65 @@
     </div>
 </div>
 
-@* 🛡️ 🚀 YENİ MÜHÜR: AKILLI DROPDOWN MOTORU (AJAX) *@
+@* --- 🛡️ 🚀 STAJ ÖNERİ MODALI --- *@
+<div class="modal fade" id="recommendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-dark text-white rounded-top">
+                <h5 class="modal-title fw-bold"><i class="fas fa-paper-plane me-2"></i>Staj Önerisi Gönder</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Advisor" asp-action="RecommendInternship" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">Seçilen öğrenci: <strong id="modalStudentName" class="text-primary"></strong></p>
+                    <input type="hidden" name="studentId" id="modalStudentId" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Önerilecek Staj İlanı</label>
+                        <select name="internshipId" class="form-select rounded-pill border-2 shadow-none" required>
+                            <option value="">--- İlan Seçiniz ---</option>
+                            @foreach (var intern in internships)
+                            {
+                                <option value="@intern.Id">@intern.CompanyName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="alert bg-soft-primary border-0 rounded-3 small text-dark">
+                        <i class="fas fa-info-circle me-1 text-primary"></i> Öneriniz öğrenciye <strong>sohbet (chat)</strong> mesajı ve <strong>direkt link</strong> olarak iletilecektir.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow">ÖNERİYİ MÜHÜRLE</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         $(document).ready(function () {
             $('#EducationLevelDropdown').change(function () {
                 var selectedLevel = $(this).val();
                 var departmentSelect = $('#DepartmentIdDropdown');
-
-                departmentSelect.empty();
-                departmentSelect.append('<option value="">Bölümler Yükleniyor...</option>');
-
+                departmentSelect.empty().append('<option value="">Bölümler Yükleniyor...</option>');
                 $.ajax({
-                    url: '/Advisor/GetDepartmentsByLevel', // Controller'daki yeni metodun yolu
+                    url: '/Advisor/GetDepartmentsByLevel',
                     type: 'GET',
                     data: { level: selectedLevel },
                     success: function (data) {
-                        departmentSelect.empty();
-                        departmentSelect.append('<option value="">-- Bölüm Seçiniz --</option>');
-                        $.each(data, function (i, item) {
-                            departmentSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
-                        });
-                    },
-                    error: function () {
-                        alert("Bölümler getirilirken siber bir hata oluştu!");
+                        departmentSelect.empty().append('<option value="">-- Bölüm Seçiniz --</option>');
+                        $.each(data, function (i, item) { departmentSelect.append('<option value="' + item.id + '">' + item.name + '</option>'); });
                     }
                 });
             });
         });
+        function openRecommendModal(id, name) {
+            $('#modalStudentId').val(id);
+            $('#modalStudentName').text(name);
+            var myModal = new bootstrap.Modal(document.getElementById('recommendModal'));
+            myModal.show();
+        }
     </script>
 }

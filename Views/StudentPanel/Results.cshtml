@@ -6,12 +6,13 @@
 }
 
 <div class="container py-4 techNode-fade-in">
-    <div class="glass-card p-4 shadow-lg border-0 rounded-4 bg-white">
+    @* 🌑 SİBER MÜHÜR: glass-card artık gece modunda lacivert parlayacak *@
+    <div class="glass-card p-4 shadow-lg border-0 rounded-4 theme-main-card">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold mb-0 text-dark">
+            <h3 class="fw-bold mb-0 theme-title">
                 <i class="fas fa-poll-h text-info me-2"></i>Staj Başvuru Sonuçları
             </h3>
-            <span class="badge bg-info-subtle text-info border border-info-subtle px-4 py-2 rounded-pill fw-bold shadow-sm">
+            <span class="badge theme-badge-info px-4 py-2 rounded-pill fw-bold shadow-sm">
                 <i class="fas fa-check-double me-1"></i> Kesin Sonuç Listesi
             </span>
         </div>
@@ -19,8 +20,8 @@
         @if (Model != null && Model.Any())
         {
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
+                <table class="table table-hover align-middle mb-0 theme-table">
+                    <thead class="theme-thead">
                         <tr>
                             <th class="ps-3 border-0">Şirket / Kurum</th>
                             <th class="border-0">Başvuru Tarihi</th>
@@ -33,12 +34,11 @@
                         @foreach (var app in Model)
                         {
                             <tr>
-                                <td class="ps-3 fw-bold text-dark">
+                                <td class="ps-3 fw-bold theme-text">
                                     <i class="fas fa-building text-muted me-2 small"></i>@(app.Internship?.CompanyName ?? "Şirket Bilgisi Yok")
                                 </td>
                                 <td class="text-muted">@app.ApplicationDate.ToString("dd.MM.yyyy")</td>
                                 <td class="text-center">
-                                    @* ✅ SİBER AKILLI PUAN: Eğer veritabanı 0 ise öğrencinin profil puanını (2,50) liyakatle çeker *@
                                     @{
                                         double academicScore = app.SuccessScore > 0
                                         ? (app.SuccessScore / 100.0)
@@ -64,13 +64,12 @@
                                     }
                                     else
                                     {
-                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-bold text-dark">
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-bold">
                                             <i class="fas fa-clock me-1"></i> Beklemede
                                         </span>
                                     }
                                 </td>
                                 <td class="text-center">
-                                    @* ✅ AKILLI İNCELE BUTONU: Sayfa değiştirmeden satırın altında detayı açar! *@
                                     <button class="btn btn-sm btn-outline-info rounded-pill px-4 fw-bold shadow-sm transition hover-up"
                                             type="button" data-bs-toggle="collapse" data-bs-target="#details-@app.Id">
                                         <i class="fas fa-search-plus me-1"></i> Detaylar
@@ -78,23 +77,23 @@
                                 </td>
                             </tr>
 
-                            @* 🛡️ GİZLİ DETAY PANELİ: Başvuru notu ve konumu burada parlayacak *@
+                            @* 🛡️ GİZLİ DETAY PANELİ: Gece moduna tam uyarlandı *@
                             <tr class="collapse" id="details-@app.Id">
-                                <td colspan="5" class="bg-light p-3 border-bottom shadow-inner">
-                                    <div class="card border-0 shadow-sm p-3 rounded-3">
+                                <td colspan="5" class="theme-collapse-bg p-3 border-bottom shadow-inner">
+                                    <div class="card border-0 shadow-sm p-3 rounded-3 theme-inner-card">
                                         <div class="d-flex align-items-center mb-2">
                                             <i class="fas fa-info-circle text-info me-2"></i>
-                                            <h6 class="fw-bold mb-0 text-dark">Başvuru Değerlendirme Özeti</h6>
+                                            <h6 class="fw-bold mb-0 theme-text">Başvuru Değerlendirme Özeti</h6>
                                         </div>
-                                        <hr class="my-2 opacity-25">
-                                        <p class="mb-2">
+                                        <hr class="my-2 opacity-25 theme-hr">
+                                        <p class="mb-2 theme-text">
                                             <strong><i class="fas fa-comment-alt me-2 text-secondary"></i>Açıklama:</strong>
                                             <span class="text-muted">@(app.Internship?.Description ?? "Değerlendirme süreci liyakatle devam etmektedir.")</span>
                                         </p>
 
                                         @if (app.Status == ApplicationStatus.Approved)
                                         {
-                                            <p class="mb-0">
+                                            <p class="mb-0 theme-text">
                                                 <strong><i class="fas fa-map-marker-alt me-2 text-danger"></i>Staj Konumu:</strong>
                                                 <a href="https://www.google.com/maps/search/?api=1&query=@(app.Internship?.CompanyName)+@(app.Internship?.City?.Name)"
                                                    target="_blank" class="btn btn-xs btn-link p-0 fw-bold text-primary">
@@ -112,9 +111,9 @@
         }
         else
         {
-            <div class="text-center py-5 opacity-50">
+            <div class="text-center py-5 opacity-50 theme-text">
                 <i class="fas fa-hourglass-start fa-3x text-muted mb-3"></i>
-                <p class="text-muted fw-bold">Henüz sonuçlanmış bir staj başvurunuz bulunmamaktadır.</p>
+                <p class="fw-bold">Henüz sonuçlanmış bir staj başvurunuz bulunmamaktadır.</p>
                 <small>Değerlendirme süreci tamamlandığında akademik sonuçlarınız burada listelenecektir. 😊</small>
             </div>
         }
@@ -122,7 +121,37 @@
 </div>
 
 <style>
-    /* Kurumsal Estetik Dokunuşlar */
+    /* 🌓 GÜNDÜZ AYARLARI (Varsayılan) */
+    .theme-main-card {
+        background-color: white !important;
+    }
+
+    .theme-title {
+        color: #2b2d42 !important;
+    }
+
+    .theme-text {
+        color: #2b2d42 !important;
+    }
+
+    .theme-thead {
+        background-color: #f8f9fa !important;
+    }
+
+    .theme-badge-info {
+        background-color: #e3f2fd;
+        color: #0dcaf0;
+        border: 1px solid #e3f2fd;
+    }
+
+    .theme-inner-card {
+        background-color: white !important;
+    }
+
+    .theme-collapse-bg {
+        background-color: #f8f9fa !important;
+    }
+
     .bg-success-subtle {
         background-color: #e8f5e9 !important;
     }
@@ -139,6 +168,68 @@
         background-color: #e3f2fd !important;
     }
 
+    /* 🌑 SİBER GECE: DARK MODE AKTİF OLDUĞUNDA HER ŞEYİ MÜHÜRLE */
+    html[data-theme="dark"] .theme-main-card {
+        background-color: #1e293b !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    html[data-theme="dark"] .theme-title,
+    html[data-theme="dark"] .theme-text {
+        color: #f1f5f9 !important;
+    }
+
+    html[data-theme="dark"] .theme-thead {
+        background-color: #334155 !important;
+    }
+
+        html[data-theme="dark"] .theme-thead th {
+            color: #cbd5e1 !important;
+        }
+
+    html[data-theme="dark"] .table {
+        color: #f1f5f9 !important;
+    }
+
+    html[data-theme="dark"] .theme-collapse-bg {
+        background-color: #0f172a !important;
+    }
+
+    html[data-theme="dark"] .theme-inner-card {
+        background-color: #334155 !important;
+        color: white !important;
+    }
+
+    html[data-theme="dark"] .theme-hr {
+        border-color: rgba(255,255,255,0.1) !important;
+    }
+
+    /* İnatçı Subtle Badgeları Geceye Uyduralım */
+    html[data-theme="dark"] .bg-success-subtle {
+        background-color: rgba(25, 135, 84, 0.2) !important;
+        color: #75b798 !important;
+        border-color: rgba(117, 183, 152, 0.2) !important;
+    }
+
+    html[data-theme="dark"] .bg-danger-subtle {
+        background-color: rgba(220, 53, 69, 0.2) !important;
+        color: #ea868f !important;
+        border-color: rgba(234, 134, 143, 0.2) !important;
+    }
+
+    html[data-theme="dark"] .bg-warning-subtle {
+        background-color: rgba(255, 193, 7, 0.2) !important;
+        color: #ffda6a !important;
+        border-color: rgba(255, 218, 106, 0.2) !important;
+    }
+
+    html[data-theme="dark"] .theme-badge-info {
+        background-color: rgba(13, 202, 240, 0.15) !important;
+        color: #6edff6 !important;
+        border-color: rgba(110, 223, 246, 0.2) !important;
+    }
+
+    /* Kurumsal Estetik Dokunuşlar (Orijinalliği Korundu) */
     .transition {
         transition: all 0.3s ease;
     }

@@ -269,6 +269,7 @@
 
   <ItemGroup>
     <Folder Include="Migrations\" />
+    <Folder Include="wwwroot\img\logos\" />
     <Folder Include="wwwroot\uploads\cv\" />
   </ItemGroup>
 

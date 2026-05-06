@@ -334,7 +334,7 @@ namespace StajSistemi.Migrations
                             Id = 1,
                             AcademicYear = "2025-2026",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "2e48f89d-4b93-4b79-a0ff-a50d9ec7d20e",
+                            ConcurrencyStamp = "0c222918-b0df-445c-a3f6-693aebb79f51",
                             DepartmentName = "Yönetim Paneli",
                             Email = "admin@stajsistemi.com",
                             EmailConfirmed = true,
@@ -346,9 +346,9 @@ namespace StajSistemi.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@STAJSISTEMI.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEMycICVgW2pRKsUywj4hX4kPTJCjtnePZn8KSkBihZYsgQGKF30Va07H/f5eCzlxBA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEBfYi+mzWtbKdad5lYZfsMZ7CYgGUXwCIK5tO8Bf7Co+EUcVLQQcB+S4dJB4DLzV3A==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "070655bf-45ab-472b-a1f1-95b668d6e5fe",
+                            SecurityStamp = "39366918-f729-4c72-96c2-5ad920bc8e9c",
                             TwoFactorEnabled = false,
                             UniversityName = "Sinop Üniversitesi",
                             UserName = "admin"
@@ -741,6 +741,9 @@ namespace StajSistemi.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsReadByStudent")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("StartDate")

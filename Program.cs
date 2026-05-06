@@ -10,10 +10,10 @@ using StajSistemi.Services;
 using StajSistemi.Helpers;
 using StajSistemi.Hubs;
 using StajSistemi.Filters;
-using Serilog; // 🛡️ SİBER GÜNLÜK MÜHÜRÜ: Serilog kütüphanesini dahil ettik
+using Serilog;
+using Microsoft.AspNetCore.Authorization;
 
 // --- 🚀 SİBER GÜNLÜK (LOGGING) YAPILANDIRMASI ---
-// builder oluşturulmadan önce günlüğü kuruyoruz ki her şeyi duyalım.
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
@@ -22,23 +22,19 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🛡️ SİBER ENTEGRASYON: Sistemi Serilog'un korumasına teslim ediyoruz
 builder.Host.UseSerilog();
 
 // --- Standart Servisler ---
-// 👈 MÜHÜR 2: Profil kontrolü aktif!
 builder.Services.AddControllersWithViews(options =>
 {
+    // 👈 MÜHÜR: Profil kontrolü aktif!
     options.Filters.Add<ProfileCompletionFilter>();
 });
 
-// 🚀 CANLI YAYIN MÜHÜRÜ: SignalR servisini sisteme kaydediyoruz
 builder.Services.AddSignalR();
-
-// 🔥 KRİTİK MÜHÜR: Memory Cache Motoru
 builder.Services.AddMemoryCache();
 
-// ✅ HAFTA 3 MÜHÜRÜ: Session (Oturum) Motoru Kaydı
+// ✅ Session (Oturum) Motoru Kaydı
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -46,7 +42,6 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// ✅ IP Loglama için Gerekli
 builder.Services.AddHttpContextAccessor();
 
 // --- Veri Tabanı Bağlantısı ---
@@ -56,7 +51,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // --- REPOSITORY VE UNIT OF WORK KAYDI ---
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
 builder.Services.AddAutoMapper(typeof(MapProfile));
 
 // --- MAİL SERVİSİ KAYDI ---
@@ -86,12 +80,33 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 });
 
-// Cookie Ayarları
+// --- 🛡️ COOKIE VE AJAX YETKİ AYARLARI (KRİTİK DÜZELTME) ---
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
+
+    // 🚀 SİBER MÜHÜR: AJAX isteklerinde HTML (Login sayfası) dönmesini engelleyen blok
+    options.Events.OnRedirectToLogin = context =>
+    {
+        // İstek AJAX mı yoksa Department API'sine mi gidiyor?
+        bool isAjax = context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+        bool isDepartmentApi = context.Request.Path.StartsWithSegments("/Department");
+
+        if (isAjax || isDepartmentApi)
+        {
+            // Eğer AJAX ise sakın yönlendirme yapma! Sadece "Yetki Yok" (401) de.
+            // Bu sayede JavaScript login sayfasını değil, boş listeyi anlar.
+            context.Response.StatusCode = 401;
+        }
+        else
+        {
+            // Normal sayfa isteklerini giriş sayfasına yönlendir.
+            context.Response.Redirect(context.RedirectUri);
+        }
+        return Task.CompletedTask;
+    };
 });
 
 var app = builder.Build();
@@ -99,13 +114,11 @@ var app = builder.Build();
 // --- Pipeline Ayarları (Siber Kalkan) ---
 if (!app.Environment.IsDevelopment())
 {
-    // 🛡️ GLOBAL HATA KALKANI: Hata anında siber bir şıklıkla Error sayfasına gider.
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 else
 {
-    // Geliştirme modunda hatayı detaylı gör ki hemen çözelim.
     app.UseDeveloperExceptionPage();
 }
 
@@ -114,13 +127,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// ✅ KRİTİK MÜHÜR: Session özelliğini aktifleştiriyoruz
+// ✅ Session özelliğini aktifleştiriyoruz
 app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🚀 CANLI YAYIN KANALI: ChatHub yolunu mühürlüyoruz
+// 🚀 CANLI YAYIN KANALI
 app.MapHub<ChatHub>("/chatHub");
 
 app.MapControllerRoute(

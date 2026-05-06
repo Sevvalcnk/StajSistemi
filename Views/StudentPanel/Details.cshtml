@@ -2,12 +2,14 @@
 @model StajSistemi.DTOs.StudentDto
 @{
     var ilan = ViewBag.SelectedInternship as StajSistemi.Models.Internship;
-    // 🛡️ MÜHÜR: Controller'dan gelen başvuru detayını alıyoruz
     var app = ViewBag.MyApplication as StajSistemi.Models.InternshipApplication;
     var hocaNotu = ViewBag.AdvisorNote as string;
     bool isApplied = ViewBag.IsApplied ?? false;
 
     ViewData["Title"] = isApplied ? "Başvuru Sonucu" : "Staj Başvurusu";
+
+    // 🛡️ MÜHÜR: Harita şehri için güvenli kontrol
+    var haritaSehri = ilan?.City?.Name ?? "İstanbul";
 }
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -27,13 +29,51 @@
         color: #2b2d42;
     }
 
+    /* 🌑 SİBER GECE: TÜM EKSİKLERİ KAPATAN KARARTMA MÜHÜRLERİ */
+    html[data-theme="dark"] body {
+        background-color: #0f172a !important;
+    }
+
+    html[data-theme="dark"] .profile-card-side,
+    html[data-theme="dark"] .apply-card-compact {
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    html[data-theme="dark"] .badge-program-fix {
+        background: #0f172a !important;
+        color: #38bdf8 !important;
+        border-color: #0c4a6e !important;
+    }
+
+    html[data-theme="dark"] .btn-light {
+        background-color: #334155 !important;
+        color: #f1f5f9 !important;
+        border-color: rgba(255,255,255,0.1) !important;
+    }
+
+    html[data-theme="dark"] .text-dark,
+    html[data-theme="dark"] label,
+    html[data-theme="dark"] h6,
+    html[data-theme="dark"] p,
+    html[data-theme="dark"] .text-secondary {
+        color: #f1f5f9 !important;
+    }
+
+    html[data-theme="dark"] .input-wrapper-custom {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+    }
+
+    /* ---------------------------------------------------- */
     .centered-wrapper {
         max-width: 1150px;
         margin: 0 auto;
         padding: 40px 15px;
     }
 
-    /* 👤 SOL TARAF: PROFİL KARTI */
     .profile-card-side {
         background: white;
         border-radius: 20px;
@@ -63,7 +103,6 @@
         display: inline-block;
     }
 
-    /* 📋 SAĞ TARAF: DİNAMİK KART YAPISI */
     .apply-card-compact {
         background: white;
         border-radius: 20px;
@@ -73,7 +112,7 @@
     }
 
     .header-info-blue {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        background: linear-gradient(135deg, #1e293b 0%, #4361ee 100%);
     }
 
     .header-info-green {
@@ -104,6 +143,7 @@
             font-weight: 800;
             margin-bottom: 2px;
             font-size: 1.35rem;
+            color: white !important;
         }
 
     .form-section {
@@ -154,22 +194,25 @@
 
 <div class="centered-wrapper">
     <div class="row g-4 justify-content-center">
-
         @* --- 👤 SOL TARAF: PROFİL ALANI --- *@
         <div class="col-lg-3">
             <div class="profile-card-side sticky-top" style="top: 20px;">
                 <div class="position-relative d-inline-block mb-3">
                     <img src="https://ui-avatars.com/api/?name=@(Model.Name)+@(Model.Surname)&background=4361ee&color=fff&size=200" class="profile-img-side">
-                    <div class="badge bg-success position-absolute" style="bottom: 5px; right: -5px; border-radius: 8px; border: 2px solid white; padding: 4px 8px; font-size: 10px;">@(ViewBag.TotalScore ?? 350)</div>
+
+                    @* 🛡️ 🚀 KRİTİK DÜZELTME: 350 SİLİNDİ, ÖĞRENCİNİN GERÇEK GPA DEĞERİ MÜHÜRLENDİ *@
+                    <div class="badge bg-success position-absolute" style="bottom: 5px; right: -5px; border-radius: 8px; border: 2px solid white; padding: 4px 8px; font-size: 10px;">
+                        @(Model.GPA ?? 0.00)
+                    </div>
                 </div>
                 <h6 class="fw-bold mb-1">@Model.Name @Model.Surname</h6>
                 <p class="text-muted x-small mb-3">@Model.Email</p>
 
                 <div class="text-start border-top pt-3 small">
                     <label class="text-muted fw-bold text-uppercase" style="font-size:0.55rem;">Üniversite</label>
-                    <p class="fw-bold text-primary x-small mb-2">@(Model.UniversityName ?? "Samsun Üniversitesi")</p>
+                    <p class="fw-bold text-primary x-small mb-2">@(Model.UniversityName ?? "Ordu Üniversitesi")</p>
                     <label class="text-muted fw-bold text-uppercase" style="font-size:0.55rem;">Program</label>
-                    <div class="badge-program-fix">@(Model.DepartmentName ?? "Bölüm Belirtilmedi")</div>
+                    <div class="badge-program-fix">@(Model.DepartmentName ?? "İnternet ve Ağ Teknolojileri")</div>
                 </div>
 
                 <a asp-action="Index" class="btn btn-light btn-sm w-100 rounded-pill mt-4 border x-small fw-bold">
@@ -182,99 +225,101 @@
         <div class="col-lg-8">
             <div class="apply-card-compact animate__animated animate__fadeIn">
 
-                @if (isApplied && app != null && (app.Status == ApplicationStatus.Approved || app.Status == ApplicationStatus.Rejected))
+                @if (isApplied && app != null)
                 {
-                    @* 🏛️ MOD 1: BAŞVURU SONUÇLANDI (YEŞİL / KIRMIZI EKRAN) *@
-                    <div class="apply-header-small @(app.Status == ApplicationStatus.Approved ? "header-info-green" : "header-info-red")">
-
-                        <i class="fas @(app.Status == ApplicationStatus.Approved ? "fa-check-double" : "fa-file-signature")"></i>
-
-                        <h4>@(app.Status == ApplicationStatus.Approved ? "Tebrikler, Başvurunuz Onaylanmıştır!" : "Başvuru Süreci Bilgilendirmesi")</h4>
-                        <p class="x-small mb-0 opacity-75 fw-bold">@ilan?.CompanyName Staj Programı</p>
+                    <div class="apply-header-small @(app.Status == ApplicationStatus.Approved ? "header-info-green" : (app.Status == ApplicationStatus.Rejected ? "header-info-red" : "header-info-blue"))">
+                        <i class="fas @(app.Status == ApplicationStatus.Approved ? "fa-award" : (app.Status == ApplicationStatus.Rejected ? "fa-user-graduate" : "fa-hourglass-half"))"></i>
+                        <h4>
+                            @if (app.Status == ApplicationStatus.Approved)
+                            {
+                                <text>Akademik Başvurunuz Kabul Edilmiştir</text>
+                            }
+                            else if (app.Status == ApplicationStatus.Rejected)
+                            {
+                                <text>Başvuru Değerlendirme Süreci Tamamlandı</text>
+                            }
+                            else
+                            {
+                                <text>Başvurunuz Panel Onayındadır</text>
+                            }
+                        </h4>
+                        <p class="x-small mb-0 opacity-75 fw-bold">@ilan?.CompanyName | Yetenek ve Kariyer Yönetimi Birimi</p>
                     </div>
 
                     <div class="form-section">
                         @if (app.Status == ApplicationStatus.Rejected)
                         {
-                            @* 🛡️ 10. RESİMDEKİ RED GÖRSELİ *@
-                            <div class="feedback-alert alert-danger" style="border-left-color: #dc3545; background-color: #fff5f5;">
-                                <h6 class="fw-bold text-danger mb-2"><i class="fas fa-info-circle me-2"></i>Değerlendirme Notu:</h6>
-                                <p class="small text-dark mb-3" style="line-height: 1.7;">@hocaNotu</p>
-                                <a asp-action="Index" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm">Diğer İlanları Keşfet</a>
+                            <div class="feedback-alert alert-info" style="border-left-color: #4361ee; background-color: rgba(67, 97, 238, 0.1);">
+                                <h6 class="fw-bold text-primary mb-2"><i class="fas fa-rocket me-2"></i>Kariyer Yolculuğunuz Devam Ediyor!</h6>
+                                <p class="small mb-3" style="line-height: 1.7;">
+                                    @(string.IsNullOrEmpty(hocaNotu) ? "Mevcut başvurunuz şu an için olumlu sonuçlanmamış olsa da, potansiyeliniz çok daha büyük fırsatlarla eşleşebilir. Yeteneklerinize en uygun yeni ilanları keşfetmeye devam edin, liyakatli başarı yolunuz açık olsun! 🛡️✨" : hocaNotu)
+                                </p>
+                                <a asp-action="Index" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm">Diğer İlanları Keşfet</a>
                             </div>
                         }
                         else if (app.Status == ApplicationStatus.Approved)
                         {
-                            @* ✅ 9. RESİMDEKİ ONAY GÖRSELİ *@
-                            <div class="feedback-alert alert-success" style="border-left-color: #198754; background-color: #f0fff4;">
-                                <h6 class="fw-bold text-success mb-2"><i class="fas fa-award me-2"></i>Danışman Notu:</h6>
-                                <p class="small text-dark mb-3" style="line-height: 1.7;">@hocaNotu</p>
-                                <a asp-action="Documents" class="btn btn-success btn-sm rounded-pill px-4 fw-bold shadow-sm">Staj Dosyasına Git</a>
-                            </div>
-                        }
-
-                        <div class="row g-4 mt-2">
-                            <div class="col-md-7 border-end">
-                                <h6 class="fw-bold text-dark border-bottom pb-2">Kurum Hakkında</h6>
-                                <p class="small text-secondary" style="line-height: 1.8;">@(ilan?.Description ?? "Kurum detayları yükleniyor...")</p>
+                            <div class="feedback-alert alert-success" style="border-left-color: #10b981;">
+                                <h6 class="fw-bold text-success mb-2"><i class="fas fa-trophy me-2"></i>Tebrikler, Stajın Onaylandı! 🥂</h6>
+                                <p class="small mb-3" style="line-height: 1.7;">
+                                    @(string.IsNullOrEmpty(hocaNotu) ? "Harika haber! Akademik birikimin ve yetkinliklerinle bu stajı kaptın. Senin için yeni bir macera başlıyor. Başarılarının devamını dileriz kaptan, yolun açık olsun! ✨⚓" : hocaNotu)
+                                </p>
+                                <a asp-action="Documents" class="btn btn-success btn-sm rounded-pill px-4 fw-bold shadow-sm">Staj Dosyasına Git ve Başla</a>
                             </div>
 
-                            @if (app.Status == ApplicationStatus.Approved)
-                            {
+                            <div class="row g-4 mt-2">
+                                <div class="col-md-7 border-end">
+                                    <h6 class="fw-bold border-bottom pb-2">Kurum Hakkında</h6>
+                                    <p class="small text-secondary" style="line-height: 1.8;">@(ilan?.Description ?? "Kurum detayları yükleniyor...")</p>
+                                </div>
                                 <div class="col-md-5">
-                                    <h6 class="fw-bold text-dark border-bottom pb-2">Konum Bilgisi</h6>
+                                    <h6 class="fw-bold border-bottom pb-2">Staj Konumu</h6>
                                     <div class="map-container">
-                                        @* Google Maps Iframe *@
                                         <iframe width="100%" height="100%" frameborder="0" style="border:0"
-                                                src="http://googleusercontent.com/maps.google.com/6"
+                                                src="https://maps.google.com/maps?q=@(Uri.EscapeDataString(haritaSehri))&t=&z=13&ie=UTF8&iwloc=&output=embed"
                                                 allowfullscreen></iframe>
                                     </div>
-                                    <p class="x-small text-muted mt-2 text-center"><i class="fas fa-map-marker-alt text-danger"></i> @(ilan?.City?.Name ?? "Konum Bilgisi")</p>
+                                    <p class="x-small text-muted mt-2 text-center"><i class="fas fa-map-marker-alt text-danger"></i> @haritaSehri</p>
                                 </div>
-                            }
-                        </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="feedback-alert alert-info" style="border-left-color: #4361ee;">
+                                <h6 class="fw-bold text-primary mb-2"><i class="fas fa-history me-2"></i>Süreç Takibi:</h6>
+                                <p class="small mb-3" style="line-height: 1.7;">Başvurunuz siber mühürle kaydedildi. Danışman hocanız inceledikten sonra buradan geri bildirim alacaksınız.</p>
+                            </div>
+                        }
                     </div>
                 }
                 else
                 {
-                    @* 🏛️ MOD 2: BAŞVURU YAPILMAMIŞSA FORM GÖSTER *@
                     <div class="header-apply-green apply-header-small">
                         <i class="fas fa-file-signature"></i>
                         <h4>Staj Başvurusu Yap</h4>
                         <p class="x-small mb-0 opacity-75 fw-bold">@ilan?.CompanyName Staj Programı</p>
                     </div>
-
                     <div class="form-section">
-                        @if (TempData["FileError"] != null)
-                        {
-                            <div class="alert alert-danger border-0 rounded-4 mb-4 py-2 small shadow-sm">
-                                <i class="fas fa-exclamation-triangle me-2"></i> @TempData["FileError"]
-                            </div>
-                        }
-
                         <form asp-action="ConfirmApplication" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="InternshipId" value="@ilan?.Id" />
-
                             <div class="mb-4">
-                                <label class="small fw-bold text-dark mb-1">Güncel Özgeçmiş (CV) *</label>
+                                <label class="small fw-bold mb-1">Güncel Özgeçmiş (CV) *</label>
                                 <div class="input-wrapper-custom">
                                     <div class="d-flex align-items-center gap-2">
                                         <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" width="24">
-                                        <input type="file" name="CVFile" class="form-control form-control-sm border-0 bg-transparent" accept=".pdf,.doc,.docx" required />
+                                        <input type="file" name="CVFile" class="form-control form-control-sm border-0 bg-transparent" accept=".pdf,.doc,.docx,.ppt,.pptx" required />
                                     </div>
                                 </div>
                             </div>
-
                             <div class="mb-5">
-                                <label class="small fw-bold text-dark mb-1">Sertifika / Proje (Opsiyonel)</label>
+                                <label class="small fw-bold mb-1">Sertifika / Proje (Opsiyonel)</label>
                                 <div class="input-wrapper-custom">
                                     <div class="d-flex align-items-center gap-2">
                                         <img src="https://cdn-icons-png.flaticon.com/512/2436/2436636.png" width="24">
-                                        <input type="file" name="CertificateFile" class="form-control form-control-sm border-0 bg-transparent" accept=".pdf,.doc,.docx" />
+                                        <input type="file" name="CertificateFile" class="form-control form-control-sm border-0 bg-transparent" accept=".pdf,.doc,.docx,.ppt,.pptx" />
                                     </div>
                                 </div>
                             </div>
-
                             <button type="submit" class="btn-submit-elegant">
                                 <i class="fas fa-paper-plane me-2"></i> BAŞVURUYU GÖNDER
                             </button>
@@ -288,15 +333,18 @@
 
 @section Scripts {
     <script>
-        document.querySelectorAll('input[type="file"]').forEach(input => {
-            input.addEventListener('change', function() {
-                const ext = this.value.split('.').pop().toLowerCase();
-                if (!['pdf', 'doc', 'docx'].includes(ext)) {
+        $(document).ready(function() {
+            $('input[type="file"]').on('change', function() {
+                const file = this.files[0];
+                if (!file) return;
+                const ext = file.name.split('.').pop().toLowerCase();
+                const allowed = ['pdf', 'doc', 'docx', 'ppt', 'pptx'];
+                if (!allowed.includes(ext)) {
                     Swal.fire({
                         title: 'Hatalı Format! 🛡️',
-                        text: 'Lütfen akademik standartlara uygun (PDF/Word) bir belge seçiniz.',
+                        text: 'Lütfen sadece PDF, Word veya PowerPoint dosyası seçiniz.',
                         icon: 'error',
-                        confirmButtonColor: '#00d285'
+                        confirmButtonColor: '#4361ee'
                     });
                     this.value = '';
                 }

@@ -5,7 +5,7 @@
 @inject StajSistemi.data.ApplicationDbContext _context
 
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -13,16 +13,132 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-
-    @* ✅ SweetAlert2 ve Google Fonts *@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --staj-bg: #f4f7f6;
+            --staj-nav-bg: #ffffff;
+            --staj-text: #333333;
+            --staj-card-bg: #ffffff;
+            --staj-border: #e3e6f0;
+        }
+
+        html[data-theme="dark"] {
+            --staj-bg: #0f172a !important;
+            --staj-nav-bg: #1e293b !important;
+            --staj-text: #f1f5f9 !important;
+            --staj-card-bg: #1e293b !important;
+            --staj-border: rgba(255, 255, 255, 0.1) !important;
+        }
+
         body {
             overflow-x: hidden;
-            background-color: #f4f7f6;
+            background-color: var(--staj-bg) !important;
+            color: var(--staj-text) !important;
             font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* 🌙 SİBER BALYOZ: TÜM İNATÇI BEYAZ ALANLARI ZORLA KARARTMA */
+        html[data-theme="dark"] .card,
+        html[data-theme="dark"] .card-body,
+        html[data-theme="dark"] .card-header,
+        html[data-theme="dark"] .card-footer,
+        html[data-theme="dark"] .bg-white,
+        html[data-theme="dark"] .bg-light,
+        html[data-theme="dark"] .navbar,
+        html[data-theme="dark"] #page-content-wrapper,
+        html[data-theme="dark"] .official-document,
+        html[data-theme="dark"] .document-content,
+        html[data-theme="dark"] .staj-diary-page,
+        html[data-theme="dark"] .diary-container,
+        html[data-theme="dark"] .table,
+        html[data-theme="dark"] .table td,
+        html[data-theme="dark"] .table th,
+        html[data-theme="dark"] .status-cell,
+        html[data-theme="dark"] .alert-success,
+        html[data-theme="dark"] .alert-danger,
+        html[data-theme="dark"] .alert-info,
+        html[data-theme="dark"] .status-badge,
+        html[data-theme="dark"] .chat-container,
+        html[data-theme="dark"] .mesgs,
+        html[data-theme="dark"] .msg_history,
+        html[data-theme="dark"] .msg_card_body,
+        html[data-theme="dark"] .inbox_chat,
+        html[data-theme="dark"] .type_msg,
+        html[data-theme="dark"] .input_msg_write,
+        html[data-theme="dark"] .input_msg_write input,
+        html[data-theme="dark"] input,
+        html[data-theme="dark"] textarea,
+        html[data-theme="dark"] select,
+        html[data-theme="dark"] .form-control,
+        html[data-theme="dark"] .form-select,
+        html[data-theme="dark"] .swal2-popup,
+        html[data-theme="dark"] main {
+            background-color: var(--staj-card-bg) !important;
+            color: var(--staj-text) !important;
+            border-color: var(--staj-border) !important;
+            background-image: none !important;
+        }
+
+        /* 🛡️ MÜHÜR: KÜÇÜK BEYAZLIKLARI İMHA EDEN EK CSS */
+        html[data-theme="dark"] .feedback-alert,
+        html[data-theme="dark"] .alert {
+            background-color: rgba(30, 41, 59, 0.7) !important;
+            box-shadow: none !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* 📏 SİBER DÜZEN: RAKAM HİZALAMA (RAKAMLARIN SIKIŞMASINI VE ALT ALTA BİNMESİNİ ENGELLER) */
+        .badge, .status-badge {
+            white-space: nowrap !important; /* Rakamların alt alta binmesini engeller */
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px; /* Kutucuğa nefes alacak alan tanır */
+            padding: 6px 10px !important;
+            font-weight: 700 !important;
+            line-height: 1 !important;
+            text-align: center;
+        }
+
+        html[data-theme="dark"] .select2-container--default .select2-selection--multiple,
+        html[data-theme="dark"] .select2-dropdown,
+        html[data-theme="dark"] .select2-search__field,
+        html[data-theme="dark"] .select2-results__option {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #334155 !important;
+        }
+
+        html[data-theme="dark"] .select2-selection__choice {
+            background-color: #334155 !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #475569 !important;
+        }
+
+        html[data-theme="dark"] .btn-light,
+        html[data-theme="dark"] .btn-white,
+        html[data-theme="dark"] button[style*="background-color: white"],
+        html[data-theme="dark"] a.btn-light {
+            background-color: #334155 !important;
+            color: white !important;
+            border-color: #475569 !important;
+        }
+
+        html[data-theme="dark"] input::file-selector-button {
+            background-color: #334155 !important;
+            color: white !important;
+            border: 1px solid var(--staj-border) !important;
+        }
+
+        html[data-theme="dark"] h1, html[data-theme="dark"] h2, html[data-theme="dark"] h3,
+        html[data-theme="dark"] h4, html[data-theme="dark"] h5, html[data-theme="dark"] h6,
+        html[data-theme="dark"] p, html[data-theme="dark"] span:not(.badge), html[data-theme="dark"] div:not(.badge),
+        html[data-theme="dark"] label, html[data-theme="dark"] i, html[data-theme="dark"] strong {
+            color: var(--staj-text) !important;
         }
 
         #wrapper {
@@ -31,122 +147,77 @@
             align-items: stretch;
         }
 
-        /* 🛡️ SİBER MENÜ ZIRHI */
         #sidebar-wrapper {
             min-height: 100vh;
             width: 260px;
-            background: #2c3e50;
-            color: white;
+            background: #1e293b !important;
+            color: white !important;
             position: fixed;
             left: 0;
             top: 0;
-            z-index: 1050 !important;
-            transition: transform 0.3s ease-in-out;
-            transform: translateX(-260px);
-            box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+            z-index: 1050;
+            transition: transform 0.3s ease;
         }
 
-            #sidebar-wrapper .sidebar-heading {
-                padding: 1.5rem 1.25rem;
-                font-size: 1.3rem;
-                font-weight: 800;
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-                text-align: center;
-            }
-
             #sidebar-wrapper .list-group-item {
-                background: transparent;
-                color: rgba(255,255,255,0.7);
-                border: none;
+                background-color: transparent !important;
+                color: rgba(255,255,255,0.7) !important;
+                border: none !important;
                 padding: 1rem 1.5rem;
-                transition: all 0.3s;
             }
 
-                #sidebar-wrapper .list-group-item:hover {
-                    background: rgba(255,255,255,0.1);
-                    color: white;
-                    padding-left: 2rem;
-                }
-
-                #sidebar-wrapper .list-group-item.active-link {
-                    background: rgba(67, 97, 238, 0.2);
-                    color: white;
-                    border-left: 4px solid #4361ee;
+                #sidebar-wrapper .list-group-item:hover, #sidebar-wrapper .list-group-item.active-link {
+                    background-color: rgba(67, 97, 238, 0.2) !important;
+                    color: white !important;
                 }
 
         #page-content-wrapper {
             width: 100%;
             flex: 1;
-            transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease;
+            margin-left: 260px;
+        }
+
+        body.sb-sidenav-toggled #sidebar-wrapper {
+            transform: translateX(-260px);
+        }
+
+        body.sb-sidenav-toggled #page-content-wrapper {
             margin-left: 0;
         }
 
-        .navbar {
-            background: white;
-            border-bottom: 1px solid #e3e6f0;
-            padding: 0.8rem 1rem;
-        }
-
-        /* 📱 MOBİL TETİKLEYİCİ VE DÜZELTME (768px ALTI) */
-        @@media (max-width: 767.98px) {
-            body.sb-sidenav-toggled #sidebar-wrapper {
-                transform: translateX(0) !important;
-            }
-            /* Karartma Overlay'i */
-            body.sb-sidenav-toggled #wrapper::after {
-                content: "";
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background: rgba(0,0,0,0.4);
-                z-index: 1040;
-            }
-            /* Mobilde kartların ve başlıkların taşmasını önleyen siber yama */
-            .container-fluid {
-                padding-left: 10px !important;
-                padding-right: 10px !important;
-            }
-
-            h2, h3, .display-4 {
-                font-size: 1.5rem !important; /* Büyük başlıkları mobilde dizginliyoruz */
-            }
-        }
-
-        /* 💻 MASAÜSTÜ GÖRÜNÜM (768px ÜSTÜ) */
-        @@media (min-width: 768px) {
+        @@media (max-width: 768px) {
             #sidebar-wrapper {
-                transform: translateX(0);
+                transform: translateX(-260px);
             }
 
             #page-content-wrapper {
-                margin-left: 260px;
+                margin-left: 0;
             }
 
             body.sb-sidenav-toggled #sidebar-wrapper {
-                transform: translateX(-260px) !important;
-            }
-
-            body.sb-sidenav-toggled #page-content-wrapper {
-                margin-left: 0 !important;
+                transform: translateX(0);
             }
         }
 
-        .menu-locked {
-            opacity: 0.5;
-            cursor: not-allowed !important;
+        .navbar {
+            background: var(--staj-nav-bg) !important;
+            border-bottom: 1px solid var(--staj-border);
+            padding: 0.8rem 1rem;
         }
-
-            .menu-locked i {
-                color: #95a5a6 !important;
-            }
     </style>
 </head>
 <body>
+    @{
+        var currentUserId = UserManager.GetUserId(User);
+        int parsedUserId = currentUserId != null ? int.Parse(currentUserId) : 0;
+        var pendingAppsCount = _context.InternshipApplications.Count(a => a.Status == ApplicationStatus.Pending && !a.IsDeleted);
+        var unreadMessagesCount = _context.ChatMessages.Count(m => m.ReceiverId == parsedUserId && !m.IsRead);
+    }
+
     <div id="wrapper">
         <div id="sidebar-wrapper">
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" style="padding: 1.5rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.1); color:white;">
                 <i class="fas fa-graduation-cap me-2 text-primary"></i>StajSistemi
             </div>
             <div class="list-group list-group-flush mt-3">
@@ -158,61 +229,54 @@
                 {
                     if (User.IsInRole("Advisor") || User.IsInRole("Admin"))
                     {
-                        <a asp-controller="Advisor" asp-action="InternshipApplications" class="list-group-item list-group-item-action bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
+                        <a asp-controller="Advisor" asp-action="InternshipApplications" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                             <span><i class="fas fa-envelope-open-text me-2 text-warning"></i> Gelen Başvurular</span>
-                            @if (ViewBag.NewApplicationsCount != null && (int)ViewBag.NewApplicationsCount > 0)
+                            @if (pendingAppsCount > 0)
                             {
-                                <span class="badge rounded-pill bg-danger shadow-sm">@ViewBag.NewApplicationsCount</span>
+                                <span class="badge rounded-pill bg-danger">@pendingAppsCount</span>
                             }
                         </a>
-                        <a asp-controller="Advisor" asp-action="Index" class="list-group-item list-group-item-action">
-                            <i class="fas fa-users me-2 text-danger"></i> Öğrenci Listesi
-                        </a>
-                        <a asp-controller="Advisor" asp-action="Archive" class="list-group-item list-group-item-action">
-                            <i class="fas fa-archive me-2 text-warning"></i> Siber Arşiv
+                        <a asp-controller="Advisor" asp-action="Index" class="list-group-item list-group-item-action"><i class="fas fa-users me-2 text-danger"></i> Öğrenci Listesi</a>
+                        <a asp-controller="Advisor" asp-action="Archive" class="list-group-item list-group-item-action"><i class="fas fa-archive me-2 text-secondary"></i> Başvuru Arşivi</a>
+                        <a asp-controller="Chat" asp-action="Index" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-comments me-2 text-info"></i> Gelen Mesajlar</span>
+                            @if (unreadMessagesCount > 0)
+                            {
+                                <span class="badge rounded-pill bg-info text-dark">@unreadMessagesCount</span>
+                            }
                         </a>
                     }
 
                     if (User.IsInRole("Student"))
                     {
-                        <a asp-controller="StudentPanel" asp-action="Index" class="list-group-item list-group-item-action">
-                            <i class="fas fa-user-graduate me-2 text-primary"></i> Kariyer Panelim
-                        </a>
-                        <a asp-controller="StudentPanel" asp-action="Applications" class="list-group-item list-group-item-action">
-                            <i class="fas fa-file-contract me-2 text-warning"></i> Başvurularım
-                        </a>
-                        <a asp-controller="StudentPanel" asp-action="Results" class="list-group-item list-group-item-action">
-                            <i class="fas fa-poll me-2 text-info"></i> Başvuru Sonuçlarım
+                        <a asp-controller="StudentPanel" asp-action="Index" class="list-group-item list-group-item-action"><i class="fas fa-user-graduate me-2 text-primary"></i> Kariyer Panelim</a>
+                        <a asp-controller="StudentPanel" asp-action="Applications" class="list-group-item list-group-item-action"><i class="fas fa-file-invoice me-2 text-warning"></i> Başvurularım</a>
+                        <a asp-controller="StudentPanel" asp-action="Results" class="list-group-item list-group-item-action"><i class="fas fa-history me-2 text-success"></i> Başvuru Sonuçlarım</a>
+                        <a asp-controller="Chat" asp-action="Index" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-comment-dots me-2 text-info"></i> Mesajlarım</span>
+                            @if (unreadMessagesCount > 0)
+                            {
+                                <span class="badge rounded-pill bg-info text-dark">@unreadMessagesCount</span>
+                            }
                         </a>
 
-                        var currentUserId = UserManager.GetUserId(User);
-                        bool isInternshipApproved = false;
-                        if (currentUserId != null)
-                        {
-                            isInternshipApproved = _context.InternshipApplications
-                            .Any(a => a.AppUserId == int.Parse(currentUserId) && a.Status == ApplicationStatus.Approved);
-                        }
-
-                        if (isInternshipApproved)
+                        bool isApproved = _context.InternshipApplications.Any(a => a.AppUserId == parsedUserId && a.Status == ApplicationStatus.Approved);
+                        if (isApproved)
                         {
                             <a asp-controller="StudentPanel" asp-action="Documents" class="list-group-item list-group-item-action">
-                                <i class="fas fa-file-signature me-2 text-success"></i> <strong>Staj Defterim (Aktif)</strong>
+                                <i class="fas fa-file-signature me-2 text-primary"></i> <strong>Staj Defterim</strong>
                             </a>
                         }
                         else
                         {
-                            <div class="list-group-item menu-locked" title="Stajınız onaylandığında açılacaktır.">
-                                <i class="fas fa-lock me-2"></i> <span class="small">Staj Defterim (Kilitli)</span>
-                            </div>
+                            <a href="javascript:void(0)" onclick="Swal.fire({ title: 'Erişim Kilitli! 🔒', text: 'Staj defterine erişmek için başvurunuzun onaylanması gerekir.', icon: 'info', confirmButtonColor: '#4361ee' })"
+                               class="list-group-item list-group-item-action opacity-50">
+                                <i class="fas fa-lock me-2 text-muted"></i> Staj Defteri
+                            </a>
                         }
                     }
-
-                    @await Component.InvokeAsync("Sidebar")
-
                     <div class="border-top my-2 opacity-25"></div>
-                    <a asp-controller="Internship" asp-action="Index" class="list-group-item list-group-item-action">
-                        <i class="fas fa-search me-2 text-success"></i> Staj İlanları
-                    </a>
+                    <a asp-controller="Internship" asp-action="Index" class="list-group-item list-group-item-action"><i class="fas fa-search me-2 text-success"></i> Staj İlanları</a>
                 }
             </div>
         </div>
@@ -220,15 +284,15 @@
         <div id="page-content-wrapper" class="d-flex flex-column">
             <nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top">
                 <div class="container-fluid">
-                    <button class="btn btn-primary shadow-sm border-0" id="sidebarToggle" type="button" style="background: linear-gradient(to right, #2c3e50, #4ca1af);">
-                        <i class="fas fa-bars"></i>
-                    </button>
-
+                    <button class="btn btn-primary shadow-sm border-0" id="sidebarToggle" type="button"><i class="fas fa-bars"></i></button>
                     <div class="ms-auto d-flex align-items-center">
+                        <button id="darkModeToggle" class="btn btn-link text-warning me-3 shadow-none border-0">
+                            <i id="themeIcon" class="fas fa-moon fs-5"></i>
+                        </button>
                         @if (User.Identity.IsAuthenticated)
                         {
                             var user = await UserManager.GetUserAsync(User);
-                            <span class="me-3 d-none d-md-inline fw-bold text-dark">
+                            <span class="me-3 d-none d-md-inline fw-bold theme-text">
                                 <i class="fas fa-user-circle me-1 text-primary"></i> @(user?.FullName ?? User.Identity.Name)
                             </span>
                             <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
@@ -238,56 +302,37 @@
                     </div>
                 </div>
             </nav>
-
             <div class="container-fluid p-2 p-md-4">
-                <main role="main" class="pb-3">
-                    @RenderBody()
-                </main>
+                <main role="main" class="pb-3">@RenderBody()</main>
             </div>
         </div>
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 
     <script>
-        $(document).ready(function () {
-            $(document).on("click", "#sidebarToggle", function (e) {
-                e.preventDefault();
-                $("body").toggleClass("sb-sidenav-toggled");
-            });
+        const toggleBtn = document.getElementById('darkModeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const html = document.documentElement;
+        const savedTheme = localStorage.getItem('staj-theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+        if(savedTheme === 'dark') themeIcon.className = 'fas fa-sun fs-5';
 
-            // ✅ Mobilde menü açıkken dışarıya tıklandığında menüyü kapatan liyakatli dokunuş
-            $(document).on("click", function (e) {
-                if ($("body").hasClass("sb-sidenav-toggled") && window.innerWidth < 768) {
-                    if (!$(e.target).closest("#sidebar-wrapper, #sidebarToggle").length) {
-                        $("body").removeClass("sb-sidenav-toggled");
-                    }
-                }
-            });
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('staj-theme', newTheme);
+            themeIcon.className = newTheme === 'dark' ? 'fas fa-sun fs-5' : 'fas fa-moon fs-5';
         });
 
-        // 🛰️ SIGNALR SİBER BAĞLANTI
-        const connectionGlobal = new signalR.HubConnectionBuilder()
-            .withUrl("/chatHub")
-            .withAutomaticReconnect()
-            .build();
-
-        connectionGlobal.start().catch(err => console.error(err.toString()));
-
-        connectionGlobal.on("ReceiveNewMessage", function (senderId, content) {
-            new Audio('https://www.soundjay.com/buttons/beep-07a.mp3').play().catch(e => {});
-
-            Swal.mixin({
-                toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true
-            }).fire({
-                icon: 'info', title: 'Yeni Mesaj!', text: content.length > 40 ? content.substring(0, 40) + "..." : content
-            });
+        $("#sidebarToggle").on("click", function (e) {
+            e.preventDefault();
+            $("body").toggleClass("sb-sidenav-toggled");
         });
     </script>
-
-    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

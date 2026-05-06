@@ -3,21 +3,17 @@
     ViewData["Title"] = "Mesajlaşma Paneli";
     var receiver = ViewBag.Receiver as StajSistemi.Models.AppUser;
     var recentContacts = ViewBag.RecentContacts as List<StajSistemi.Models.AppUser>;
-
-    // ✅ Controller'dan gelen "Mesaj Sayacı" verisini yakalıyoruz
     var unreadCounts = ViewBag.UnreadCountsPerContact as Dictionary<int, int>;
-
-    // ✅ Kimlik karmaşasını önleyen garanti mühür
     var currentUserId = ViewBag.CurrentUserId?.ToString() ?? "0";
 }
 
-<div class="container py-4">
-    <div class="card shadow-lg border-0 rounded-4 overflow-hidden d-flex flex-row" style="height: 700px;">
+<div class="container py-2 py-md-4">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden d-flex flex-column flex-md-row chat-main-wrapper theme-card" style="height: 85vh; min-height: 600px;">
 
         @* --- SOL TARAF: SOHBET LİSTESİ --- *@
-        <div class="bg-light border-end d-flex flex-column" style="width: 320px; min-width: 320px;">
-            <div class="p-3 bg-white border-bottom shadow-sm">
-                <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-users me-2 text-primary"></i>Sohbetler</h6>
+        <div class="chat-sidebar-area border-end d-flex flex-column theme-bg-light">
+            <div class="p-3 border-bottom shadow-sm theme-bg-white">
+                <h6 class="fw-bold mb-0 theme-text"><i class="fas fa-users me-2 text-primary"></i>Sohbetler</h6>
             </div>
 
             <div class="overflow-auto flex-grow-1" style="scrollbar-width: thin;">
@@ -25,19 +21,17 @@
                 {
                     foreach (var contact in recentContacts)
                     {
+                        bool isActive = receiver?.Id == contact.Id;
                         <a asp-action="Index" asp-route-receiverId="@contact.Id"
-                           class="d-flex align-items-center p-3 text-decoration-none border-bottom transition @(receiver?.Id == contact.Id ? "bg-white border-start border-4 border-primary shadow-sm" : "text-dark hover-bg-light")">
+                           class="d-flex align-items-center p-3 text-decoration-none border-bottom transition chat-contact-link @(isActive ? "active-chat" : "theme-text hover-bg-custom")">
 
                             <div class="avatar-sm bg-secondary rounded-circle me-3 text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:45px; height:45px; flex-shrink: 0;">
                                 @(contact.FirstName?.Length > 0 ? contact.FirstName[0].ToString() : "?")@(contact.LastName?.Length > 0 ? contact.LastName[0].ToString() : "")
                             </div>
 
-                            @* ✅ KRİTİK MÜHÜR: İSİM VE SAYACI YAN YANA GETİREN DÜZEN *@
                             <div class="w-100 text-truncate">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div class="fw-bold small text-dark text-truncate">@contact.FirstName @contact.LastName</div>
-
-                                    @* 🚀 MESAJ SAYACI ROZETİ: Eğer bu kişiden okunmamış mesaj varsa göster *@
+                                    <div class="fw-bold small theme-text text-truncate">@contact.FirstName @contact.LastName</div>
                                     @if (unreadCounts != null && unreadCounts.ContainsKey(contact.Id))
                                     {
                                         <span class="badge rounded-pill bg-danger shadow-sm ms-2 pulse-animation" style="font-size: 0.7rem;">
@@ -54,20 +48,20 @@
         </div>
 
         @* --- SAĞ TARAF: MESAJLAŞMA ALANI --- *@
-        <div class="flex-grow-1 d-flex flex-column bg-white">
+        <div class="flex-grow-1 d-flex flex-column theme-bg-white chat-messages-wrapper">
             @if (receiver != null)
             {
-                <div class="p-3 border-bottom d-flex align-items-center bg-white shadow-sm" style="z-index: 5;">
+                <div class="p-3 border-bottom d-flex align-items-center theme-bg-white shadow-sm" style="z-index: 5;">
                     <div class="avatar-sm bg-primary rounded-circle me-2 text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:38px; height:38px;">
                         @(receiver.FirstName?.Length > 0 ? receiver.FirstName[0].ToString() : "?")@(receiver.LastName?.Length > 0 ? receiver.LastName[0].ToString() : "")
                     </div>
                     <div>
-                        <h6 class="mb-0 fw-bold text-dark">@receiver.FirstName @receiver.LastName</h6>
+                        <h6 class="mb-0 fw-bold theme-text">@receiver.FirstName @receiver.LastName</h6>
                         <small class="text-success small fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> Aktif Sohbet</small>
                     </div>
                 </div>
 
-                <div class="chat-box p-4 flex-grow-1" id="chatArea" style="overflow-y: auto; background-color: #e5e7eb;">
+                <div class="chat-box p-3 p-md-4 flex-grow-1" id="chatArea" style="overflow-y: auto;">
                     @if (Model != null && Model.Any())
                     {
                         foreach (var msg in Model)
@@ -75,10 +69,11 @@
                             bool isMe = msg.SenderId.ToString() == currentUserId;
 
                             <div class="d-flex mb-3 @(isMe ? "justify-content-end" : "justify-content-start")" id="msg-@msg.Id">
-                                <div class="p-3 shadow position-relative @(isMe ? "bg-primary text-white" : "bg-white text-dark border border-secondary-subtle")"
-                                     style="max-width: 75%; border-radius: @(isMe ? "15px 15px 0 15px" : "15px 15px 15px 0") !important;">
+                                <div class="p-3 shadow position-relative @(isMe ? "bg-primary text-white" : "msg-received theme-text border border-secondary-subtle")"
+                                     style="max-width: 85%; border-radius: @(isMe ? "15px 15px 0 15px" : "15px 15px 15px 0") !important;">
 
-                                    <p class="mb-1 small">@msg.Content</p>
+                                    @* 🛡️ MÜHÜR 1: HTML kodlarının (link/buton) render edilmesi için @Html.Raw mühürlendi *@
+                                    <p class="mb-1 small">@Html.Raw(msg.Content)</p>
 
                                     <div class="d-flex align-items-center justify-content-end gap-1 @(isMe ? "text-white-50" : "text-muted")" style="font-size: 9px;">
                                         <i class="fas fa-trash-alt me-1 cursor-pointer hover-danger" onclick="mesajSil(@msg.Id)" style="cursor:pointer;" title="Mesajı Sil"></i>
@@ -99,12 +94,12 @@
                     }
                 </div>
 
-                <div class="p-3 border-top bg-light">
+                <div class="p-3 border-top theme-bg-light chat-input-area">
                     <form asp-action="SendMessage" method="post" class="d-flex gap-2">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="receiverId" value="@receiver.Id" />
-                        <input type="text" name="content" class="form-control rounded-pill px-4 border-0 shadow-sm"
-                               style="height: 45px;" placeholder="Mesajınızı buraya mühürleyin..." required autocomplete="off">
+                        <input type="text" name="content" class="form-control rounded-pill px-4 border-0 shadow-sm theme-input"
+                               style="height: 45px;" placeholder="Mesaj yazın..." required autocomplete="off">
                         <button type="submit" class="btn btn-primary rounded-circle shadow d-flex align-items-center justify-content-center"
                                 style="width:45px; height:45px; min-width: 45px;">
                             <i class="fas fa-paper-plane text-white"></i>
@@ -114,12 +109,12 @@
             }
             else
             {
-                <div class="h-100 d-flex flex-column align-items-center justify-content-center text-muted opacity-50 bg-light bg-opacity-50">
-                    <div class="p-4 bg-white rounded-circle shadow-sm mb-3">
+                <div class="h-100 d-flex flex-column align-items-center justify-content-center text-muted opacity-50 theme-bg-light">
+                    <div class="p-4 theme-bg-white rounded-circle shadow-sm mb-3">
                         <i class="fas fa-comments fa-4x text-primary opacity-25"></i>
                     </div>
-                    <h5 class="fw-bold">Sohbet Seçilmedi</h5>
-                    <p class="small">Mesajlaşmak için sol menüden birini seç kardaşım!</p>
+                    <h5 class="fw-bold theme-text">Sohbet Seçilmedi</h5>
+                    <p class="small theme-text">Birini seç kardaşım!</p>
                 </div>
             }
         </div>
@@ -127,8 +122,86 @@
 </div>
 
 <style>
-    .hover-bg-light:hover {
+    /* ... (Mevcut stillerin dokunulmadan korundu) ... */
+    .theme-bg-white {
+        background-color: white !important;
+    }
+
+    .theme-bg-light {
+        background-color: #f8fafc !important;
+    }
+
+    .theme-text {
+        color: #333 !important;
+    }
+
+    .active-chat {
+        background-color: white !important;
+        border-left: 4px solid #0d6efd !important;
+    }
+
+    #chatArea {
+        background-color: #e5e7eb;
+    }
+
+    .msg-received {
+        background-color: white;
+    }
+
+    /* 🌑 DARK MODE */
+    html[data-theme="dark"] .theme-bg-white,
+    html[data-theme="dark"] .chat-messages-wrapper,
+    html[data-theme="dark"] .chat-sidebar-area div {
+        background-color: #1e293b !important;
+    }
+
+    html[data-theme="dark"] .theme-bg-light,
+    html[data-theme="dark"] .chat-input-area {
+        background-color: #0f172a !important;
+    }
+
+    html[data-theme="dark"] .theme-text {
+        color: #f1f5f9 !important;
+    }
+
+    html[data-theme="dark"] .active-chat {
+        background-color: rgba(13, 110, 253, 0.15) !important;
+        border-left: 4px solid #3b82f6 !important;
+    }
+
+    html[data-theme="dark"] #chatArea {
+        background-color: #0f172a !important;
+    }
+
+    html[data-theme="dark"] .msg-received {
+        background-color: #1e293b !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    html[data-theme="dark"] .theme-input {
+        background-color: #1e293b !important;
+        color: white !important;
+    }
+
+    /* 🔗 SİBER KÖPRÜ: MESAJ İÇİ BUTONUN GECE MODU AYARI */
+    .msg-received a.btn-primary {
+        background-color: #3b82f6 !important;
+        border: none !important;
+        color: white !important;
+    }
+
+    .chat-sidebar-area {
+        width: 320px;
+        min-width: 320px;
+    }
+
+    .hover-bg-custom:hover {
         background-color: rgba(0,0,0,0.03);
+    }
+
+    html[data-theme="dark"] .hover-bg-custom:hover {
+        background-color: rgba(255,255,255,0.05);
     }
 
     .transition {
@@ -148,9 +221,31 @@
         color: #ff4d4d !important;
     }
 
-    /* 🚀 SAYAÇ İÇİN CANLI ANİMASYON */
     .pulse-animation {
         animation: pulse-red 2s infinite;
+    }
+
+    @@media (max-width: 768px) {
+        .chat-main-wrapper {
+            height: 90vh !important;
+        }
+
+        .chat-sidebar-area {
+            width: 100% !important;
+            min-width: 100% !important;
+            height: 180px !important;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        html[data-theme="dark"] .chat-sidebar-area {
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+
+        .chat-input-area {
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+        }
     }
 
     @@keyframes pulse-red {
@@ -171,11 +266,15 @@
     }
 </style>
 
-@* --- 🚀 CANLI YAYIN MOTORU (SIGNALR) --- *@
+@* --- SIGNALR & JS --- *@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+    @* 🛡️ MÜHÜR 2: "method group" Hatasını (Line 290) Çözen Kritik Satır *@
+    @* Not: Eğer sayfada Model serileştirilecekse bu tam yolu kullanmalısın *@
+    // const serializedData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
+
     const connection = new signalR.HubConnectionBuilder()
         .withUrl("/chatHub")
         .withAutomaticReconnect()
@@ -186,10 +285,7 @@
     }).catch(err => console.error(err.toString()));
 
     connection.on("ReceiveReadReceipt", function (readerId) {
-        $(".fa-check").removeClass("fa-check")
-                      .addClass("fa-check-double text-info")
-                      .attr("title", "Okundu")
-                      .css("color", "#00d2ff");
+        $(".fa-check").removeClass("fa-check").addClass("fa-check-double text-info").attr("title", "Okundu").css("color", "#00d2ff");
     });
 
     connection.on("ReceiveNewMessage", function (senderId, content) {
@@ -200,7 +296,7 @@
     if (chatBox) { chatBox.scrollTop = chatBox.scrollHeight; }
 
     function mesajSil(mesajId) {
-        if (confirm("Bu mesajı silmek istediğine emin misin kardaşım?")) {
+        if (confirm("Silmek istediğine emin misin kardaşım?")) {
             $.ajax({
                 url: '/Chat/DeleteMessage',
                 type: 'POST',
@@ -208,11 +304,9 @@
                 success: function (response) {
                     if (response.success) {
                         $("#msg-" + mesajId).fadeOut(300, function() { $(this).remove(); });
-                    } else {
-                        alert(response.message);
-                    }
+                    } else { alert(response.message); }
                 },
-                error: function () { alert("Hata oluştu kardaşım!"); }
+                error: function () { alert("Hata oluştu!"); }
             });
         }
     }

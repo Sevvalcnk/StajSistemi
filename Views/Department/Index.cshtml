@@ -1,26 +1,71 @@
 ﻿@model IEnumerable<StajSistemi.Models.Department>
 
 <div class="container mt-4">
-    <h2>Bölüm Ayarları</h2>
-    <p>
-        <a asp-action="Create" class="btn btn-primary">Yeni Bölüm Ekle</a>
-    </p>
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Bölüm Adı</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.Id</td>
-                    <td>@item.DepartmentName</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-    <a href="/Admin/Index" class="btn btn-secondary">Admin Paneline Dön</a>
+    @* 🛡️ BAŞARI/HATA MESAJLARI (Mühür Kontrolü) *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-pill shadow-sm animate__animated animate__fadeInDown" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @* 📊 BÖLÜM AYARLARI KARTI *@
+    <div class="card shadow border-0 rounded-4 overflow-hidden">
+        <div class="card-header bg-primary text-white p-4 border-0 d-flex justify-content-between align-items-center">
+            <h3 class="mb-0 fw-bold"><i class="fas fa-layer-group me-2"></i>Bölüm Ayarları</h3>
+            <a asp-action="Create" class="btn btn-light btn-lg rounded-pill shadow-sm fw-bold">
+                <i class="fas fa-plus-circle me-1 text-primary"></i> Yeni Bölüm Ekle
+            </a>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light theme-text">
+                        <tr>
+                            <th class="ps-4" style="width: 80px;">ID</th>
+                            <th>Bölüm Adı</th>
+                            <th class="text-center" style="width: 150px;">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr class="staj-row">
+                                <td class="ps-4 fw-bold text-secondary">#@item.Id</td>
+                                <td class="fw-semibold">@item.DepartmentName</td>
+                                <td class="text-center pe-3">
+                                    @* 🗑️ SİBER SİLME FORMU *@
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post"
+                                          onsubmit="return confirm('Bu bölümü siber tarihten silmek istediğinize emin misiniz? ✨🛡️');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm">
+                                            <i class="fas fa-trash-alt me-1"></i> Sil
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @* 🚀 GERİ DÖNÜŞ BUTONU *@
+    <div class="mt-4 mb-5">
+        <a href="/Admin/Index" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="fas fa-arrow-left me-2"></i>Admin Paneline Dön
+        </a>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Mesajların 4 saniye sonra otomatik kapanması için siber zamanlayıcı
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 4000);
+    </script>
+}

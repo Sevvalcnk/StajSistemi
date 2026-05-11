@@ -1,15 +1,19 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper; // 🛡️ SİBER DTO DÖNÜŞÜMÜ İÇİN ŞART
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StajSistemi.data;
 using StajSistemi.Models;
+using StajSistemi.DTOs;
+using StajSistemi.Services; // 🚀 E-MAİL SERVİSİNE (EMAIL SENDER) ERİŞİM İÇİN ŞART
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Rotativa.AspNetCore; // 🚀 PDF MOTORU İÇİN ŞART
 
 namespace StajSistemi.Controllers
 {
@@ -19,17 +23,19 @@ namespace StajSistemi.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly IEmailSender _emailSender;
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public AdminController(UserManager<AppUser> userManager, IEmailSender emailSender, ApplicationDbContext context)
+        public AdminController(UserManager<AppUser> userManager, IEmailSender emailSender, ApplicationDbContext context, IMapper mapper)
         {
             _userManager = userManager;
             _emailSender = emailSender;
             _context = context;
+            _mapper = mapper;
         }
 
+        // --- 📊 1. ADMİN ANA DASHBOARD (ANALİZ VE GRAFİK MOTORU) ---
         public async Task<IActionResult> Index()
         {
-            // 📊 1. ANALİZ: Bölüm Bazlı İlan Dağılımı (SADELEŞTİRİLDİ!)
             // 🛡️ SİBER DÜZELTME: Sadece 'Aktif' ve 'Silinmemiş' ilanı olan bölümleri getiriyoruz.
             var bolumVerileriRaw = await _context.Departments
                 .Select(d => new {
@@ -40,20 +46,14 @@ namespace StajSistemi.Controllers
                 })
                 .ToListAsync();
 
-            // Sadece IlanSayisi 0'dan büyük olanları filtreleyerek o karışık grafiği pırlanta gibi yapıyoruz.
             var bolumVerileri = bolumVerileriRaw.Where(x => x.IlanSayisi > 0).ToList();
 
-            // 📊 2. ANALİZ: En Çok Başvuru Alan Şirketler (HAYALET VERİ TEMİZLİĞİ!)
-            // 🛡️ SİBER FİLTRE: Sadece yayında olan (Silinmemiş ve Aktif) ilanların başvurularını sayıyoruz.
-            // Bu sayede "Technode" gibi hayalet şirketler grafikten temizlenir.
+            // 🛡️ SİBER FİLTRE: En çok başvuru alan ilk 5 aktif şirketi getiriyoruz.
             var popülerIlanlar = await _context.InternshipApplications
                 .Include(a => a.Internship)
                 .Where(a => !a.Internship.IsDeleted && a.Internship.Status == ApplicationStatus.Active)
                 .GroupBy(a => a.Internship.CompanyName)
-                .Select(g => new {
-                    SirketAdi = g.Key,
-                    BasvuruSayisi = g.Count()
-                })
+                .Select(g => new { SirketAdi = g.Key, BasvuruSayisi = g.Count() })
                 .OrderByDescending(x => x.BasvuruSayisi)
                 .Take(5).ToListAsync();
 
@@ -62,12 +62,8 @@ namespace StajSistemi.Controllers
             var rawTrendData = await _context.InternshipApplications
                 .Where(a => a.ApplicationDate >= yediGunOnce)
                 .GroupBy(a => a.ApplicationDate.Date)
-                .Select(g => new {
-                    TarihDate = g.Key,
-                    Sayi = g.Count()
-                })
-                .OrderBy(x => x.TarihDate)
-                .ToListAsync();
+                .Select(g => new { TarihDate = g.Key, Sayi = g.Count() })
+                .OrderBy(x => x.TarihDate).ToListAsync();
 
             var gunlukBasvuru = rawTrendData.Select(x => new {
                 Tarih = x.TarihDate.ToString("dd/MM"),
@@ -77,29 +73,22 @@ namespace StajSistemi.Controllers
             // 📊 4. ANALİZ: Genel İstatistik Kartları
             var students = await _userManager.GetUsersInRoleAsync("Student");
             ViewBag.TotalStudentsCount = students.Count;
-
-            // Kartlardaki sayıyı da aktif ilanlara göre güncelliyoruz.
             ViewBag.ActiveInternships = await _context.Internships.CountAsync(x => !x.IsDeleted && x.Status == ApplicationStatus.Active);
             ViewBag.PendingApplications = await _context.InternshipApplications.CountAsync(a => a.Status == ApplicationStatus.Pending);
 
             // 🛡️ VERİLERİ VİEW'A FIRLATMA
             ViewBag.BolumLabels = bolumVerileri.Select(x => x.BolumAdi).ToArray();
             ViewBag.BolumCounts = bolumVerileri.Select(x => x.IlanSayisi).ToArray();
-
             ViewBag.CompanyLabels = popülerIlanlar.Select(x => x.SirketAdi).ToArray();
             ViewBag.AppCounts = popülerIlanlar.Select(x => x.BasvuruSayisi).ToArray();
-
             ViewBag.TrendLabels = gunlukBasvuru.Select(x => x.Tarih).ToArray();
             ViewBag.TrendCounts = gunlukBasvuru.Select(x => x.Sayi).ToArray();
 
             return View();
         }
 
-        [HttpGet]
-        public IActionResult AddStudent()
-        {
-            return View();
-        }
+        // --- ➕ 2. ÖĞRENCİ EKLEME VE MAİL BİLGİLENDİRME ---
+        [HttpGet] public IActionResult AddStudent() { return View(); }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -121,37 +110,119 @@ namespace StajSistemi.Controllers
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(newStudent, "Student");
-
                 string subject = "Staj Takip Sistemi - Giriş Bilgileriniz";
                 string message = $@"
-                    <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;'>
-                        <h2 style='color: #2c3e50;'>Merhaba {newStudent.FullName},</h2>
-                        <p>Staj takip sistemine kaydınız başarıyla tamamlanmıştır.</p>
-                        <div style='background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                            <p><strong>Kullanıcı Adınız (Okul No):</strong> {newStudent.UserName}</p>
-                            <p><strong>Geçici Şifreniz:</strong> <span style='color: #d35400; font-size: 18px; font-weight: bold;'>{temporaryPassword}</span></p>
-                        </div>
-                        <p style='color: #7f8c8d; font-size: 12px;'>Lütfen giriş yaptıktan sonra profilinizden şifrenizi güncelleyiniz.</p>
+                    <div style='font-family: Arial; padding: 20px; border: 1px solid #ddd; border-radius: 8px;'>
+                        <h2>Merhaba {newStudent.FullName},</h2>
+                        <p>Staj takip sistemine kaydınız liyakatle tamamlanmıştır.</p>
+                        <p>Kullanıcı Adınız: {newStudent.UserName}</p>
+                        <p>Geçici Şifreniz: <b>{temporaryPassword}</b></p>
                     </div>";
 
-                try
-                {
-                    await _emailSender.SendEmailAsync(newStudent.Email, subject, message);
-                    TempData["SuccessMessage"] = $"{newStudent.FullName} başarıyla eklendi. Şifre: {temporaryPassword}";
-                }
-                catch (Exception)
-                {
-                    TempData["WarningMessage"] = $"Öğrenci eklendi fakat mail gönderilemedi. Şifre: {temporaryPassword}";
-                }
-
+                try { await _emailSender.SendEmailAsync(newStudent.Email, subject, message); } catch { }
                 return RedirectToAction("Index", "Admin");
             }
+            foreach (var error in result.Errors) { ModelState.AddModelError("", error.Description); }
+            return View(model);
+        }
 
-            foreach (var error in result.Errors)
+        // --- 🛡️ 🚀 3. MEZUNİYET ONAY MERKEZİ (KESİN KİLİT - SIZINTI İMHASI) ---
+        [HttpGet]
+        public async Task<IActionResult> GraduationQueue()
+        {
+            // 🛡️ SİBER MÜHÜR: 
+            // 1. Sadece hocanın ONAYLADIĞI (Status == Approved) olanlar.
+            // 2. Hocanın tarih mühürü bastığı (CompletedDate != null) olanlar. (SIZINTIYI BU KESER!)
+            // 3. Hocanın puan verdiği (SuccessScore > 0) pırlantalar.
+            // 4. ASLA silinmemiş (!IsDeleted) olanlar.
+
+            var strictApprovedList = await _context.InternshipApplications
+                .Include(a => a.AppUser)
+                .Include(a => a.Internship)
+                .Where(a => a.Status == ApplicationStatus.Approved) // Statü Onaylı Olmalı
+                .Where(a => a.CompletedDate != null)                // Hoca Onay Tarihi OLMALI (Kesin çözüm!)
+                .Where(a => a.SuccessScore > 0)                     // Puan Verilmiş Olmalı
+                .Where(a => a.IsDeleted == false)                   // Arşivde Olmamalı
+                .AsNoTracking()                                     // Bellekten değil, taze veriyi çek!
+                .OrderByDescending(a => a.CompletedDate)
+                .ToListAsync();
+
+            return View(strictApprovedList);
+        }
+
+        // --- 🎓 📧 🚀 4. MEZUN ET, TEBRİK BELGESİ ÜRET VE MAİL GÖNDER ---
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> FinalizeGraduation(int appId)
+        {
+            var application = await _context.InternshipApplications
+                .Include(a => a.AppUser).ThenInclude(u => u.Department)
+                .Include(a => a.Internship)
+                .FirstOrDefaultAsync(a => a.Id == appId);
+
+            if (application == null) return Json(new { success = false, message = "Kayıt bulunamadı!" });
+
+            // 1. Statüyü "Graduated" (Mezun) Olarak Mühürle
+            application.Status = ApplicationStatus.Graduated;
+            _context.Update(application);
+            await _context.SaveChangesAsync();
+
+            // 🚀 2. ÖZEL MEZUNİYET BELGESİ ÜRETİMİ (TEBRİKLER BELGESİ!)
+            var studentDto = _mapper.Map<StudentDto>(application.AppUser);
+            studentDto.DepartmentName = application.AppUser.Department?.DepartmentName ?? "Belirtilmemiş";
+
+            // BURASI KRİTİK: Artık defter değil, "GraduationCertificate" view'ını PDF yapıyoruz!
+            var pdfResult = new ViewAsPdf("GraduationCertificate", studentDto)
             {
-                ModelState.AddModelError("", error.Description);
-            }
+                FileName = $"{application.AppUser.UserName}_Mezuniyet_Sertifikasi.pdf",
+                PageSize = Rotativa.AspNetCore.Options.Size.A4,
+                CustomSwitches = "--print-media-type"
+            };
 
+            byte[] pdfBytes = await pdfResult.BuildFile(ControllerContext);
+
+            // 📧 3. TEBRİK MAİLİ İNŞASI
+            string subject = "🎓 TEBRİKLER! Mezuniyetiniz Tescillendi ✨";
+            string emailBody = $@"
+                <div style='font-family: Arial; text-align: center; padding: 30px; border: 4px double #1a3a8a; border-radius: 15px;'>
+                    <h1 style='color: #1a3a8a;'>🎓 MEZUNİYET TEBRİĞİ 🎓</h1>
+                    <p>Sayın <strong>{application.AppUser.FullName}</strong>,</p>
+                    <p>30 iş günlük staj sürecinizi başarıyla tamamlayarak mezun olmaya hak kazandınız.</p>
+                    <p>Resmi <b>Staj Başarı Belgeniz</b> ekte tarafınıza sunulmuştur.</p>
+                    <p>Kariyer yolculuğunuzda başarılar dileriz! ⚓️🥂</p>
+                </div>";
+
+            try
+            {
+                if (_emailSender is StajSistemi.Services.EmailSender customSender)
+                {
+                    await customSender.SendEmailWithAttachmentAsync(
+                        application.AppUser.Email,
+                        subject,
+                        emailBody,
+                        pdfBytes,
+                        $"{application.AppUser.UserName}_Mezuniyet_Belgesi.pdf"
+                    );
+                }
+                else
+                {
+                    await _emailSender.SendEmailAsync(application.AppUser.Email, subject, emailBody);
+                }
+
+                return Json(new { success = true, message = $"{application.AppUser.FullName} tebriklerle mezun edildi! 🎓🚀" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = true, message = "Mezuniyet tescillendi ancak mail uçurulamadı: " + ex.Message });
+            }
+        }
+
+        // 📜 SİBER SERTİFİKA TEMPLATE ODASI (Rotativa PDF üretirken burayı kullanır)
+        [AllowAnonymous]
+        public IActionResult GraduationCertificate(StudentDto model)
+        {
+            // Danışman ismini mühürleyelim
+            ViewBag.AdvisorName = "Dr. Öğr. Hakan ÖZTÜRK";
             return View(model);
         }
     }

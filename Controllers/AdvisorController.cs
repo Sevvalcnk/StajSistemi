@@ -32,6 +32,9 @@ namespace StajSistemi.Controllers
             var allStudents = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
             var allApps = await _unitOfWork.InternshipApplications.GetAllAsync();
 
+            // 🛡️ SİBER RADAR: 30 gün kontrolü için tüm raporları çekiyoruz
+            var allDailyReports = await _unitOfWork.DailyReports.GetAllAsync();
+
             // 🛡️ KRİTİK MÜHÜR: Modal içindeki ilan listesinin dolması için bu veriyi çekiyoruz
             var allInternships = await _unitOfWork.Internships.GetAllAsync();
             ViewBag.Internships = allInternships.Where(i => !i.IsDeleted).ToList();
@@ -49,9 +52,17 @@ namespace StajSistemi.Controllers
             var cities = await _unitOfWork.Cities.GetAllAsync();
             var departments = await _unitOfWork.Departments.GetAllAsync();
             ViewBag.Cities = new SelectList(cities.OrderBy(c => c.Name), "Id", "Name", cityId);
-            ViewBag.Departments = new SelectList(departments.OrderBy(d => d.DepartmentName), "Id", "DepartmentName", departmentId);
+
+            // ✅ SİBER GÜNCELLEME: Mükerrer bölümleri (GroupBy) engelliyoruz
+            ViewBag.Departments = new SelectList(
+                departments.GroupBy(d => d.DepartmentName).Select(g => g.First()).OrderBy(d => d.DepartmentName),
+                "Id", "DepartmentName", departmentId);
 
             var studentDtos = _mapper.Map<List<StudentDto>>(filteredStudents);
+
+            // 🚀 SİBER SİNYAL SİSTEMİ: Her öğrenci için rapor sayısını hesapla
+            var needsApprovalList = new Dictionary<int, bool>();
+            var reportCounts = new Dictionary<int, int>();
 
             foreach (var student in studentDtos)
             {
@@ -72,19 +83,47 @@ namespace StajSistemi.Controllers
                         ApplicationStatus.Pending => "Beklemede",
                         _ => "İşlemde"
                     };
+
+                    // 🛡️ SİBER KONTROL (GÜNCELLENDİ): 31/30 hatası için benzersiz günleri sayıyoruz
+                    int reportCount = allDailyReports.Where(r => r.AppUserId == student.Id).Select(r => r.DayNumber).Distinct().Count();
+                    bool needsFinalApproval = reportCount >= 30 && lastApp.CompletedDate == null;
+
+                    needsApprovalList.Add(student.Id, needsFinalApproval);
+                    reportCounts.Add(student.Id, reportCount);
                 }
                 else { student.InternshipStatus = "Başvuru Yok"; }
             }
 
+            ViewBag.NeedsApprovalList = needsApprovalList;
+            ViewBag.ReportCounts = reportCounts;
+
             return View(studentDtos);
         }
 
+        // 🛡️ 🚀 GÜNCELLENDİ: AKILLI BÖLÜM ÇEKME MOTORU (UYUŞMAZLIK VE MÜKERRER KAYIT ÇÖZÜLDÜ)
         [HttpGet]
         public async Task<JsonResult> GetDepartmentsByLevel(string level)
         {
             var allDepartments = await _unitOfWork.Departments.GetAllAsync();
+
+            if (string.IsNullOrEmpty(level) || level == "Hepsi")
+            {
+                // Mükerrerleri engellemek için GroupBy ekledim kral
+                var all = allDepartments.GroupBy(d => d.DepartmentName).Select(g => g.First()).OrderBy(d => d.DepartmentName).Select(d => new { id = d.Id, name = d.DepartmentName }).ToList();
+                return Json(all);
+            }
+
+            // 🛡️ SİBER NORMALİZASYON: "Önlisans" ve "Ön Lisans" arasındaki boşluk farkını yok ediyoruz
+            string clean = level.Replace(" ", "").ToLower();
+
             var filtered = allDepartments
-                .Where(d => d.DepartmentName.Contains(level) || level == "Hepsi")
+                .Where(d => d.DepartmentName != null && (
+                    d.DepartmentName.Replace(" ", "").ToLower().Contains(clean) ||
+                    // 🎯 AKILLI TAHMİN: İsminde "Mühendisliği/Yönetimi" varsa Lisanstır, "Programı/Teknolojileri" varsa Önlisanstır.
+                    (clean.Contains("lisans") && !clean.Contains("ön") && (d.DepartmentName.Contains("Mühendisliği") || d.DepartmentName.Contains("Mimarlık") || d.DepartmentName.Contains("Yönetimi") || d.DepartmentName.Contains("Öğretmenliği"))) ||
+                    (clean.Contains("ön") && (d.DepartmentName.Contains("Programı") || d.DepartmentName.Contains("Teknolojileri") || d.DepartmentName.Contains("Hizmetleri") || d.DepartmentName.Contains("Sekreterlik")))
+                ))
+                .GroupBy(d => d.DepartmentName).Select(g => g.First()) // 🛡️ MÜHÜR: Tekil bölümler
                 .OrderBy(d => d.DepartmentName)
                 .Select(d => new { id = d.Id, name = d.DepartmentName })
                 .ToList();
@@ -92,18 +131,41 @@ namespace StajSistemi.Controllers
             return Json(filtered);
         }
 
-        public async Task<IActionResult> Archive(int? departmentId)
+        // 🛡️ 🚀 GÜNCELLENDİ: ARŞİV FİLTRELEME (NULL, MÜKERRER VE GRADE UYUŞMAZLIK FİX)
+        public async Task<IActionResult> Archive(int? departmentId, string grade)
         {
             var allStudents = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
             var archivedQuery = allStudents.Where(s => s.IsDeleted == true);
 
-            if (departmentId.HasValue) archivedQuery = archivedQuery.Where(s => s.DepartmentId == departmentId);
+            // 🏛️ 1. ADIM: Eğer bir bölüm seçilmişse, direkt ona odaklan
+            if (departmentId.HasValue)
+            {
+                archivedQuery = archivedQuery.Where(s => s.DepartmentId == departmentId);
+            }
+            // 🏛️ 2. ADIM: Grade (Eğitim Düzeyi) varsa akıllı eşleşme yap
+            else if (!string.IsNullOrEmpty(grade) && grade != "Hepsi")
+            {
+                string clean = grade.Replace(" ", "").ToLower();
+
+                // ✅ SİBER ONARIM: s.Grade != null kontrolü (s.Grade ?? "") ile yapıldı, NullReference mühürlendi
+                archivedQuery = archivedQuery.Where(s =>
+                    ((s.Grade ?? "").Replace(" ", "").ToLower().Contains(clean)) ||
+                    (s.Department != null && (
+                        s.Department.DepartmentName.Replace(" ", "").ToLower().Contains(clean) ||
+                        (clean.Contains("lisans") && !clean.Contains("ön") && (s.Department.DepartmentName.Contains("Mühendisliği") || s.Department.DepartmentName.Contains("Yönetimi"))) ||
+                        (clean.Contains("ön") && (s.Department.DepartmentName.Contains("Programı") || s.Department.DepartmentName.Contains("Teknolojileri")))
+                    ))
+                );
+            }
 
             var archivedStudents = archivedQuery.OrderByDescending(s => s.FullName).ToList();
             var studentDtos = _mapper.Map<List<StudentDto>>(archivedStudents);
 
             var departments = await _unitOfWork.Departments.GetAllAsync();
-            ViewBag.Departments = new SelectList(departments.OrderBy(d => d.DepartmentName), "Id", "DepartmentName", departmentId);
+            // ✅ SİBER GÜNCELLEME: Arşiv dropdown mükerrer engelleme
+            ViewBag.Departments = new SelectList(
+                departments.GroupBy(d => d.DepartmentName).Select(g => g.First()).OrderBy(d => d.DepartmentName),
+                "Id", "DepartmentName", departmentId);
 
             TempData["InfoMessage"] = "Şu an Siber Arşiv odasındasınız. 🗄️";
             return View(studentDtos);
@@ -141,7 +203,7 @@ namespace StajSistemi.Controllers
             return View(studentDto);
         }
 
-        // --- 🛡️ 🚀 GÜNCELLENDİ: STAJ DOSYASI GÖRÜNTÜLEME (0/30 ÇÖZÜMÜ) ---
+        // --- 🛡️ 🚀 GÜNCELLENDİ: STAJ DOSYASI GÖRÜNTÜLEME (KAPAK BİLGİ KAYBI FİXLENDİ) ---
         public async Task<IActionResult> ViewStudentFile(int studentId)
         {
             var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
@@ -156,22 +218,24 @@ namespace StajSistemi.Controllers
             var apps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(
                 a => a.Internship, a => a.Internship.City, a => a.Internship.InternshipDepartments);
 
-            var activeApp = apps.FirstOrDefault(a =>
-                a.AppUserId == studentId &&
-                a.Status == ApplicationStatus.Approved);
+            // 🚀 SİBER DÜZELTME: Sadece 'Approved' olanı değil, 'Rejected' olsa bile son başvuruyu getiriyoruz ki kapak dolu gelsin!
+            var activeApp = apps.Where(a => a.AppUserId == studentId && !a.IsDeleted)
+                                .OrderByDescending(a => a.ApplicationDate)
+                                .FirstOrDefault();
 
             ViewBag.ActiveInternship = activeApp;
 
             var reports = await _unitOfWork.DailyReports.GetAllAsync();
             var studentReports = reports.Where(r => r.AppUserId == studentId).OrderBy(r => r.DayNumber).ToList();
 
-            // 🛡️ KRİTİK DEĞİŞİKLİK: IsApproved değil, sadece yazılanları say (0/30 sorunu bitti)
-            int writtenCount = studentReports.Count;
+            // 🛡️ KRİTİK VERİ: 31/30 Distinct Mührü
+            int writtenCount = studentReports.Select(r => r.DayNumber).Distinct().Count();
             ViewBag.ApprovedReportsCount = writtenCount;
-            ViewBag.CanApproveInternship = writtenCount >= 30; // 30 Gün kilidi açılır
+            ViewBag.CanApproveInternship = writtenCount >= 30;
 
             ViewBag.DailyReports = studentReports;
 
+            // 🚀 TASARIM MÜHRÜ: StudentPanel tasarımını giydiriyoruz.
             return View("../StudentPanel/Documents", studentDto);
         }
 
@@ -188,8 +252,9 @@ namespace StajSistemi.Controllers
             var allDailyReports = await _unitOfWork.DailyReports.GetAllAsync();
             var myReports = allDailyReports.Where(r => r.AppUserId == studentId).ToList();
 
-            int totalReportsCount = myReports.Count;
-            int approvedReportsCount = totalReportsCount; // 0/30 sorunu için toplamı onaylı gibi gösteriyoruz
+            // 🛡️ BENZERSİZ GÜN SAYISI (31/30 ÇÖZÜMÜ)
+            int totalReportsCount = myReports.Select(r => r.DayNumber).Distinct().Count();
+            int approvedReportsCount = totalReportsCount;
             int pendingReportsCount = 0;
 
             int targetDays = 30;
@@ -205,8 +270,7 @@ namespace StajSistemi.Controllers
             var allApps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(a => a.Internship);
             var activeAppForTimeline = allApps
                 .Where(a => a.AppUserId == studentId && !a.IsDeleted)
-                .OrderByDescending(a => a.Status == ApplicationStatus.Approved)
-                .ThenByDescending(a => a.ApplicationDate)
+                .OrderByDescending(a => a.ApplicationDate)
                 .FirstOrDefault();
 
             ViewBag.ActiveAppForTimeline = activeAppForTimeline;
@@ -278,7 +342,7 @@ namespace StajSistemi.Controllers
             await _unitOfWork.SaveAsync();
 
             string mesaj = status == ApplicationStatus.Approved ? "Onaylandı" : "İşlem Güncellendi";
-            TempData["SuccessMessage"] = $"Başvuru başarıyla '{mesaj}' olarak mühürlendi! ✨🥂";
+            TempData["SuccessMessage"] = $"Başvuru başarıyla '{mesaj}' olarak tescil edildi! ✨🥂";
 
             return RedirectToAction(nameof(InternshipApplications));
         }
@@ -304,7 +368,7 @@ namespace StajSistemi.Controllers
                 report.IsApproved = true;
                 _unitOfWork.DailyReports.Update(report);
                 await _unitOfWork.SaveAsync();
-                TempData["SuccessMessage"] = $"{dayNumber}. Gün Raporu Liyakatle Onaylandı! 🛡️🥂";
+                TempData["SuccessMessage"] = $"{dayNumber}. Gün Raporu Onaylandı! 🛡️🥂";
             }
             else
             {
@@ -314,49 +378,57 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(ViewStudentFile), new { studentId = studentId });
         }
 
-        // --- 🛡️ 🚀 GÜNCELLENDİ: STAJ DEFTERİNİ KOMPLE ONAYLA ---
+        // --- 🛡️ 🚀 GÜNCELLENDİ: STAJ DEFTERİNİ KOMPLE ONAYLA (REDDEDİLENİ TEKRAR ONAYLAMA FİXİ) ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveFullInternship(int studentId)
         {
             var reports = await _unitOfWork.DailyReports.GetAllAsync();
-            int writtenCount = reports.Count(r => r.AppUserId == studentId);
+            // 🛡️ 31/30 ÇÖZÜMÜ BURADA DA ŞART
+            int writtenCount = reports.Where(r => r.AppUserId == studentId).Select(r => r.DayNumber).Distinct().Count();
 
             if (writtenCount < 30)
             {
-                TempData["ErrorMessage"] = $"Liyakat uyarısı: 30 rapor tamamlanmadan onay mühürü vurulamaz. (Şu an: {writtenCount}/30) 🚫";
-                return RedirectToAction(nameof(ViewStudentFile), new { studentId = studentId });
+                return Json(new { success = false, message = $"Süreç Uyarısı: 30 iş günü tamamlanmadan resmi onay verilemez. (Mevcut: {writtenCount}/30) 🚫" });
             }
 
             var apps = await _unitOfWork.InternshipApplications.GetAllAsync();
-            var activeApp = apps.FirstOrDefault(a => a.AppUserId == studentId && a.Status == ApplicationStatus.Approved);
+
+            // 🚀 KRİTİK SİBER DÜZELTME: Reddedilmiş (Rejected) veya Beklemede (Pending) olsa bile kaydı bulup 'Approved' yapabilmek için sorguyu mühürledik!
+            var activeApp = apps.FirstOrDefault(a => a.AppUserId == studentId
+                                                  && !a.IsDeleted
+                                                  && (a.Status == ApplicationStatus.Approved || a.Status == ApplicationStatus.Rejected || a.Status == ApplicationStatus.Pending));
 
             if (activeApp != null)
             {
                 activeApp.CompletedDate = DateTime.Now;
+                activeApp.Status = ApplicationStatus.Approved; // Reddedilmişse bile asaletle Onaylandıya çekiyoruz!
+
                 var studentReports = reports.Where(r => r.AppUserId == studentId).ToList();
-                foreach (var r in studentReports) { r.IsApproved = true; } // Toplu mühür
+                foreach (var r in studentReports) { r.IsApproved = true; } // Toplu onay
 
                 await _unitOfWork.SaveAsync();
-                TempData["SuccessMessage"] = "30 İş Günü Liyakatle Tamamlandı ve Staj Defteri Mühürlendi! 🥂🛡️⚓";
+
+                return Json(new { success = true, message = "Staj süreci başarıyla tamamlandı ve sistem kayıtlarına resmi olarak işlendi! 🛡️⚓🥂" });
             }
 
-            return RedirectToAction(nameof(ViewStudentFile), new { studentId = studentId });
+            return Json(new { success = false, message = "Onaylanacak aktif veya reddedilmiş bir staj kaydı bulunamadı! ❌" });
         }
 
-        // --- 🛡️ 🚀 YENİ: STAJ DEFTERİNİ KOMPLE REDDET ---
+        // --- 🛡️ 🚀 GÜNCELLENDİ: STAJ DEFTERİNİ KOMPLE REDDET ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectFullInternship(int studentId)
         {
             var apps = await _unitOfWork.InternshipApplications.GetAllAsync();
-            var activeApp = apps.FirstOrDefault(a => a.AppUserId == studentId && a.Status == ApplicationStatus.Approved);
+            var activeApp = apps.FirstOrDefault(a => a.AppUserId == studentId && !a.IsDeleted);
 
             if (activeApp != null)
             {
                 activeApp.Status = ApplicationStatus.Rejected;
+                activeApp.CompletedDate = null; // Eğer tarih atılmışsa temizliyoruz
                 await _unitOfWork.SaveAsync();
-                TempData["ErrorMessage"] = "Staj dosyası incelendi ve yetersiz bulunduğu için reddedildi. 🚫";
+                TempData["ErrorMessage"] = "Staj dosyası incelendi ve yetersiz bulunduğu için resmi olarak reddedildi. 🚫";
             }
 
             return RedirectToAction(nameof(Index));
@@ -389,7 +461,7 @@ namespace StajSistemi.Controllers
             await _unitOfWork.ChatMessages.AddAsync(message);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = $"{student.FullName} isimli öğrencieye profesyonel öneri liyakatle iletildi! ✨🥂";
+            TempData["SuccessMessage"] = $"{student.FullName} isimli öğrenciye profesyonel öneri resmi olarak iletildi! ✨🥂";
 
             return RedirectToAction(nameof(Index));
         }

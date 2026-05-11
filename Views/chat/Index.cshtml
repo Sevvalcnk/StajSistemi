@@ -13,15 +13,23 @@
         @* --- SOL TARAF: SOHBET LİSTESİ --- *@
         <div class="chat-sidebar-area border-end d-flex flex-column theme-bg-light">
             <div class="p-3 border-bottom shadow-sm theme-bg-white">
-                <h6 class="fw-bold mb-0 theme-text"><i class="fas fa-users me-2 text-primary"></i>Sohbetler</h6>
+                <h6 class="fw-bold mb-3 theme-text"><i class="fas fa-users me-2 text-primary"></i>Sohbetler</h6>
+
+                @* 🔍 SİBER ARAMA ÇUBUĞU *@
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-0 theme-bg-light theme-text"><i class="fas fa-search opacity-50"></i></span>
+                    <input type="text" id="contactSearch" class="form-control border-0 bg-light shadow-none theme-input theme-text"
+                           placeholder="Öğrenci ara kardaşım..." style="border-radius: 0 10px 10px 0;">
+                </div>
             </div>
 
-            <div class="overflow-auto flex-grow-1" style="scrollbar-width: thin;">
+            <div class="overflow-auto flex-grow-1 chat-list-container" style="scrollbar-width: thin;">
                 @if (recentContacts != null && recentContacts.Any())
                 {
                     foreach (var contact in recentContacts)
                     {
                         bool isActive = receiver?.Id == contact.Id;
+                        @* 🚀 SİBER DÜZELTME: d-flex ile çakışmaması için JS tarafında d-none kullanılacak *@
                         <a asp-action="Index" asp-route-receiverId="@contact.Id"
                            class="d-flex align-items-center p-3 text-decoration-none border-bottom transition chat-contact-link @(isActive ? "active-chat" : "theme-text hover-bg-custom")">
 
@@ -31,7 +39,7 @@
 
                             <div class="w-100 text-truncate">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div class="fw-bold small theme-text text-truncate">@contact.FirstName @contact.LastName</div>
+                                    <div class="fw-bold small theme-text text-truncate student-name">@contact.FirstName @contact.LastName</div>
                                     @if (unreadCounts != null && unreadCounts.ContainsKey(contact.Id))
                                     {
                                         <span class="badge rounded-pill bg-danger shadow-sm ms-2 pulse-animation" style="font-size: 0.7rem;">
@@ -72,7 +80,7 @@
                                 <div class="p-3 shadow position-relative @(isMe ? "bg-primary text-white" : "msg-received theme-text border border-secondary-subtle")"
                                      style="max-width: 85%; border-radius: @(isMe ? "15px 15px 0 15px" : "15px 15px 15px 0") !important;">
 
-                                    @* 🛡️ MÜHÜR 1: HTML kodlarının (link/buton) render edilmesi için @Html.Raw mühürlendi *@
+                                    @* 🛡️ MÜHÜR 1: HTML kodlarının render edilmesi korundu *@
                                     <p class="mb-1 small">@Html.Raw(msg.Content)</p>
 
                                     <div class="d-flex align-items-center justify-content-end gap-1 @(isMe ? "text-white-50" : "text-muted")" style="font-size: 9px;">
@@ -98,7 +106,7 @@
                     <form asp-action="SendMessage" method="post" class="d-flex gap-2">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="receiverId" value="@receiver.Id" />
-                        <input type="text" name="content" class="form-control rounded-pill px-4 border-0 shadow-sm theme-input"
+                        <input type="text" name="content" class="form-control rounded-pill px-4 border-0 shadow-sm theme-input theme-text"
                                style="height: 45px;" placeholder="Mesaj yazın..." required autocomplete="off">
                         <button type="submit" class="btn btn-primary rounded-circle shadow d-flex align-items-center justify-content-center"
                                 style="width:45px; height:45px; min-width: 45px;">
@@ -122,7 +130,6 @@
 </div>
 
 <style>
-    /* ... (Mevcut stillerin dokunulmadan korundu) ... */
     .theme-bg-white {
         background-color: white !important;
     }
@@ -184,13 +191,6 @@
         color: white !important;
     }
 
-    /* 🔗 SİBER KÖPRÜ: MESAJ İÇİ BUTONUN GECE MODU AYARI */
-    .msg-received a.btn-primary {
-        background-color: #3b82f6 !important;
-        border: none !important;
-        color: white !important;
-    }
-
     .chat-sidebar-area {
         width: 320px;
         min-width: 320px;
@@ -208,44 +208,8 @@
         transition: all 0.2s ease-in-out;
     }
 
-    .chat-box::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .chat-box::-webkit-scrollbar-thumb {
-        background: #cbd5e0;
-        border-radius: 10px;
-    }
-
-    .hover-danger:hover {
-        color: #ff4d4d !important;
-    }
-
     .pulse-animation {
         animation: pulse-red 2s infinite;
-    }
-
-    @@media (max-width: 768px) {
-        .chat-main-wrapper {
-            height: 90vh !important;
-        }
-
-        .chat-sidebar-area {
-            width: 100% !important;
-            min-width: 100% !important;
-            height: 180px !important;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        html[data-theme="dark"] .chat-sidebar-area {
-            border-bottom-color: rgba(255,255,255,0.1);
-        }
-
-        .chat-input-area {
-            position: sticky;
-            bottom: 0;
-            z-index: 100;
-        }
     }
 
     @@keyframes pulse-red {
@@ -266,34 +230,48 @@
     }
 </style>
 
-@* --- SIGNALR & JS --- *@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
-    @* 🛡️ MÜHÜR 2: "method group" Hatasını (Line 290) Çözen Kritik Satır *@
-    @* Not: Eğer sayfada Model serileştirilecekse bu tam yolu kullanmalısın *@
-    // const serializedData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
+    $(document).ready(function () {
+    @* 🚀 SİBER FİLTRELEME MOTORU (BOOTSTRAP d-flex UYUMLU) *@
+        $("#contactSearch").on("input", function () {
+            var value = $(this).val().toLowerCase().trim();
 
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl("/chatHub")
-        .withAutomaticReconnect()
-        .build();
+            $(".chat-contact-link").each(function () {
+                var studentName = $(this).find(".student-name").text().toLowerCase();
 
-    connection.start().then(function () {
-        console.log("Canlı Yayın Mühürlendi! ✅");
-    }).catch(err => console.error(err.toString()));
+                // Eğer isimde aranan kelime varsa 'd-none' sınıfını kaldır, yoksa ekle
+                if (studentName.indexOf(value) > -1) {
+                    $(this).removeClass("d-none");
+                } else {
+                    $(this).addClass("d-none");
+                }
+            });
+        });
 
-    connection.on("ReceiveReadReceipt", function (readerId) {
-        $(".fa-check").removeClass("fa-check").addClass("fa-check-double text-info").attr("title", "Okundu").css("color", "#00d2ff");
+    @* 🛡️ MÜHÜR 2: SignalR ve diğer fonksiyonlar korundu *@
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.start().then(function () {
+            console.log("Canlı Yayın Mühürlendi! ✅");
+        }).catch(err => console.error(err.toString()));
+
+        connection.on("ReceiveReadReceipt", function (readerId) {
+            $(".fa-check").removeClass("fa-check").addClass("fa-check-double text-info").attr("title", "Okundu").css("color", "#00d2ff");
+        });
+
+        connection.on("ReceiveNewMessage", function (senderId, content) {
+            location.reload();
+        });
+
+        var chatBox = document.getElementById("chatArea");
+        if (chatBox) { chatBox.scrollTop = chatBox.scrollHeight; }
     });
-
-    connection.on("ReceiveNewMessage", function (senderId, content) {
-        location.reload();
-    });
-
-    var chatBox = document.getElementById("chatArea");
-    if (chatBox) { chatBox.scrollTop = chatBox.scrollHeight; }
 
     function mesajSil(mesajId) {
         if (confirm("Silmek istediğine emin misin kardaşım?")) {

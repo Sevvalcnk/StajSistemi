@@ -28,7 +28,7 @@ namespace StajSistemi.Controllers
             _cache = cache;
         }
 
-        // --- 1. LİSTELEME: Akıllı Sıralama ve Smart Match Mührü ---
+        // --- 📊 1. LİSTELEME: Akıllı Sıralama ve Smart Match Mührü ---
         [HttpGet]
         public async Task<IActionResult> Index(int? departmentId)
         {
@@ -179,6 +179,7 @@ namespace StajSistemi.Controllers
             ModelState.Remove("AppUser");
             ModelState.Remove("Name");
             ModelState.Remove("City");
+            ModelState.Remove("Status");
             ModelState.Remove("InternshipDepartments");
 
             if (ModelState.IsValid)
@@ -188,7 +189,10 @@ namespace StajSistemi.Controllers
                 if (gercekIsGunu >= 30)
                 {
                     model.CreatedDate = DateTime.Now;
+
+                    // ✅ 3. HAMLE: Görünümden kalkan kutu yerine ilanı otomatik 'Active' yapıyoruz
                     model.Status = ApplicationStatus.Active;
+
                     model.IsDeleted = false;
 
                     _context.Internships.Add(model);
@@ -247,6 +251,7 @@ namespace StajSistemi.Controllers
             ModelState.Remove("AppUser");
             ModelState.Remove("Name");
             ModelState.Remove("City");
+            ModelState.Remove("Status");
             ModelState.Remove("InternshipDepartments");
 
             if (ModelState.IsValid)
@@ -265,8 +270,11 @@ namespace StajSistemi.Controllers
                     existing.StartDate = model.StartDate;
                     existing.EndDate = model.EndDate;
                     existing.CityId = model.CityId;
+
+                    // ✅ SİBER MÜHÜR: Hidden input'tan gelen status değerini koruyoruz
                     existing.Status = model.Status;
-                    existing.MinGPA = model.MinGPA; // GPA Güncelleme desteği eklendi
+
+                    existing.MinGPA = model.MinGPA;
                     existing.Name = string.IsNullOrEmpty(model.Name) ? model.CompanyName + " Staj İlanı" : model.Name;
 
                     _context.InternshipDepartments.RemoveRange(existing.InternshipDepartments);
@@ -423,7 +431,7 @@ namespace StajSistemi.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // --- 6. DURUM GÜNCELLEME ---
+        // --- 🎓 6. DURUM GÜNCELLEME (ONAY/RED MEKANİZMASI TAMİR EDİLDİ) ---
         [Authorize(Roles = "Admin,Advisor")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -448,7 +456,7 @@ namespace StajSistemi.Controllers
             // Reddedilirse kontenjanı geri ver, tekrar onaylanırsa geri al
             if (status == ApplicationStatus.Rejected && application.Status != ApplicationStatus.Rejected)
                 application.Internship.Quota += 1;
-            else if (status == ApplicationStatus.Approved && application.Status == ApplicationStatus.Rejected)
+            else if (status == ApplicationStatus.Approved && application.Status != ApplicationStatus.Approved)
                 application.Internship.Quota -= 1;
 
             application.Status = status;
@@ -457,7 +465,9 @@ namespace StajSistemi.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Öğrenci başvuru durumu başarıyla güncellendi ve mühürlendi! 🥂";
-            return RedirectToAction(nameof(Applications));
+
+            // 🚀 KRİTİK YÖNLENDİRME: Advisor klasöründeki o liyakatli panele geri dönüyoruz!
+            return RedirectToAction("InternshipApplications", "Advisor");
         }
 
         // --- YARDIMCI METOTLAR ---

@@ -49,5 +49,6 @@ namespace StajSistemi.Models
         public string? EducationLevel { get; set; }
 
         public ICollection<InternshipApplication>? Applications { get; set; }
+        public string? Grade { get; set; }
     }
 }

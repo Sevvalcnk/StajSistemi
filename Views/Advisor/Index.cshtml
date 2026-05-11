@@ -3,9 +3,14 @@
 @{
     ViewData["Title"] = "Danışman Yönetim Merkezi";
     var internships = ViewBag.Internships as IEnumerable<StajSistemi.Models.Internship> ?? new List<StajSistemi.Models.Internship>();
+
+    // 🛡️ 1. ADIMDAN GELEN AKILLI SİNYAL VERİLERİ
+    var needsApprovalList = ViewBag.NeedsApprovalList as Dictionary<int, bool> ?? new Dictionary<int, bool>();
+    var reportCounts = ViewBag.ReportCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
 }
 
 <style>
+    /* 🛡️ SENİN TÜM ÖZEL STİLLERİN (BOZULMADAN KORUNDU) */
     :root {
         --primary-color: #4e73df;
         --success-color: #1cc88a;
@@ -111,7 +116,6 @@
         background-color: rgba(37, 140, 251, 0.1);
     }
 
-    /* 🌙 MODAL GECE MODU UYUMU */
     [data-theme="dark"] .modal-content {
         background-color: #1a2235 !important;
         color: #e2e8f0 !important;
@@ -172,7 +176,7 @@
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1 small">Onaylı Stajyerler</div>
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1 small">Aktif Stajyerler</div>
                             <div class="h4 mb-0 font-weight-bold text-gray-800">@Model.Count(x => x.InternshipStatus == "Onaylandı")</div>
                         </div>
                         <div class="col-auto"><i class="fas fa-check-double fa-2x text-gray-300 opacity-25"></i></div>
@@ -182,7 +186,7 @@
         </div>
     </div>
 
-    @* --- 🔍 FİLTRELEME --- *@
+    @* --- 🔍 FİLTRELEME (KORUNDU) --- *@
     <div class="card tech-card shadow-sm mb-4 border" style="background: #f8f9fc;">
         <div class="card-body p-4">
             <h6 class="fw-bold text-dark mb-3"><i class="fas fa-search me-2 text-primary"></i>Öğrenci Sorgulama</h6>
@@ -230,13 +234,17 @@
                             <th class="ps-4">Öğrenci Bilgileri</th>
                             <th>Bölüm / Şehir</th>
                             <th class="text-center">Not Ort.</th>
-                            <th class="text-center">Durum</th>
-                            <th class="text-end pe-4">Süreç & Dosya İşlemleri</th>
+                            <th class="text-center">Durum / Sinyal</th>
+                            <th class="text-end pe-4">İşlemler</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var student in Model)
                         {
+                            // 🚀 AKILLI HESAPLAMA SÜZGEÇLERİ
+                            bool needsFinalSeal = needsApprovalList.ContainsKey(student.Id) && needsApprovalList[student.Id];
+                            int writtenDays = reportCounts.ContainsKey(student.Id) ? reportCounts[student.Id] : 0;
+
                             <tr>
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
@@ -261,9 +269,18 @@
                                     </div>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge @(student.InternshipStatus == "Onaylandı" ? "bg-success-subtle text-success" : (student.InternshipStatus == "Beklemede" ? "bg-warning-subtle text-warning" : "bg-danger-subtle text-danger")) border rounded-pill px-3 py-2 fw-bold">
-                                        @student.InternshipStatus
-                                    </span>
+                                    @if (needsFinalSeal)
+                                    {
+                                        <span class="badge bg-danger animate__animated animate__flash animate__infinite rounded-pill px-3 py-2 shadow-sm">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> 30 GÜN DOLDU - İNCELE!
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge @(student.InternshipStatus == "Onaylandı" ? "bg-success-subtle text-success" : (student.InternshipStatus == "Beklemede" ? "bg-warning-subtle text-warning" : "bg-danger-subtle text-danger")) border rounded-pill px-3 py-2 fw-bold">
+                                            @student.InternshipStatus (@writtenDays / 30)
+                                        </span>
+                                    }
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="d-flex justify-content-end gap-2">
@@ -276,15 +293,9 @@
                                         <a asp-action="ViewStudentFile" asp-route-studentId="@student.Id" class="btn btn-view-file btn-sm px-3 shadow-sm">
                                             <i class="fas fa-file-invoice me-1"></i> Dosyayı Gör
                                         </a>
-
-                                        @* 🛡️ 🚀 GERİ GELEN KRİTİK BUTON: İNCELE (CV/SERTİFİKA) *@
-                                        <a asp-action="StudentDetails" asp-route-id="@student.Id"
-                                           class="btn btn-warning btn-sm rounded-circle shadow-sm"
-                                           style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"
-                                           title="Öğrenci Bilgilerini İncele">
+                                        <a asp-action="StudentDetails" asp-route-id="@student.Id" class="btn btn-warning btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Öğrenci Bilgilerini İncele">
                                             <i class="fas fa-search text-white"></i>
                                         </a>
-
                                         <form asp-action="Delete" asp-route-id="@student.Id" method="post" onsubmit="return confirm('Öğrenci arşive kaldırılsın mı?')">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-trash-alt"></i></button>
@@ -300,7 +311,7 @@
     </div>
 </div>
 
-@* --- 🛡️ 🚀 STAJ ÖNERİ MODALI --- *@
+@* --- 🛡️ 🚀 STAJ ÖNERİ MODALI (RESMİ DİL GÜNCELLEMESİ) --- *@
 <div class="modal fade" id="recommendModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg border-0">
@@ -329,7 +340,7 @@
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Vazgeç</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow">ÖNERİYİ MÜHÜRLE</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow">ÖNERİYİ RESMİ OLARAK İLET</button>
                 </div>
             </form>
         </div>
@@ -338,6 +349,7 @@
 
 @section Scripts {
     <script>
+        /* 🛡️ SENİN TÜM SCRIPTLERİN (BOZULMADAN KORUNDU) */
         $(document).ready(function () {
             $('#EducationLevelDropdown').change(function () {
                 var selectedLevel = $(this).val();

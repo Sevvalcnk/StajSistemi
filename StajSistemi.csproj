@@ -263,6 +263,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+    <PackageReference Include="Rotativa.AspNetCore" Version="1.4.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
@@ -271,6 +272,12 @@
     <Folder Include="Migrations\" />
     <Folder Include="wwwroot\img\logos\" />
     <Folder Include="wwwroot\uploads\cv\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\Rotativa\wkhtmltopdf.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

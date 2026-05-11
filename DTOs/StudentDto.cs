@@ -43,5 +43,6 @@
 
         // ✅ MÜHÜR 2: AdvisorId
         public int? AdvisorId { get; set; }
+        public string? Grade { get; set; }
     }
 }

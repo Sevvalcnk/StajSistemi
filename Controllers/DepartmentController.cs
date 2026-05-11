@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace StajSistemi.Controllers
 {
-    [Authorize(Roles = "Advisor,Admin")] // Sadece yetkililer bu odaya girebilir
+    [Authorize(Roles = "Advisor,Admin")] // Sadece yetkililer girebilir
     public class DepartmentController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -49,38 +49,77 @@ namespace StajSistemi.Controllers
             return View(department);
         }
 
-        // --- 🗑️ BÖLÜM SİLME (POST) ---
+        // --- 🗑️ BÖLÜM SİLME (GÜVENLİ HALE GETİRİLDİ) ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var department = await _context.Departments.FindAsync(id);
-            if (department != null)
+            try
             {
-                _context.Departments.Remove(department);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Bölüm siber tarihten başarıyla silindi! 🛡️🗑️";
+                var department = await _context.Departments.FindAsync(id);
+                if (department != null)
+                {
+                    _context.Departments.Remove(department);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Bölüm siber tarihten başarıyla silindi! 🛡️🗑️";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Silinecek bölüm bulunamadı! 🚫";
+                }
             }
-            else
+            catch (Exception)
             {
-                TempData["ErrorMessage"] = "Silinecek bölüm bulunamadı! 🚫";
+                // 🛡️ SİBER KORUMA: Eğer bölüme kayıtlı öğrenciler varsa veritabanı hata verir.
+                // Bu catch bloğu o hatayı yakalar ve sistemi çökertmek yerine uyarı verir.
+                TempData["ErrorMessage"] = "Bu bölüme kayıtlı aktif öğrenciler olduğu için silme işlemi gerçekleştirilemedi! 🚫";
             }
+
             return RedirectToAction(nameof(Index));
         }
 
-        // --- 🛡️ AJAX METODU (Mevcut kodun, korundu) ---
+        // --- 🛡️ AKILLI SÜZGEÇ (TAM KAPSAYICI - PROFESYONEL VERSİYON) ---
         [HttpGet]
         [AllowAnonymous]
         [Route("/Department/GetDepartmentsByLevel")]
-        public async Task<JsonResult> GetDepartmentsByLevel()
+        public async Task<JsonResult> GetDepartmentsByLevel(string level)
         {
             try
             {
-                var allDepartments = await _context.Departments
+                // 1. Önce bütün bölümleri bir sorgu olarak hazırla
+                var allDepts = await _context.Departments.ToListAsync();
+
+                // 2. 🚀 SİBER MANTIK: Gelen seviyeye göre isim tabanlı filtreleme (Hiçbir bölüm dışarıda kalmaz)
+                var searchLevel = (level ?? "").Trim();
+                IEnumerable<Department> filtered;
+
+                if (searchLevel == "Önlisans")
+                {
+                    // 2 Yıllık anahtarları: Programı, Teknolojileri, Meslek, Sekreterlik, Muhasebe
+                    filtered = allDepts.Where(d =>
+                        d.DepartmentName.Contains("Programı") ||
+                        d.DepartmentName.Contains("Teknolojileri") ||
+                        d.DepartmentName.Contains("Meslek") ||
+                        d.DepartmentName.Contains("Sekreterlik") ||
+                        d.DepartmentName.Contains("Muhasebe"));
+                }
+                else // Lisans veya diğer durumlar
+                {
+                    // Yukarıdaki ibareleri içermeyen HER ŞEYİ Lisans kabul et (Tam Kapsayıcı)
+                    filtered = allDepts.Where(d =>
+                        !d.DepartmentName.Contains("Programı") &&
+                        !d.DepartmentName.Contains("Teknolojileri") &&
+                        !d.DepartmentName.Contains("Sekreterlik") &&
+                        !d.DepartmentName.Contains("Muhasebe"));
+                }
+
+                // 3. Verileri topla ve JSON paketini mühürle
+                var result = filtered
                     .OrderBy(d => d.DepartmentName)
                     .Select(d => new { id = d.Id, departmentName = d.DepartmentName })
-                    .ToListAsync();
-                return Json(allDepartments);
+                    .ToList();
+
+                return Json(result);
             }
             catch (Exception ex)
             {

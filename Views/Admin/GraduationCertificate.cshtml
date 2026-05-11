@@ -1,0 +1,134 @@
+﻿@model StajSistemi.DTOs.StudentDto
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            background-color: #fff;
+            padding: 0;
+            margin: 0;
+        }
+
+        .certificate-border {
+            border: 15px double #1a3a8a;
+            padding: 50px;
+            text-align: center;
+            height: 850px;
+            position: relative;
+        }
+
+        .header {
+            margin-top: 30px;
+        }
+
+        .uni-name {
+            font-size: 26pt;
+            font-weight: bold;
+            color: #1a3a8a;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .school-name {
+            font-size: 18pt;
+            font-weight: bold;
+            margin-bottom: 50px;
+            color: #333;
+        }
+
+        .title {
+            font-size: 38pt;
+            font-style: italic;
+            color: #2c3e50;
+            margin: 30px 0;
+            border-bottom: 3px solid #1a3a8a;
+            display: inline-block;
+            padding: 0 40px;
+        }
+
+        .content {
+            font-size: 18pt;
+            line-height: 1.8;
+            text-align: center;
+            margin: 40px auto;
+            width: 90%;
+            color: #222;
+        }
+
+        .student-name {
+            font-size: 26pt;
+            font-weight: bold;
+            color: #000;
+            text-decoration: underline;
+        }
+
+        .footer {
+            margin-top: 80px;
+            display: table;
+            width: 100%;
+        }
+
+        .sig-box {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            font-size: 14pt;
+        }
+
+        .stamp-mark {
+            position: absolute;
+            bottom: 60px;
+            right: 60px;
+            border: 4px double #d32f2f;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 50%;
+            transform: rotate(-15deg);
+            font-weight: bold;
+            font-size: 11pt;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate-border">
+        <div class="header">
+            <h1 class="uni-name">T.C. SİNOP ÜNİVERSİTESİ</h1>
+            <h2 class="school-name">AYANCIK MESLEK YÜKSEKOKULU</h2>
+        </div>
+
+        <div class="title">Staj Başarı Sertifikası</div>
+
+        <div class="content">
+            Sayın <span class="student-name">@Model.Name @Model.Surname</span>,
+            <br><br>
+            Üniversitemiz <strong>@Model.DepartmentName</strong> programı kapsamında yürütmüş olduğunuz
+            <strong>30 İŞ GÜNÜ</strong> süreli zorunlu yaz stajı çalışmanızı başarıyla tamamladığınız
+            akademik kurulumuzca onaylanmıştır.
+            <br><br>
+            Staj sürecindeki üstün gayretinizden dolayı sizi tebrik eder,
+            mezuniyetinizin hayırlı olmasını dileriz. ✨🚀
+        </div>
+
+        <div class="footer">
+            <div class="sig-box">
+                <strong>Bölüm Danışmanı</strong><br>
+                <span style="font-size: 10pt;">(Dijital Onaylıdır)</span>
+            </div>
+            <div class="sig-box">
+                <strong>Yüksekokul Müdürü</strong><br>
+                <span>Prof. Dr. Zafer Cömert</span>
+            </div>
+        </div>
+
+        <div class="stamp-mark">
+            SİNOP ÜNİVERSİTESİ<br>MEZUNİYET ONAYI
+        </div>
+    </div>
+</body>
+</html>

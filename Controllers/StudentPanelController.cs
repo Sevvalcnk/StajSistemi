@@ -39,19 +39,19 @@ namespace StajSistemi.Controllers
             var allDailyReports = await _unitOfWork.DailyReports.GetAllAsync();
             var myReports = allDailyReports.Where(r => r.AppUserId == studentDto.Id).ToList();
 
-            int totalReportsCount = myReports.Count;
-            int approvedReportsCount = myReports.Count(r => r.IsApproved);
-            int pendingReportsCount = totalReportsCount - approvedReportsCount;
+            int totalWrittenReports = myReports.Select(r => r.DayNumber).Distinct().Count();
+            int approvedReportsCount = myReports.Where(r => r.IsApproved).Select(r => r.DayNumber).Distinct().Count();
+            int pendingReportsCount = totalWrittenReports - approvedReportsCount;
 
             int targetDays = 30;
-            double progressPercent = ((double)totalReportsCount / targetDays) * 100;
+            double progressPercent = ((double)totalWrittenReports / targetDays) * 100;
 
-            ViewBag.TotalReportsCount = totalReportsCount;
+            ViewBag.TotalReportsCount = totalWrittenReports;
             ViewBag.ApprovedReportsCount = approvedReportsCount;
             ViewBag.PendingReportsCount = pendingReportsCount;
 
             ViewBag.ProgressPercent = Math.Round(Math.Min(progressPercent, 100), 0);
-            ViewBag.RemainingDays = Math.Max(targetDays - totalReportsCount, 0);
+            ViewBag.RemainingDays = Math.Max(targetDays - totalWrittenReports, 0);
 
             var allApplications = await _unitOfWork.InternshipApplications.GetAllAsync();
             var approvedCounts = allApplications
@@ -86,29 +86,16 @@ namespace StajSistemi.Controllers
                 }
             }
 
-            // 🚀 SMART MATCH (AKILLI EŞLEŞME) MOTORU BURADA ÇALIŞIYOR
             if (studentDto != null)
             {
                 foreach (var ilan in allInternships)
                 {
                     int score = 0;
-
-                    // 1. Bölüm Uyumu (%50)
-                    if (ilan.InternshipDepartments.Any(id => id.DepartmentId == studentDto.DepartmentId))
-                        score += 50;
-
-                    // 2. Şehir Uyumu (%30)
-                    if (ilan.CityId == studentDto.CityId)
-                        score += 30;
-
-                    // 3. GPA Uyumu (%20) - Liyakatli Tip Dönüşümü ile
-                    if ((decimal?)studentDto.GPA >= ilan.MinGPA)
-                        score += 20;
-
+                    if (ilan.InternshipDepartments.Any(id => id.DepartmentId == studentDto.DepartmentId)) score += 50;
+                    if (ilan.CityId == studentDto.CityId) score += 30;
+                    if ((decimal?)studentDto.GPA >= ilan.MinGPA) score += 20;
                     ilan.MatchScore = score;
                 }
-
-                // Listeyi puana göre yeniden sıralıyoruz
                 allInternships = allInternships.OrderByDescending(x => x.MatchScore).ThenByDescending(x => x.CreatedDate).ToList();
             }
 
@@ -128,15 +115,9 @@ namespace StajSistemi.Controllers
                 ViewBag.FilterMode = "suitable";
             }
 
-            // Siber Güncelleme: Artık anonim nesne yerine doğrudan 'ilan.MatchScore' kullanıyoruz
-            var smartMatches = filteredInternships
-                .OrderByDescending(x => x.MatchScore)
-                .Take(6).ToList();
-
+            var smartMatches = filteredInternships.OrderByDescending(x => x.MatchScore).Take(6).ToList();
             ViewBag.SmartMatches = smartMatches;
-
-            // 🛡️ ÖZEL MESAJ: Index sayfasındaki gibi akıllı mesajı buraya da mühürledik
-            ViewBag.SpecialMessage = $"Kardaşım, senin için en uygun {smartMatches.Count} staj ilanı siber radara takıldı! 🥂🛡️";
+            ViewBag.SpecialMessage = $"Gardeşim, senin için en uygun {smartMatches.Count} staj ilanı siber radara takıldı! 🥂🛡️";
 
             var allMessages = await _unitOfWork.ChatMessages.GetAllIncludingAsync(m => m.Sender);
             ViewBag.StudentMessages = allMessages
@@ -144,6 +125,36 @@ namespace StajSistemi.Controllers
                 .OrderByDescending(m => m.SentDate).ToList();
 
             return View(studentDto);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetFilteredDepartments(string level)
+        {
+            var allDepartments = await _unitOfWork.Departments.GetAllAsync();
+            IEnumerable<Department> filtered;
+
+            if (level == "Önlisans")
+            {
+                filtered = allDepartments.Where(d =>
+                    d.DepartmentName.Contains("Programı") ||
+                    d.DepartmentName.Contains("Teknolojileri") ||
+                    d.DepartmentName.Contains("Meslek") ||
+                    d.DepartmentName.Contains("Sekreterlik") ||
+                    d.DepartmentName.Contains("Muhasebe"));
+            }
+            else
+            {
+                filtered = allDepartments.Where(d =>
+                    !d.DepartmentName.Contains("Programı") &&
+                    !d.DepartmentName.Contains("Teknolojileri") &&
+                    !d.DepartmentName.Contains("Sekreterlik") &&
+                    !d.DepartmentName.Contains("Muhasebe"));
+            }
+
+            var result = filtered.OrderBy(x => x.DepartmentName)
+                                 .Select(x => new { id = x.Id, name = x.DepartmentName });
+
+            return Json(result);
         }
 
         public async Task<IActionResult> Apply(int id)
@@ -221,7 +232,7 @@ namespace StajSistemi.Controllers
             await _unitOfWork.InternshipApplications.AddAsync(application);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = "Başvurunuz liyakatle kaydedilmiştir! 🥂";
+            TempData["SuccessMessage"] = "Başvurunuz resmi olarak kaydedilmiştir! ✨🥂";
             return RedirectToAction(nameof(Applications));
         }
 
@@ -266,6 +277,7 @@ namespace StajSistemi.Controllers
             var myResults = apps.Where(a => a.AppUserId == studentDto.Id &&
                                            (a.Status == ApplicationStatus.Approved ||
                                             a.Status == ApplicationStatus.Rejected ||
+                                            a.Status == ApplicationStatus.Graduated || // MEZUNLARI DA GÖR
                                             a.Status.ToString() == "Completed")).ToList();
 
             var unreadApps = myResults.Where(a => !a.IsReadByStudent).ToList();
@@ -336,6 +348,7 @@ namespace StajSistemi.Controllers
                 student.AcademicYear = studentDto.AcademicYear;
                 student.EducationSummary = studentDto.EducationSummary;
                 student.DegreeType = studentDto.DegreeType;
+                student.Grade = studentDto.Grade;
 
                 if (CVFile != null && CVFile.Length > 0)
                     student.CVPath = await SaveFile(CVFile, "cvs");
@@ -374,6 +387,8 @@ namespace StajSistemi.Controllers
             }
 
             ViewBag.ActiveInternship = activeInternship;
+            ViewBag.SupervisorName = activeInternship.Internship?.ContactPerson ?? "Mühendis / Kurum Yetkilisi";
+
             var reports = await _unitOfWork.DailyReports.GetAllAsync();
 
             ViewBag.DailyReports = reports
@@ -453,10 +468,7 @@ namespace StajSistemi.Controllers
             var mySpecificApp = appsQuery.FirstOrDefault(a => a.InternshipId == id && a.AppUserId == studentDto.Id && !a.IsDeleted);
 
             Internship? internship = null;
-            if (mySpecificApp != null)
-            {
-                internship = mySpecificApp.Internship;
-            }
+            if (mySpecificApp != null) { internship = mySpecificApp.Internship; }
             else
             {
                 var internships = await _unitOfWork.Internships.GetAllIncludingAsync(i => i.InternshipDepartments, i => i.City);
@@ -482,6 +494,28 @@ namespace StajSistemi.Controllers
             return View(studentDto);
         }
 
+        // 🚀 🛡️ MEZUNİYET BELGESİ GÖRÜNTÜLEME METODU (UnitOfWork Uyumlu)
+        public async Task<IActionResult> GraduationCertificate()
+        {
+            var studentDto = await GetLoggedInStudentDto();
+            if (studentDto == null) return RedirectToAction("Login", "Account");
+
+            // Sadece statüsü "Graduated" (Mezun) olan başvuruyu çekiyoruz
+            var apps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(a => a.AppUser, a => a.Internship);
+            var application = apps.FirstOrDefault(a => a.AppUserId == studentDto.Id && a.Status == ApplicationStatus.Graduated);
+
+            if (application == null)
+            {
+                TempData["ErrorMessage"] = "Mezuniyet belgeniz henüz tescil edilmemiştir.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Hata Giderildi: AdvisorId yerine direkt isim mühürlüyoruz
+            ViewBag.AdvisorName = "Dr. Öğr. Üyesi Gülay Ekren";
+
+            return View("../Admin/GraduationCertificate", studentDto);
+        }
+
         private async Task<StudentDto> GetLoggedInStudentDto()
         {
             var currentUserName = User.Identity?.Name;
@@ -504,6 +538,7 @@ namespace StajSistemi.Controllers
             dto.AcademicYear = student.AcademicYear;
             dto.EducationSummary = student.EducationSummary;
             dto.DegreeType = student.DegreeType;
+            dto.Grade = student.Grade;
 
             return dto;
         }
@@ -512,17 +547,10 @@ namespace StajSistemi.Controllers
         {
             string folderRelativePath = Path.Combine("uploads", subFolder);
             string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, folderRelativePath);
-
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
             string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
             string uniqueFilePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(uniqueFilePath, FileMode.Create))
-            {
-                await file.CopyToAsync(fileStream);
-            }
-
+            using (var fileStream = new FileStream(uniqueFilePath, FileMode.Create)) { await file.CopyToAsync(fileStream); }
             return $"/{folderRelativePath.Replace("\\", "/")}/{uniqueFileName}";
         }
 

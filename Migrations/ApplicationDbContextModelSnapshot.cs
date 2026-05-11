@@ -261,6 +261,9 @@ namespace StajSistemi.Migrations
                     b.Property<double?>("GPA")
                         .HasColumnType("float");
 
+                    b.Property<string>("Grade")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("IPAddress")
                         .HasColumnType("nvarchar(max)");
 
@@ -334,7 +337,7 @@ namespace StajSistemi.Migrations
                             Id = 1,
                             AcademicYear = "2025-2026",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "0c222918-b0df-445c-a3f6-693aebb79f51",
+                            ConcurrencyStamp = "b46cff78-2d6d-4eab-be0e-3c087c6c4606",
                             DepartmentName = "Yönetim Paneli",
                             Email = "admin@stajsistemi.com",
                             EmailConfirmed = true,
@@ -346,9 +349,9 @@ namespace StajSistemi.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@STAJSISTEMI.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEBfYi+mzWtbKdad5lYZfsMZ7CYgGUXwCIK5tO8Bf7Co+EUcVLQQcB+S4dJB4DLzV3A==",
+                            PasswordHash = "AQAAAAIAAYagAAAAELZQQeB7JBB40mHT8wYcygMvYbEmSsewWBIV9+yQuBO0LWXm+TCUkPVd4XflTBAdzw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "39366918-f729-4c72-96c2-5ad920bc8e9c",
+                            SecurityStamp = "b1cc54b1-673a-44d7-8071-c41c6f7ef723",
                             TwoFactorEnabled = false,
                             UniversityName = "Sinop Üniversitesi",
                             UserName = "admin"
@@ -664,6 +667,9 @@ namespace StajSistemi.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CompanySector")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactPerson")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")

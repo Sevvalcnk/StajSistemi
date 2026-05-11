@@ -12,6 +12,7 @@ using StajSistemi.Hubs;
 using StajSistemi.Filters;
 using Serilog;
 using Microsoft.AspNetCore.Authorization;
+using Rotativa.AspNetCore;
 
 // --- 🚀 SİBER GÜNLÜK (LOGGING) YAPILANDIRMASI ---
 Log.Logger = new LoggerConfiguration()
@@ -154,5 +155,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
+IWebHostEnvironment env = app.Environment;
+RotativaConfiguration.Setup(env.WebRootPath, "Rotativa");
 
 app.Run();

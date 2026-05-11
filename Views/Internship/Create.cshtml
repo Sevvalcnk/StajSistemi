@@ -6,7 +6,6 @@
 
 @* ✅ SELECT2 VE SWEETALERT2 CSS *@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-@* SweetAlert2 Tasarımı *@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@sweetalert2/theme-bootstrap-4/bootstrap-4.css">
 
 <style>
@@ -17,6 +16,25 @@
         border-radius: 10px !important;
         min-height: 45px;
     }
+
+    /* 🌑 🚀 SİBER GECE: Neon Radyo Butonları */
+    html[data-theme="dark"] .form-check-input[type="radio"] {
+        border: 2px solid #00d2ff !important;
+        background-color: transparent !important;
+        box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+        cursor: pointer;
+    }
+
+        html[data-theme="dark"] .form-check-input[type="radio"]:checked {
+            background-color: #00d2ff !important;
+            box-shadow: 0 0 15px #00d2ff;
+        }
+
+    html[data-theme="dark"] .form-check-label {
+        color: #00d2ff !important;
+        text-shadow: 0 0 5px rgba(0, 210, 255, 0.2);
+        font-weight: 500;
+    }
 </style>
 
 <div class="container py-5">
@@ -24,27 +42,34 @@
         <div class="col-md-8 col-lg-7">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
 
-                @* ✅ MÜHÜR: Başlık Kısmı *@
+                @* ✅ MÜHÜR: Başlık *@
                 <div class="card-header text-white text-center py-4" style="background: linear-gradient(to right, #2c3e50, #4ca1af) !important;">
                     <i class="fas fa-file-signature fa-3x mb-3"></i>
                     <h2 class="fw-bold mb-0">Staj İlanı Oluştur</h2>
                     <p class="small mb-0 opacity-75">Resmi Staj İlanı Yayınlama Portalı</p>
                 </div>
 
-                <div class="card-body p-4 p-md-5 bg-white">
-                    <div asp-validation-summary="All" class="alert alert-danger shadow-sm border-0 rounded-4 small mb-4"></div>
-
+                <div class="card-body p-4 p-md-5 bg-white theme-bg-white">
                     <form asp-action="Create" method="post" id="internshipForm">
                         @Html.AntiForgeryToken()
 
                         <div class="row">
                             <div class="col-md-12 mb-4">
+                                <label asp-for="Name" class="form-label fw-bold text-secondary">İlan Başlığı</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-light border-0"><i class="fas fa-tag text-muted"></i></span>
+                                    <input asp-for="Name" class="form-control border-light bg-light" placeholder="Örn: Yazılım ve Ağ Teknolojileri Stajyeri" />
+                                </div>
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-12 mb-4">
                                 <label asp-for="CompanyName" class="form-label fw-bold text-secondary">Şirket / Kurum Tam Adı</label>
                                 <div class="input-group shadow-sm">
                                     <span class="input-group-text bg-light border-0"><i class="fas fa-building text-muted"></i></span>
                                     <input asp-for="CompanyName" id="CompanyName" class="form-control border-light bg-light" placeholder="Örn: Sinop Teknopark" />
-                                    <button type="button" class="btn btn-outline-danger" onclick="verifyMapLocation()" title="Haritada Konumu Doğrula">
-                                        <i class="fas fa-map-marker-alt"></i> Konumu Test Et
+                                    <button type="button" class="btn btn-outline-danger" onclick="verifyMapLocation()" title="Konumu Test Et">
+                                        <i class="fas fa-map-marker-alt"></i> Test
                                     </button>
                                 </div>
                                 <span asp-validation-for="CompanyName" class="text-danger small"></span>
@@ -52,103 +77,91 @@
 
                             <div class="col-md-12 mb-4">
                                 <label asp-for="CompanySector" class="form-label fw-bold text-secondary">Faaliyet Sektörü</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-0"><i class="fas fa-chart-line text-muted"></i></span>
-                                    <select asp-for="CompanySector" class="form-select border-light bg-light">
-                                        <option value="">-- Sektör Seçiniz --</option>
-                                        <option value="Bilişim, Yazılım ve Siber Güvenlik">Bilişim, Yazılım ve Siber Güvenlik</option>
-                                        <option value="Eğitim ve Okul Öncesi Hizmetleri">Eğitim ve Okul Öncesi Hizmetleri</option>
-                                        <option value="Dış Ticaret, Lojistik ve Tedarik Zinciri">Dış Ticaret, Lojistik ve Tedarik Zinciri</option>
-                                        <option value="Endüstriyel Otomasyon ve Mekatronik">Endüstriyel Otomasyon ve Mekatronik</option>
-                                        <option value="Mimarlık, Tasarım ve Dekorasyon">Mimarlık, Tasarım ve Dekorasyon</option>
-                                        <option value="Tarım, Orman ve Çevre Teknolojileri">Tarım, Orman ve Çevre Teknolojileri</option>
-                                        <option value="Medya ve Dijital Oyun Tasarımı">Medya ve Dijital Oyun Tasarımı</option>
-                                        <option value="Diğer Hizmet Sektörleri">Diğer Hizmet Sektörleri</option>
-                                    </select>
-                                </div>
+                                <select asp-for="CompanySector" class="form-select border-light bg-light">
+                                    <option value="">-- Sektör Seçiniz --</option>
+                                    <option value="Bilişim, Yazılım ve Siber Güvenlik">Bilişim, Yazılım ve Siber Güvenlik</option>
+                                    <option value="Eğitim ve Okul Öncesi Hizmetleri">Eğitim ve Okul Öncesi Hizmetleri</option>
+                                    <option value="Dış Ticaret, Lojistik ve Tedarik Zinciri">Dış Ticaret, Lojistik ve Tedarik Zinciri</option>
+                                    <option value="Endüstriyel Otomasyon ve Mekatronik">Endüstriyel Otomasyon ve Mekatronik</option>
+                                    <option value="Tarım, Orman ve Çevre Teknolojileri">Tarım, Orman ve Çevre Teknolojileri</option>
+                                    <option value="Mimarlık, Tasarım ve Dekorasyon">Mimarlık, Tasarım ve Dekorasyon</option>
+                                    <option value="Finans, Muhasebe ve Danışmanlık">Finans, Muhasebe ve Danışmanlık</option>
+                                    <option value="Medya, Dijital Oyun ve Sanat">Medya, Dijital Oyun ve Sanat</option>
+                                    <option value="Sağlık, Tıbbi Hizmetler ve Kamu Sağlığı">Sağlık, Tıbbi Hizmetler ve Kamu Sağlığı</option>
+                                </select>
                                 <span asp-validation-for="CompanySector" class="text-danger small"></span>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <label asp-for="CityId" class="form-label fw-bold text-secondary">Stajın Yapılacağı Şehir</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-map-marker-alt text-muted"></i></span>
-                                <select asp-for="CityId" id="CitySelect" class="form-select border-light bg-light">
-                                    <option value="">-- Şehir Seçiniz --</option>
-                                    @if (ViewBag.Cities != null)
-                                    {
-                                        foreach (var item in (IEnumerable<StajSistemi.Models.City>)ViewBag.Cities)
-                                        {
-                                            <option value="@item.Id">@item.Name</option>
-                                        }
-                                    }
-                                </select>
-                            </div>
+                            <select asp-for="CityId" id="CitySelect" class="form-select border-light bg-light" asp-items="@(new SelectList(ViewBag.Cities, "Id", "Name"))">
+                                <option value="">-- Şehir Seçiniz --</option>
+                            </select>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-secondary">Hedef Öğrenci Bölümleri (Çoklu Seçim)</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-0"><i class="fas fa-graduation-cap text-muted"></i></span>
-                                <select name="selectedDepartmentIds" id="targetDepartment" class="form-control select2-multiple" multiple="multiple">
-                                    @if (ViewBag.Departments != null)
+                            <label class="form-label fw-bold text-secondary">Hedef Öğrenci Bölümleri</label>
+                            <select name="selectedDepartmentIds" id="targetDepartment" class="form-control select2-multiple" multiple="multiple">
+                                @if (ViewBag.Departments != null)
+                                {
+                                    foreach (var item in (IEnumerable<StajSistemi.Models.Department>)ViewBag.Departments)
                                     {
-                                        // 🛡️ SİBER MÜHÜR: Hata sonrası seçilenleri hatırlamak için liste hazırlığı
-                                        var selectedIds = ViewBag.SelectedDeptIds as int[] ?? new int[0];
-
-                                        foreach (var item in (IEnumerable<StajSistemi.Models.Department>)ViewBag.Departments)
-                                        {
-                                            bool isSelected = selectedIds.Contains(item.Id);
-                                            <option value="@item.Id" selected="@(isSelected ? "selected" : null)">@item.DepartmentName</option>
-                                        }
+                                        <option value="@item.Id">@item.DepartmentName</option>
                                     }
-                                </select>
-                            </div>
-                            <small class="text-muted">🔍 Bölümleri arayabilir ve istediğin kadarını seçebilirsin.</small>
+                                }
+                            </select>
                         </div>
 
-                        <div class="mb-4 p-3 rounded-4 border-2 border-dashed bg-light text-center">
-                            <label class="form-label fw-bold text-dark"><i class="fas fa-calendar-check me-2"></i>Haftalık Çalışma Düzeni</label>
+                        @* 🚀 SİBER ÇALIŞMA DÜZENİ *@
+                        <div class="mb-4 p-3 rounded-4 border-2 border-dashed bg-light text-center position-relative">
+                            <label class="form-label fw-bold text-dark">
+                                <i class="fas fa-calendar-check me-2"></i>Haftalık Çalışma Düzeni
+                            </label>
+
+                            <span id="liveDayBadge" class="badge rounded-pill shadow-sm ms-2 d-none" style="font-size: 0.9rem; padding: 0.5em 0.8em; vertical-align: middle; background-color: #e74c3c;">
+                                0 İş Günü
+                            </span>
+
                             <div class="d-flex justify-content-center gap-3 mt-2">
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="weeklyWorkDays" id="work5" value="5" checked>
+                                    <input class="form-check-input" type="radio" name="WeeklyWorkDays" id="work5" value="5" checked>
                                     <label class="form-check-label" for="work5">Haftada 5 Gün</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="weeklyWorkDays" id="work6" value="6">
+                                    <input class="form-check-input" type="radio" name="WeeklyWorkDays" id="work6" value="6">
                                     <label class="form-check-label" for="work6">Haftada 6 Gün</label>
                                 </div>
                             </div>
+                            <small id="missingDayHint" class="text-danger fw-bold d-block mt-2 d-none"></small>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-4">
-                                <label asp-for="StartDate" class="form-label fw-bold text-secondary">Başlangıç Tarihi</label>
+                                <label asp-for="StartDate" class="form-label fw-bold text-secondary">Başlangıç</label>
                                 <input asp-for="StartDate" id="startDate" type="date" class="form-control border-light bg-light" />
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label asp-for="EndDate" class="form-label fw-bold text-secondary">Bitiş Tarihi</label>
+                                <label asp-for="EndDate" class="form-label fw-bold text-secondary">Bitiş</label>
                                 <input asp-for="EndDate" id="endDate" type="date" class="form-control border-light bg-light" />
-                                <small id="dateError" class="text-danger d-none fw-bold mt-1">Staj süresi en az 30 gün olmalıdır!</small>
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label asp-for="Quota" class="form-label fw-bold text-secondary">Öğrenci Kontenjanı</label>
-                            <input asp-for="Quota" type="number" class="form-control border-light bg-light" min="1" placeholder="Örn: 5" />
+                            <label asp-for="Quota" class="form-label fw-bold text-secondary">Kontenjan</label>
+                            <input asp-for="Quota" type="number" class="form-control border-light bg-light" min="1" />
                         </div>
 
                         <div class="mb-4">
-                            <label asp-for="Description" class="form-label fw-bold text-secondary">İş Tanımı ve Detaylar</label>
-                            <textarea asp-for="Description" class="form-control border-light bg-light" rows="3"></textarea>
+                            <label asp-for="Description" class="form-label fw-bold text-secondary">İş Tanımı</label>
+                            <textarea asp-for="Description" class="form-control border-light bg-light" rows="3" placeholder="İlandan beklentileri buraya yazınız..."></textarea>
                         </div>
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm py-3" style="background: linear-gradient(to right, #2c3e50, #4ca1af); border: none;">
                                 <i class="fas fa-paper-plane me-2"></i> İlanı Yayınla
                             </button>
-                            <a asp-action="Index" class="btn btn-link text-muted text-decoration-none small text-center">İptal ve Geri Dön</a>
+                            <a asp-action="Index" class="btn btn-link text-muted text-decoration-none small text-center mt-2">İptal ve Geri Dön</a>
                         </div>
                     </form>
                 </div>
@@ -161,76 +174,95 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-
-    @* ✅ SELECT2 VE SWEETALERT2 JS *@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         $(document).ready(function() {
-            $('.select2-multiple').select2({
-                placeholder: " Lütfen ilgili bölümleri seçiniz...",
-                allowClear: true,
-                width: '100%'
+            $('.select2-multiple').select2({ placeholder: " Bölümleri seçiniz...", allowClear: true, width: '100%' });
+
+            // 🚀 SİBER CANLI TAKİP MOTORU (2026 Uyumlu)
+            $("#startDate, #endDate, input[name='WeeklyWorkDays']").on("change", function() {
+                const sDate = $("#startDate").val();
+                const eDate = $("#endDate").val();
+                const schedule = $("input[name='WeeklyWorkDays']:checked").val();
+                const badge = $("#liveDayBadge");
+                const hint = $("#missingDayHint");
+
+                if (sDate && eDate) {
+                    const total = getWorkDaysCount(sDate, eDate, schedule);
+                    badge.removeClass("d-none").text(total + " İş Günü");
+
+                    if (total < 30) {
+                        const missing = 30 - total;
+                        badge.css("background-color", "#e74c3c");
+                        hint.removeClass("d-none").text("⚠️ Yönetmelik için " + missing + " iş günü daha eklemelisiniz.");
+                    } else {
+                        badge.css("background-color", "#27ae60");
+                        hint.addClass("d-none");
+                    }
+                } else {
+                    badge.addClass("d-none");
+                    hint.addClass("d-none");
+                }
             });
 
-            // 🛡️ SİBER RESMİ DOĞRULAMA
-            document.getElementById("internshipForm").addEventListener("submit", function (e) {
-                const startVal = document.getElementById("startDate").value;
-                const endVal = document.getElementById("endDate").value;
-                const deptVal = $('#targetDepartment').val();
+            function getWorkDaysCount(start, end, schedule) {
+                let count = 0;
+                let curDate = new Date(start); curDate.setHours(0,0,0,0);
+                let stopDate = new Date(end); stopDate.setHours(0,0,0,0);
 
-                // 1. Bölüm Seçim Kontrolü (Resmi Dil)
-                if (!deptVal || deptVal.length === 0) {
+                const holidays = [
+                    "2026-01-01", "2026-03-20", "2026-03-21", "2026-03-22",
+                    "2026-04-23", "2026-05-01", "2026-05-19",
+                    "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30",
+                    "2026-07-15", "2026-08-30", "2026-10-28", "2026-10-29"
+                ];
+
+                while (curDate <= stopDate) {
+                    let dayOfWeek = curDate.getDay();
+                    let dateString = curDate.toISOString().split('T')[0];
+                    let isHoliday = holidays.includes(dateString);
+
+                    if (!isHoliday) {
+                        if (schedule == "5") {
+                            if (dayOfWeek !== 0 && dayOfWeek !== 6) count++;
+                        } else {
+                            if (dayOfWeek !== 0) count++;
+                        }
+                    }
+                    curDate.setDate(curDate.getDate() + 1);
+                }
+                return count;
+            }
+
+            document.getElementById("internshipForm").addEventListener("submit", function (e) {
+                const startVal = $("#startDate").val();
+                const endVal = $("#endDate").val();
+                const deptVal = $('#targetDepartment').val();
+                const schedule = $("input[name='WeeklyWorkDays']:checked").val();
+
+                if (!deptVal || deptVal.length === 0 || !startVal || !endVal) {
                     e.preventDefault();
-                    Swal.fire({
-                        title: 'Eksik Bilgi!',
-                        text: 'İlan yayınlayabilmek için en az bir hedef bölüm seçmeniz gerekmektedir.',
-                        icon: 'warning',
-                        confirmButtonColor: '#2c3e50',
-                        confirmButtonText: 'Anladım'
-                    });
+                    Swal.fire({ title: 'Eksik!', text: 'Lütfen bölümleri ve tarihleri doldurunuz.', icon: 'warning' });
                     return false;
                 }
 
-                // 2. Tarih Farkı Kontrolü (Resmi Dil)
-                if (startVal && endVal) {
-                    const start = new Date(startVal);
-                    const end = new Date(endVal);
-                    const diffTime = Math.abs(end - start);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    if (diffDays < 30) {
-                        e.preventDefault();
-                        Swal.fire({
-                            title: 'Geçersiz Tarih Aralığı!',
-                            text: 'Staj süresi yönetmelik gereği en az 30 gün olarak belirlenmelidir.',
-                            icon: 'error',
-                            confirmButtonColor: '#c0392b',
-                            confirmButtonText: 'Düzenle'
-                        });
-                        return false;
-                    }
+                if (getWorkDaysCount(startVal, endVal, schedule) < 30) {
+                    e.preventDefault();
+                    Swal.fire({ title: 'Süre Yetersiz!', text: 'Staj en az 30 iş günü olmalıdır.', icon: 'error' });
+                    return false;
                 }
             });
         });
 
-        // 🗺️ Konum Testi Mesajı
         function verifyMapLocation() {
-            var company = document.getElementById("CompanyName").value;
-            var citySelect = document.getElementById("CitySelect");
-            var cityText = citySelect.options[citySelect.selectedIndex].text;
-
-            if (company && cityText && citySelect.value !== "") {
-                var searchQuery = encodeURIComponent(company + " " + cityText);
-                window.open("https://www.google.com/maps/search/?api=1&query=" + searchQuery, '_blank');
+            var company = $("#CompanyName").val();
+            var cityText = $("#CitySelect option:selected").text();
+            if (company && cityText && $("#CitySelect").val() !== "") {
+                window.open("https://www.google.com/maps/search/" + encodeURIComponent(company + " " + cityText), '_blank');
             } else {
-                Swal.fire({
-                    title: 'Eksik Parametre!',
-                    text: 'Konum doğrulaması yapabilmek için lütfen önce Şirket Adı ve Şehir bilgilerini doldurunuz.',
-                    icon: 'info',
-                    confirmButtonColor: '#2980b9'
-                });
+                Swal.fire({ title: 'Bilgi Eksik!', text: 'Şirket ve şehir bilgisini giriniz.', icon: 'info' });
             }
         }
     </script>

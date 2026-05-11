@@ -5,6 +5,7 @@
 }
 
 <style>
+    /* 🛡️ SENİN TÜM TASARIM KODLARIN (BOZULMADAN KORUNDU) */
     body {
         background-color: #f8faff;
         background-image: radial-gradient(at 0% 0%, rgba(37, 140, 251, 0.05) 0, transparent 50%), radial-gradient(at 100% 100%, rgba(118, 75, 162, 0.05) 0, transparent 50%), radial-gradient(#d1d8e0 0.5px, transparent 0.5px);
@@ -18,7 +19,6 @@
         box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
     }
 
-    /* Gece Modu Uyumu */
     [data-theme="dark"] .card {
         background-color: #1e293b !important;
         color: #f1f5f9 !important;
@@ -60,7 +60,6 @@
 <div class="container py-5 techNode-fade-in">
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-9">
-            @* Genişliği biraz artırdık ki yan yana alanlar rahatlasın *@
             <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
                 <div class="card-header bg-dark text-white text-center py-4">
                     <h3 class="fw-bold mb-0"><i class="fas fa-user-edit me-2"></i>Kariyer Profilini Güncelle</h3>
@@ -68,19 +67,16 @@
                 <div class="card-body p-4 p-md-5 bg-white">
                     <form asp-action="EditProfile" method="post" enctype="multipart/form-data" id="profileEditForm">
                         @Html.AntiForgeryToken()
-
                         <input type="hidden" asp-for="Id" />
                         <input type="hidden" asp-for="Email" />
                         <input type="hidden" asp-for="StudentNo" />
 
                         <div class="mb-4 text-center">
-                            <img src="https://ui-avatars.com/api/?name=@Model.Name+@Model.Surname&background=2c3e50&color=fff&size=100"
-                                 class="rounded-circle shadow-sm mb-2" alt="Avatar">
+                            <img src="https://ui-avatars.com/api/?name=@Model.Name+@Model.Surname&background=2c3e50&color=fff&size=100" class="rounded-circle shadow-sm mb-2" alt="Avatar">
                             <p class="text-muted small mb-0">@Model.Email</p>
                             <span class="badge bg-light text-dark border">No: @Model.StudentNo</span>
                         </div>
 
-                        @* 👤 AD VE SOYAD (YAN YANA) *@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label asp-for="Name" class="form-label fw-bold text-muted small text-uppercase">Adınız</label>
@@ -94,7 +90,6 @@
                             </div>
                         </div>
 
-                        @* 🎓 EĞİTİM DÜZEYİ VE ÜNİVERSİTE (YAN YANA) *@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label asp-for="DegreeType" class="form-label fw-bold text-muted small text-uppercase">Eğitim Düzeyi</label>
@@ -124,30 +119,27 @@
                                     <option value="Sakarya Üniversitesi">Sakarya Üniversitesi</option>
                                     <option value="Antalya Akdeniz Üniversitesi">Antalya Akdeniz Üniversitesi</option>
                                     <option value="Trabzon Karadeniz Teknik Üniversitesi">Trabzon Karadeniz Teknik Üniversitesi</option>
+                                    <option value="Diğer">Diğer (Listede Yok)</option>
                                 </select>
-                                <span asp-validation-for="UniversityName" class="text-danger small"></span>
                             </div>
                         </div>
 
-                        @* 🏛️ FAKÜLTE VE BÖLÜM (YAN YANA) *@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label id="facultyLabel" class="form-label fw-bold text-muted small text-uppercase">
                                     @(Model.DegreeType == "Önlisans" ? "Meslek Yüksekokulu" : "Fakülte Adı")
                                 </label>
                                 <input asp-for="FacultyName" class="form-control rounded-pill border-2 input-focus" placeholder="Birim adı" />
-                                <span asp-validation-for="FacultyName" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="DepartmentId" class="form-label fw-bold text-muted small text-uppercase">Okuduğunuz Bölüm</label>
                                 <select asp-for="DepartmentId" class="form-select rounded-pill border-2 input-focus" id="DepartmentSelect">
-                                    <option value="">--- Bölüm Listesi Bekleniyor ---</option>
+                                    <option value="">--- Eğitim Düzeyi Seçiniz ---</option>
                                 </select>
                                 <span asp-validation-for="DepartmentId" class="text-danger small fw-bold"></span>
                             </div>
                         </div>
 
-                        @* 🌍 ŞEHİR VE YETENEKLER *@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label asp-for="CityId" class="form-label fw-bold text-muted small text-uppercase">Yaşadığınız Şehir</label>
@@ -161,19 +153,33 @@
                             </div>
                         </div>
 
-                        @* 📅 DOĞUM VE AKADEMİK BİLGİLER (ÜÇLÜ) *@
                         <div class="row mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label asp-for="BirthPlace" class="form-label fw-bold text-muted small text-uppercase">Doğum Yeri</label>
                                 <input asp-for="BirthPlace" class="form-control rounded-pill border-2 input-focus" placeholder="Şehir" />
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label asp-for="BirthDate" class="form-label fw-bold text-muted small text-uppercase">Doğum Tarihi</label>
                                 <input asp-for="BirthDate" type="date" class="form-control rounded-pill border-2 input-focus" />
                             </div>
-                            <div class="col-md-4">
+                        </div>
+
+                        @* 🚀 SİBER GÜNCELLEME: Akademik Yıl ve Geri Getirilen Sınıf Alanı *@
+                        <div class="row mb-3">
+                            <div class="col-md-6">
                                 <label asp-for="AcademicYear" class="form-label fw-bold text-muted small text-uppercase">Akademik Yıl</label>
                                 <input asp-for="AcademicYear" class="form-control rounded-pill border-2 input-focus" placeholder="2024-2026" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Grade" class="form-label fw-bold text-muted small text-uppercase">Sınıf / Kademe</label>
+                                <select asp-for="Grade" class="form-select rounded-pill border-2 input-focus">
+                                    <option value="">Seçiniz...</option>
+                                    <option value="1">1. Sınıf</option>
+                                    <option value="2">2. Sınıf</option>
+                                    <option value="3">3. Sınıf</option>
+                                    <option value="4">4. Sınıf</option>
+                                    <option value="Mezun">Mezun</option>
+                                </select>
                             </div>
                         </div>
 
@@ -192,7 +198,6 @@
 
                         <hr class="my-4">
 
-                        @* 🛡️ DOSYA YÜKLEME ALANLARI *@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="p-3 border-2 border-dashed rounded-4 bg-light text-center h-100 shadow-sm">
@@ -229,50 +234,71 @@
     }
 
     <script>
+        // 📸 DOSYA FORMATI KONTROLÜ
         function validateFileType(input) {
             const fileName = input.value;
             const allowedExtensions = /(\.pdf|\.doc|\.docx|\.ppt|\.pptx)$/i;
             if (fileName && !allowedExtensions.exec(fileName)) {
                 Swal.fire({ title: 'Geçersiz Format!', text: 'Lütfen sadece PDF, Word veya PowerPoint dosyası seçiniz.', icon: 'warning', confirmButtonColor: '#2c3e50', confirmButtonText: 'Anladım' });
-                input.value = '';
-                return false;
+                input.value = ''; return false;
             }
             return true;
         }
 
-        function loadAllDepartments() {
+        // 🛡️ 🚀 KRİTİK: BÖLÜMLERİ SEVİYEYE GÖRE FİLTRELEYEN SİBER MOTOR
+        function loadFilteredDepartments(level) {
             const $deptSelect = $('#DepartmentSelect');
+            if (!level) {
+                $deptSelect.html('<option value="">--- Önce Eğitim Düzeyi Seçiniz ---</option>');
+                return;
+            }
+
             $deptSelect.html('<option value="">⏳ Bölümler dökülüyor...</option>');
-            const url = '/Department/GetDepartmentsByLevel';
+
+            // Controller'daki yeni yazdığımız metoda gidiyoruz
+            const url = '/StudentPanel/GetFilteredDepartments';
             const currentDeptId = "@(Model?.DepartmentId ?? 0)";
 
             $.ajax({
-                url: url, type: 'GET', dataType: 'json',
+                url: url,
+                type: 'GET',
+                data: { level: level },
+                dataType: 'json',
                 success: function (data) {
                     $deptSelect.empty();
                     $deptSelect.append('<option value="">--- Bölümünüzü Seçiniz ---</option>');
                     if (Array.isArray(data) && data.length > 0) {
                         $.each(data, function (index, item) {
                             const itemId = item.id || item.Id;
-                            const itemName = item.departmentName || item.DepartmentName;
+                            const itemName = item.name || item.DepartmentName;
                             const isSelected = (itemId.toString() === currentDeptId.toString()) ? ' selected' : '';
                             $deptSelect.append('<option value="' + itemId + '"' + isSelected + '>' + itemName + '</option>');
                         });
-                    } else { $deptSelect.append('<option value="">⚠️ Liste boş!</option>'); }
+                    } else { $deptSelect.append('<option value="">⚠️ Bölüm bulunamadı!</option>'); }
                 },
-                error: function (xhr) { $deptSelect.html('<option value="">❌ Bağlantı Hatası!</option>'); }
+                error: function () { $deptSelect.html('<option value="">❌ Bağlantı Hatası!</option>'); }
             });
         }
 
         $(document).ready(function() {
-            loadAllDepartments();
+            // Sayfa açıldığında mevcut seviyeye göre bölümleri yükle
+            const initialLevel = $('#degreeSelect').val();
+            if(initialLevel) { loadFilteredDepartments(initialLevel); }
+
+            // 🚀 EĞİTİM DÜZEYİ DEĞİŞTİĞİNDE TETİKLENİR
             $('#degreeSelect').on('change', function() {
-                const label = document.getElementById('facultyLabel');
                 const val = $(this).val();
+
+                // 1. Etiketi Değiştir (Senin mevcut kodun)
+                const label = document.getElementById('facultyLabel');
                 if(label) { label.innerText = (val === "Önlisans") ? "Meslek Yüksekokulu" : "Fakülte Adı"; }
+
+                // 2. Bölüm Listesini Filtrele (Yeni Siber Mantık)
+                loadFilteredDepartments(val);
             });
         });
 
+        // 🛡️ FORM GÖNDERME KONTROLÜ
         document.getElementById('profileEditForm').onsubmit = function (e) {
             const gpaInput = document.getElementById('GPAInput');
             const deptSelect = document.getElementById('DepartmentSelect');

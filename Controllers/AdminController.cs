@@ -171,6 +171,11 @@ namespace StajSistemi.Controllers
             var studentDto = _mapper.Map<StudentDto>(application.AppUser);
             studentDto.DepartmentName = application.AppUser.Department?.DepartmentName ?? "Belirtilmemiş";
 
+            // 🏛️ KRİTİK SİBER MÜHÜR: Statik (sabit) okul ismini imha edip dinamik veriyi basıyoruz
+            // Bu iki satır, Bursa Uludağ'daki öğrencinin belgesinde kendi okulunun görünmesini sağlar.
+            studentDto.UniversityName = application.AppUser.UniversityName ?? "T.C. ÜNİVERSİTESİ";
+            studentDto.FacultyName = application.AppUser.FacultyName ?? "FAKÜLTESİ / YÜKSEKOKULU";
+
             // BURASI KRİTİK: Artık defter değil, "GraduationCertificate" view'ını PDF yapıyoruz!
             var pdfResult = new ViewAsPdf("GraduationCertificate", studentDto)
             {

@@ -149,20 +149,23 @@ namespace StajSistemi.Controllers
 
         // --- 3. YENİ İLAN OLUŞTURMA ---
         [Authorize(Roles = "Admin,Advisor")]
-        [HttpGet]
+        [HttpGet] // 👈 BURAYI BUL
         public async Task<IActionResult> Create()
         {
+            // 🛡️ SİBER ÖNLEM: Şehirleri cache'den çekiyoruz
             if (!_cache.TryGetValue("CachedCities", out List<City> cities))
             {
                 cities = await _context.Cities.OrderBy(x => x.Name).ToListAsync();
                 _cache.Set("CachedCities", cities, TimeSpan.FromMinutes(60));
             }
 
-            ViewBag.Departments = await _context.Departments.ToListAsync();
+            // 🏛️ İŞTE EKLEMEN GEREKEN KRİTİK SATIRLAR BURASI:
+            // Bölümleri veritabanından çekip ViewBag'e koyuyoruz ki kutucuk dolsun!
+            ViewBag.Departments = await _context.Departments.OrderBy(x => x.DepartmentName).ToListAsync();
             ViewBag.Cities = cities;
+
             return View();
         }
-
         [Authorize(Roles = "Admin,Advisor")]
         [HttpPost]
         [ValidateAntiForgeryToken]

@@ -218,9 +218,13 @@
         var currentUserId = UserManager.GetUserId(User);
         int parsedUserId = currentUserId != null ? int.Parse(currentUserId) : 0;
 
-        // 🛡️ SİBER SORGULAR (BİLDİRİMLER)
-        var pendingAppsCount = _context.InternshipApplications.AsNoTracking().Count(a => a.Status == ApplicationStatus.Pending && !a.IsDeleted);
-        var unreadMessagesCount = _context.ChatMessages.AsNoTracking().Count(m => m.ReceiverId == parsedUserId && !m.IsRead);
+        // 🛡️ SİBER FİLTRE: Sadece hocanın henüz bakmadığı, durumu 'Pending' olanları say.
+        // Onaylanmış (Approved) olanlar artık bildirim sayısına dahil edilmez!
+        var pendingAppsCount = _context.InternshipApplications.AsNoTracking()
+        .Count(a => a.Status == ApplicationStatus.Pending && !a.IsDeleted);
+
+        var unreadMessagesCount = _context.ChatMessages.AsNoTracking()
+        .Count(m => m.ReceiverId == parsedUserId && !m.IsRead);
     }
 
     <div id="wrapper">

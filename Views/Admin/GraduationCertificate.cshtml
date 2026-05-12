@@ -39,6 +39,7 @@
             font-weight: bold;
             margin-bottom: 50px;
             color: #333;
+            text-transform: uppercase;
         }
 
         .title {
@@ -92,14 +93,16 @@
             font-weight: bold;
             font-size: 11pt;
             opacity: 0.8;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
     <div class="certificate-border">
         <div class="header">
-            <h1 class="uni-name">T.C. SİNOP ÜNİVERSİTESİ</h1>
-            <h2 class="school-name">AYANCIK MESLEK YÜKSEKOKULU</h2>
+            @* 🏛️ ARTIK DİNAMİK: Öğrenci hangi üniversitedeyse o görünecek *@
+            <h1 class="uni-name">@Model.UniversityName</h1>
+            <h2 class="school-name">@Model.FacultyName</h2>
         </div>
 
         <div class="title">Staj Başarı Sertifikası</div>
@@ -112,7 +115,7 @@
             akademik kurulumuzca onaylanmıştır.
             <br><br>
             Staj sürecindeki üstün gayretinizden dolayı sizi tebrik eder,
-            mezuniyetinizin hayırlı olmasını dileriz. ✨🚀
+            mezuniyetinizin hayırlı olmasını dileriz.
         </div>
 
         <div class="footer">
@@ -121,13 +124,14 @@
                 <span style="font-size: 10pt;">(Dijital Onaylıdır)</span>
             </div>
             <div class="sig-box">
-                <strong>Yüksekokul Müdürü</strong><br>
+                <strong>Yüksekokul Müdürü / Dekan</strong><br>
                 <span>Prof. Dr. Zafer Cömert</span>
             </div>
         </div>
 
+        @* 🔴 MÜHÜR DE ARTIK DİNAMİK *@
         <div class="stamp-mark">
-            SİNOP ÜNİVERSİTESİ<br>MEZUNİYET ONAYI
+            @Model.UniversityName<br>MEZUNİYET ONAYI
         </div>
     </div>
 </body>

@@ -401,7 +401,10 @@ namespace StajSistemi.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveDailyReport(int dayNumber, string? content, IFormFile? reportImage)
+        // --- 📝 GÜNLÜK RAPOR KAYDETME (KOLEJ MODELİ UYUMLU) ---
+         // ✅ Sadece bir tane kalsın kral
+      
+        public async Task<IActionResult> SaveDailyReport(int dayNumber, string? content, List<IFormFile>? reportImages)
         {
             var studentDto = await GetLoggedInStudentDto();
             if (studentDto == null) return Unauthorized();
@@ -418,6 +421,19 @@ namespace StajSistemi.Controllers
                 await _unitOfWork.SaveAsync();
             }
 
+            // --- 🖼️ SİBER KOLAJ MOTORU: 4 RESMİ VERİTABANINA MÜHÜRLEME ---
+            string savedImagePaths = "";
+            if (reportImages != null && reportImages.Count > 0)
+            {
+                var paths = new List<string>();
+                foreach (var file in reportImages.Take(4)) // En fazla 4 resim
+                {
+                    var path = await SaveFile(file, "reports");
+                    paths.Add(path);
+                }
+                savedImagePaths = string.Join(";", paths); // Yolları ; ile birleştir
+            }
+
             var allReports = await _unitOfWork.DailyReports.GetAllAsync();
             var existingReport = allReports.FirstOrDefault(r => r.AppUserId == studentDto.Id && r.DayNumber == dayNumber);
 
@@ -429,26 +445,22 @@ namespace StajSistemi.Controllers
                     InternshipApplicationId = activeApp.Id,
                     DayNumber = dayNumber,
                     Content = content ?? "Giriş yapılmadı.",
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.Now,
+                    ImagePath = savedImagePaths // 🚀 4 Resim yolu mühürlendi!
                 };
-
-                if (reportImage != null && reportImage.Length > 0)
-                    newReport.ImagePath = await SaveFile(reportImage, "reports");
-
                 await _unitOfWork.DailyReports.AddAsync(newReport);
             }
             else
             {
                 existingReport.Content = content ?? existingReport.Content;
-
-                if (reportImage != null && reportImage.Length > 0)
-                    existingReport.ImagePath = await SaveFile(reportImage, "reports");
+                if (!string.IsNullOrEmpty(savedImagePaths))
+                    existingReport.ImagePath = savedImagePaths;
 
                 _unitOfWork.DailyReports.Update(existingReport);
             }
 
             await _unitOfWork.SaveAsync();
-            TempData["SuccessMessage"] = $"{dayNumber}. Gün Raporu Mühürlendi! 🛡️🥂";
+            TempData["SuccessMessage"] = $"{dayNumber}. Gün Raporu ve Kolej Görselleri Mühürlendi! 🛡️🥂";
             return RedirectToAction(nameof(Documents));
         }
 
@@ -553,8 +565,71 @@ namespace StajSistemi.Controllers
             using (var fileStream = new FileStream(uniqueFilePath, FileMode.Create)) { await file.CopyToAsync(fileStream); }
             return $"/{folderRelativePath.Replace("\\", "/")}/{uniqueFileName}";
         }
+        // 🚀 SİBER EDİTÖR İMAJ YÜKLEME MOTORU
+        
+        // 🚀 EDİTÖR İÇİ RESİM YÜKLEME MOTORU
+        
+        [HttpPost]
+        [IgnoreAntiforgeryToken] // 🚨 Test aşamasında kolaylık için ekledik, sızıntıyı engeller
+
+        public async Task<IActionResult> UploadEditorImage(IFormFile file) // 🚨 İsim 'file' olmalı!
+        {
+            // 1. Dosya boş mu kontrolü
+            if (file == null || file.Length == 0) return Json(new { error = "Dosya seçilmedi!" });
+
+            // 🛡️ 🚀 İŞTE TAM BURAYA EKLENDİ (SİBER SÜZGEÇ KİLİDİ):
+            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif" };
+            var ext = Path.GetExtension(file.FileName).ToLower();
+            if (!allowedExtensions.Contains(ext)) return Json(new { error = "Sadece görsel yükleyebilirsiniz! Zararlı dosya tespiti engellendi. 🚫" });
+
+
+            // Resmin kaydedileceği fiziksel yol (Senin mevcut kodların aynen devam ediyor)
+            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "editor_images");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+
+            // 🛰️ Editöre resmin tam yolunu geri gönderiyoruz
+            return Json(new { url = "/uploads/editor_images/" + uniqueFileName });
+        }
 
         public async Task<IActionResult> About() => View(await GetLoggedInStudentDto());
         public async Task<IActionResult> Contact() => View(await GetLoggedInStudentDto());
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetMyProcess()
+        {
+            var studentDto = await GetLoggedInStudentDto();
+            if (studentDto == null) return Unauthorized();
+
+            var allReports = await _unitOfWork.DailyReports.GetAllAsync();
+            var myReports = allReports.Where(r => r.AppUserId == studentDto.Id).ToList();
+
+            foreach (var report in myReports)
+            {
+                _unitOfWork.DailyReports.Delete(report);
+            }
+
+            var apps = await _unitOfWork.InternshipApplications.GetAllAsync();
+            var activeApp = apps.Where(a => a.AppUserId == studentDto.Id && !a.IsDeleted)
+                                .OrderByDescending(a => a.Id).FirstOrDefault();
+
+            if (activeApp != null)
+            {
+                activeApp.IsDeleted = true;
+                _unitOfWork.InternshipApplications.Update(activeApp);
+            }
+
+            await _unitOfWork.SaveAsync();
+            TempData["SuccessMessage"] = "Süreciniz asaletle sıfırlandı! ✨🚀";
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

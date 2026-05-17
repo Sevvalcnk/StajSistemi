@@ -1,4 +1,5 @@
 ﻿@model StajSistemi.DTOs.StudentDto
+
 @{
     ViewData["Title"] = "Staj Dashboard";
     var appliedIds = ViewBag.AppliedInternshipIds as List<int> ?? new List<int>();
@@ -25,7 +26,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-    /* 🛡️ SENİN TÜM ÖZEL STİLLERİN (BOZULMADAN KORUNDU) */
+    /* 🛡️ 1. GENEL UI VE GECE MODU AYARLARI */
     body {
         background-color: #f3f6f9;
         font-family: 'Inter', sans-serif;
@@ -260,11 +261,81 @@
         display: inline-block;
         margin: 2px;
     }
+
+    /* ==========================================================================
+           🌑 🚀 SİBER GÜNCELLEME: BU SAYFADAKİ ÖNERİ MODALINI KARARTAN CSS MOTORU
+           ========================================================================== */
+    html[data-theme="dark"] .modal-content {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    html[data-theme="dark"] .modal-header,
+    html[data-theme="dark"] .modal-footer {
+        border-color: #334155 !important;
+        background-color: #1e293b !important;
+    }
+
+    html[data-theme="dark"] .modal-body,
+    html[data-theme="dark"] .modal-body label,
+    html[data-theme="dark"] .modal-body p,
+    html[data-theme="dark"] .modal-body .text-muted {
+        color: #cbd5e1 !important;
+    }
+
+    html[data-theme="dark"] #modalStudentName {
+        color: #38bdf8 !important;
+    }
+
+    html[data-theme="dark"] .modal-body select {
+        background-color: #0f172a !important;
+        color: #f1f5f9 !important;
+        border: 1px solid #475569 !important;
+    }
+
+        html[data-theme="dark"] .modal-body select option {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+
+    html[data-theme="dark"] .btn-close {
+        filter: invert(1) grayscale(1) brightness(2) !important;
+    }
+
+    html[data-theme="dark"] .btn-light {
+        background-color: #334155 !important;
+        color: #f1f5f9 !important;
+        border: 1px solid #475569 !important;
+    }
 </style>
 
 <div class="centered-container">
-    @* 🚀 SİBER MÜHÜR: ÖĞRENCİYE ÖZEL RESMİ ONAY BANNER'I (SADECE HOCA MÜHÜR BASINCA ÇIKAR) *@
-    @if (timelineApp != null && timelineApp.CompletedDate != null)
+    @* 🚩 🚀 SİBER BANNER KONTROL MERKEZİ (DÜZENSİZLİĞİ YOK EDEN YENİ AKILLI ZİNCİR) *@
+    @if (timelineApp != null && timelineApp.Status == StajSistemi.Models.ApplicationStatus.Rejected)
+    {
+        <div class="alert alert-danger border-0 shadow-lg rounded-4 p-5 mb-4 text-center animate__animated animate__headShake">
+            <i class="fas fa-exclamation-triangle fa-4x mb-3 text-danger"></i>
+            <h3 class="fw-bold">Staj Dosyanız Reddedildi! 🚫</h3>
+
+            <div class="bg-white bg-opacity-50 p-4 rounded-4 mt-3 border border-danger border-opacity-25 shadow-inner">
+                <h5 class="fw-bold text-dark mb-2"><i class="fas fa-comment-alt me-2"></i>Danışman Hocanızın Notu:</h5>
+                <p class="fs-5 text-danger-emphasis fst-italic mb-0">
+                    "@(string.IsNullOrEmpty(timelineApp.RejectionReason) ? "Gerekçe belirtilmedi, lütfen hocanızla iletişime geçiniz." : timelineApp.RejectionReason)"
+                </p>
+            </div>
+
+            <hr class="my-4 opacity-25">
+            <form asp-controller="StudentPanel" asp-action="ResetMyProcess" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger btn-lg rounded-pill px-5 fw-bold shadow-lg transition hover-up">
+                    <i class="fas fa-sync-alt me-2"></i> HER ŞEYİ SIFIRLA VE YENİDEN BAŞLA
+                </button>
+            </form>
+        </div>
+    }
+    else if (timelineApp != null && timelineApp.Status == StajSistemi.Models.ApplicationStatus.Approved && timelineApp.CompletedDate != null)
     {
         <div class="alert alert-success border-0 shadow-lg rounded-4 techNode-fade-in p-4 mb-4 text-center border-start border-5 border-success animate__animated animate__fadeInDown">
             <div class="d-flex align-items-center justify-content-center gap-3">
@@ -418,7 +489,7 @@
                 </div>
             }
 
-            @* 🛡️ 🚀 DANIŞMAN FİNAL KARAR PANELİ (SADECE DANIŞMAN GÖRÜR - RESMİ DİL) *@
+            @* 🛡️ 🚀 DANIŞMAN FİNAL KARAR PANELİ (SADECE DANIŞMAN GÖRÜR) *@
             @if (isAdvisor)
             {
                 <div class="mt-5 mb-5 p-4 border border-4 border-dashed rounded-4 bg-white shadow-lg text-center mx-auto"
@@ -432,15 +503,14 @@
                             <p class="text-muted fs-5">Öğrenci 30 günlük rapor girişini tamamladı. Kararınızı onaylayarak tescil edin.</p>
 
                             <div class="d-flex gap-3 justify-content-center mt-4">
-                                <button type="button" class="btn btn-success btn-lg rounded-pill px-5 fw-bold shadow-lg animate__animated animate__pulse animate__infinite staj-tamamla-btn" data-id="@Model.Id">
+                                <button type="button" class="btn btn-success btn-lg rounded-pill px-5 fw-bold shadow-lg staj-tamamla-btn" data-id="@Model.Id">
                                     STAJ DOSYASINI ONAYLA
                                 </button>
 
-                                <form asp-controller="Advisor" asp-action="RejectFullInternship" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="studentId" value="@Model.Id" />
-                                    <button type="submit" class="btn btn-danger btn-lg rounded-pill px-5 fw-bold shadow-lg" onclick="return confirm('Tüm staj sürecini reddetmek istediğinize emin misiniz?')">REDDET</button>
-                                </form>
+                                <button type="button" class="btn btn-danger btn-lg rounded-pill px-5 fw-bold shadow-lg"
+                                        onclick="dashboardGerekceliRed(@Model.Id, '@Model.Name @Model.Surname')">
+                                    REDDET
+                                </button>
                             </div>
                         </div>
                     }
@@ -454,28 +524,54 @@
                     }
                 </div>
             }
-        </div>
-    </div>
-</div>
+        </div> @* col-lg-8 kapanışı *@
+    </div> @* row g-4 kapanışı *@
+</div> @* centered-container kapanışı *@
 
 @* 🛡️ GÜVENLİK ANAHTARI *@
 @Html.AntiForgeryToken()
 
 @section Scripts {
-    <script>
-        $(document).ready(function () {
-            // 🚀 STAJ ONAYLAMA SİNYALİ (AJAX MOTORU)
-            $('.staj-tamamla-btn').on('click', function () {
-                const studentId = $(this).data('id');
-                const token = $('input[name="__RequestVerificationToken"]').val();
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <script>
+        // --- 🚀 1. RED MOTORU (HOCA NOTU ALIR) ---
+        function dashboardGerekceliRed(studentId, name) {
+            let reason = prompt(name + " isimli öğrencinin stajını REDDETME gerekçeniz:");
+            if (reason !== null && reason.trim() !== "") {
+                let form = document.createElement('form');
+                form.method = 'post'; form.action = '/Advisor/RejectFullInternship';
+                let token = $('input[name="__RequestVerificationToken"]').val();
+                form.innerHTML = `<input type="hidden" name="studentId" value="${studentId}"><input type="hidden" name="rejectionReason" value="${reason}"><input type="hidden" name="__RequestVerificationToken" value="${token}">`;
+                document.body.appendChild(form); form.submit();
+            } else if (reason === "") { alert("Uyarı: Gerekçe boş bırakılamaz! 🚫"); }
+        }
+
+        // --- 📊 SİBER HAZIRLIK ODASI ---
+        $(document).ready(function () {
+        @if (TempData["DeptMismatch"] != null)
+        {
+            <text>
+                        Swal.fire({
+                            title: 'Bölüm Uygunluk Bildirimi 🛡️',
+                            text: 'Seçtiğiniz ilan akademik kriterlerinizle (Bölüm/Program) tam örtüşmemektedir. Sizin için en uygun ilanlar siber radara takıldı!',
+                            icon: 'warning',
+                            confirmButtonColor: '#4361ee',
+                            confirmButtonText: 'Anladım Kaptan!'
+                        });
+            </text>
+        }
+
+            // --- ✅ ONAYLAMA MOTORU (AJAX) ---
+            $('.staj-tamamla-btn').on('click', function () {
+                const sId = $(this).data('id');
+                const token = $('input[name="__RequestVerificationToken"]').val();
                 Swal.fire({
-                    title: 'Stajı Onaylıyor musunuz?',
-                    text: "Öğrencinin staj süreci resmi olarak onaylanacaktır! Bu işlem geri alınamaz.",
+                    title: 'Onaylıyor musunuz?',
+                    text: "Bu işlem resmi tescil niteliğindedir!",
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#10b981',
-                    cancelButtonColor: '#6c757d',
                     confirmButtonText: 'Evet, Onayla!',
                     cancelButtonText: 'Vazgeç'
                 }).then((result) => {
@@ -483,38 +579,18 @@
                         $.ajax({
                             url: '/Advisor/ApproveFullInternship',
                             type: 'POST',
-                            data: {
-                                studentId: studentId,
-                                __RequestVerificationToken: token
-                            },
-                            success: function (response) {
-                                if (response.success) {
-                                    Swal.fire('Başarılı!', response.message, 'success')
-                                        .then(() => { window.location.reload(); });
+                            data: { studentId: sId, __RequestVerificationToken: token },
+                            success: function (r) {
+                                if (r.success) {
+                                    Swal.fire('Başarılı!', r.message, 'success').then(() => { location.reload(); });
                                 } else {
-                                    Swal.fire('Dikkat!', response.message, 'warning');
+                                    Swal.fire('Hata!', r.message, 'error');
                                 }
-                            },
-                            error: function () {
-                                Swal.fire('Hata!', 'Siber iletişim hatası oluştu!', 'error');
                             }
                         });
                     }
                 });
             });
-
-            // 📢 BÖLÜM UYGUNLUK BİLDİRİMİ
-        @if (TempData["DeptMismatch"] != null)
-        {
-            <text>
-                        Swal.fire({
-                            title: 'Bölüm Uygunluk Bildirimi',
-                            text: 'Seçtiğiniz ilan akademik kriterlerinizle tam örtüşmeyebilir.',
-                            icon: 'info',
-                            confirmButtonColor: '#4361ee'
-                        });
-            </text>
-        }
         });
     </script>
 }

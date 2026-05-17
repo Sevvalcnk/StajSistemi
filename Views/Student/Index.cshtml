@@ -5,7 +5,6 @@
 }
 
 <style>
-    /* Hover efektini biraz daha belirginleştirelim */
     .transition {
         transition: all 0.3s ease;
     }
@@ -31,7 +30,6 @@
                 <small class="text-muted">Sisteme kayıtlı stajyer öğrencilerin listesi ve analizleri.</small>
             </div>
             <div class="d-flex align-items-center gap-3">
-                @* ✅ MÜHÜR: Yeni Öğrenci butonu buradan kaldırıldı, artık öğrenciler kendileri kayıt olacak *@
                 <span class="badge bg-light text-muted border px-3 py-2 rounded-pill shadow-sm d-none d-md-inline-block">
                     <i class="fas fa-user-graduate me-1 text-info"></i> Toplam: @(Model?.Count() ?? 0) Öğrenci
                 </span>
@@ -86,9 +84,10 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-2">
-                                        <a asp-controller="Student" asp-action="Details" asp-route-id="@item.Id"
+                                        @* 🚀 SİBER MÜHÜR: Admin'i doğrudan her şeyin göründüğü Advisor/StudentDetails sayfasına gönderiyoruz! *@
+                                        <a asp-controller="Advisor" asp-action="StudentDetails" asp-route-id="@item.Id"
                                            class="btn btn-sm btn-info rounded-pill text-white fw-bold shadow-sm px-3 py-2 transition hover-up">
-                                            <i class="fas fa-chart-pie me-1"></i> Analiz
+                                            <i class="fas fa-search me-1"></i> İncele
                                         </a>
 
                                         <form asp-controller="Student" asp-action="Delete" asp-route-id="@item.Id" method="post"
@@ -110,7 +109,6 @@
                             <td colspan="4" class="text-center py-5">
                                 <i class="fas fa-user-slash fa-3x text-muted opacity-25 mb-3"></i>
                                 <p class="text-muted fw-bold">Henüz kayıtlı veya staj başvurusu yapmış bir öğrenci bulunmuyor.</p>
-                                @* ✅ MÜHÜR: Buradaki eylemsiz link de kaldırıldı *@
                             </td>
                         </tr>
                     }

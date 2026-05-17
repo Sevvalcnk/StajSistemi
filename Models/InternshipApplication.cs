@@ -47,6 +47,8 @@ namespace StajSistemi.Models
         public DateTime? CompletedDate { get; set; }    // Staj bitiş tarihi
 
         // ✅ NİHAİ MÜHÜR: Hocanın notlarını bu bağlantı sayesinde çekeceğiz!
+        // 🛡️ HOCA MÜHÜRÜ: Red sebebi bilgisi burada tutulacak
+        public string? RejectionReason { get; set; }
         public virtual ICollection<InternshipApplicationLog> InternshipApplicationLogs { get; set; } = new List<InternshipApplicationLog>();
     }
 }

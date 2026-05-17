@@ -4,13 +4,12 @@
     ViewData["Title"] = "Danışman Yönetim Merkezi";
     var internships = ViewBag.Internships as IEnumerable<StajSistemi.Models.Internship> ?? new List<StajSistemi.Models.Internship>();
 
-    // 🛡️ 1. ADIMDAN GELEN AKILLI SİNYAL VERİLERİ
     var needsApprovalList = ViewBag.NeedsApprovalList as Dictionary<int, bool> ?? new Dictionary<int, bool>();
     var reportCounts = ViewBag.ReportCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
 }
 
 <style>
-    /* 🛡️ SENİN TÜM ÖZEL STİLLERİN (BOZULMADAN KORUNDU) */
+    /* 🛡️ TÜM ÖZEL STİLLERİN EKSİKSİZ KORUNDU */
     :root {
         --primary-color: #4e73df;
         --success-color: #1cc88a;
@@ -29,10 +28,10 @@
         transition: 0.3s;
     }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
-        }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+    }
 
     .bg-success-subtle {
         background-color: #e8f5e9 !important;
@@ -71,11 +70,11 @@
         border: none;
     }
 
-        .btn-view-file:hover {
-            background-color: #2e59d9;
-            color: white;
-            transform: scale(1.05);
-        }
+    .btn-view-file:hover {
+        background-color: #2e59d9;
+        color: white;
+        transform: scale(1.05);
+    }
 
     .btn-view-dashboard {
         background-color: #1cc88a;
@@ -86,11 +85,11 @@
         border: none;
     }
 
-        .btn-view-dashboard:hover {
-            background-color: #17a673;
-            color: white;
-            transform: scale(1.05);
-        }
+    .btn-view-dashboard:hover {
+        background-color: #17a673;
+        color: white;
+        transform: scale(1.05);
+    }
 
     .btn-recommend {
         background: linear-gradient(135deg, #6610f2, #6f42c1);
@@ -101,11 +100,11 @@
         border: none;
     }
 
-        .btn-recommend:hover {
-            background: linear-gradient(135deg, #520dc2, #59359a);
-            color: white;
-            transform: scale(1.05);
-        }
+    .btn-recommend:hover {
+        background: linear-gradient(135deg, #520dc2, #59359a);
+        color: white;
+        transform: scale(1.05);
+    }
 
     .avatar-text {
         font-weight: 700;
@@ -116,30 +115,77 @@
         background-color: rgba(37, 140, 251, 0.1);
     }
 
-    [data-theme="dark"] .modal-content {
-        background-color: #1a2235 !important;
-        color: #e2e8f0 !important;
-        border: 1px solid #2d3748 !important;
+    html[data-theme="dark"] .modal-content,
+    html[data-theme="dark"] .modal-dialog .modal-content {
+        background-color: #1e293b !important; /* Diğer belgelerle uyumlu asil lacivert */
+        color: #f1f5f9 !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
     }
 
-    [data-theme="dark"] .modal-header {
-        border-bottom: 1px solid #2d3748;
+    /* Modal Başlık ve Alt Kısım Çizgileri */
+    html[data-theme="dark"] .modal-header,
+    html[data-theme="dark"] .modal-footer {
+        border-color: #334155 !important;
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
     }
 
-    [data-theme="dark"] .modal-footer {
-        border-top: 1px solid #2d3748;
+    /* Modal İçindeki Soluk Etiketler (Seçilen Öğrenci, Önerilecek İlan vb.) */
+    html[data-theme="dark"] .modal-body,
+    html[data-theme="dark"] .modal-body label,
+    html[data-theme="dark"] .modal-body p,
+    html[data-theme="dark"] .modal-body span,
+    html[data-theme="dark"] .modal-body h5,
+    html[data-theme="dark"] .modal-body .text-muted {
+        color: #cbd5e1 !important; /* Okunabilir pırlanta gri */
     }
 
-    [data-theme="dark"] .form-select {
-        background-color: #111827 !important;
-        color: white !important;
-        border-color: #4a5568 !important;
+        /* Vurgulanan Alanlar (şevval cinek ismi) */
+        html[data-theme="dark"] .modal-body strong,
+        html[data-theme="dark"] .modal-body .student-name {
+            color: #38bdf8 !important; /* Parlak neon mavi vurgu */
+        }
+
+        /* Açılır Kutu (Select/Dropdown) ve Girdi Elemanları Karartması */
+        html[data-theme="dark"] .modal-body select,
+        html[data-theme="dark"] .modal-body input,
+        html[data-theme="dark"] .modal-body textarea,
+        html[data-theme="dark"] .modal-body .form-control {
+            background-color: #0f172a !important; /* İç derinlik siyahı */
+            color: #f1f5f9 !important;
+            border: 1px solid #475569 !important;
+        }
+
+            /* Seçenekler Listesi (Dropdown Options) */
+            html[data-theme="dark"] .modal-body select option {
+                background-color: #1e293b !important;
+                color: #f1f5f9 !important;
+            }
+
+    /* Kapatma (X) Butonu Gece Modu Ayarı */
+    html[data-theme="dark"] .modal-header .close,
+    html[data-theme="dark"] .modal-header .btn-close {
+        color: #f1f5f9 !important;
+        filter: invert(1) grayscale(1) brightness(2); /* Beyaza çevirme sihirbazı */
+        opacity: 0.8;
     }
 
-    [data-theme="dark"] .alert-dark {
-        background-color: #2d3748 !important;
-        color: #cbd5e0 !important;
+    /* "Vazgeç" Butonunun Gece Modu Uyumu */
+    html[data-theme="dark"] .modal-body .btn-light,
+    html[data-theme="dark"] .modal-footer .btn-light,
+    html[data-theme="dark"] .modal-body .btn-secondary,
+    html[data-theme="dark"] .modal-footer .btn-secondary {
+        background-color: #334155 !important;
+        color: #f1f5f9 !important;
+        border: 1px solid #475569 !important;
+        transition: 0.2s;
     }
+
+        html[data-theme="dark"] .modal-body .btn-light:hover,
+        html[data-theme="dark"] .modal-footer .btn-light:hover {
+            background-color: #475569 !important;
+        }
 </style>
 
 <div class="container-fluid py-4 px-4 techNode-fade-in">
@@ -177,7 +223,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1 small">Aktif Stajyerler</div>
-                            <div class="h4 mb-0 font-weight-bold text-gray-800">@Model.Count(x => x.InternshipStatus == "Onaylandı")</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">@Model.Count(x => x.InternshipStatus == "Onaylandı" || x.InternshipStatus == "Staj Başladı")</div>
                         </div>
                         <div class="col-auto"><i class="fas fa-check-double fa-2x text-gray-300 opacity-25"></i></div>
                     </div>
@@ -218,7 +264,7 @@
         </div>
     </div>
 
-    @* --- 📊 TABLO --- *@
+    @* --- 📊 TABLO (GEREKSİZ RED BUTONU KALDIRILDI) --- *@
     <div class="card tech-card shadow-lg overflow-hidden border">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
             <h6 class="m-0 font-weight-bold text-primary">Öğrenci Yönetim Listesi</h6>
@@ -241,8 +287,10 @@
                     <tbody>
                         @foreach (var student in Model)
                         {
-                            // 🚀 AKILLI HESAPLAMA SÜZGEÇLERİ
-                            bool needsFinalSeal = needsApprovalList.ContainsKey(student.Id) && needsApprovalList[student.Id];
+                            bool needsFinalSeal = needsApprovalList.ContainsKey(student.Id) &&
+                                                  needsApprovalList[student.Id] &&
+                                                  student.InternshipStatus != "Onaylandı";
+
                             int writtenDays = reportCounts.ContainsKey(student.Id) ? reportCounts[student.Id] : 0;
 
                             <tr>
@@ -277,7 +325,11 @@
                                     }
                                     else
                                     {
-                                        <span class="badge @(student.InternshipStatus == "Onaylandı" ? "bg-success-subtle text-success" : (student.InternshipStatus == "Beklemede" ? "bg-warning-subtle text-warning" : "bg-danger-subtle text-danger")) border rounded-pill px-3 py-2 fw-bold">
+                                        <span class="badge 
+                                            @(student.InternshipStatus == "Onaylandı" ? "bg-success-subtle text-success" : 
+                                             (student.InternshipStatus == "Staj Başladı" ? "bg-info-subtle text-info" : 
+                                             (student.InternshipStatus == "Beklemede" || student.InternshipStatus == "Onay Bekliyor" ? "bg-warning-subtle text-warning" : "bg-danger-subtle text-danger"))) 
+                                            border rounded-pill px-3 py-2 fw-bold">
                                             @student.InternshipStatus (@writtenDays / 30)
                                         </span>
                                     }
@@ -293,12 +345,15 @@
                                         <a asp-action="ViewStudentFile" asp-route-studentId="@student.Id" class="btn btn-view-file btn-sm px-3 shadow-sm">
                                             <i class="fas fa-file-invoice me-1"></i> Dosyayı Gör
                                         </a>
-                                        <a asp-action="StudentDetails" asp-route-id="@student.Id" class="btn btn-warning btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Öğrenci Bilgilerini İncele">
+                                        <a asp-action="StudentDetails" asp-route-id="@student.Id" class="btn btn-warning btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="İncele">
                                             <i class="fas fa-search text-white"></i>
                                         </a>
+
+                                        @* 🚀 SADELEŞTİRME: Gereksiz 'Reddet' butonu buradan kaldırıldı! *@
+
                                         <form asp-action="Delete" asp-route-id="@student.Id" method="post" onsubmit="return confirm('Öğrenci arşive kaldırılsın mı?')">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-trash-alt"></i></button>
+                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Arşive Kaldır"><i class="fas fa-trash-alt"></i></button>
                                         </form>
                                     </div>
                                 </td>
@@ -311,7 +366,7 @@
     </div>
 </div>
 
-@* --- 🛡️ 🚀 STAJ ÖNERİ MODALI (RESMİ DİL GÜNCELLEMESİ) --- *@
+@* --- 🛡️ STAJ ÖNERİ MODALI (KORUNDU) --- *@
 <div class="modal fade" id="recommendModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg border-0">
@@ -334,13 +389,10 @@
                             }
                         </select>
                     </div>
-                    <div class="alert bg-soft-primary border-0 rounded-3 small text-dark">
-                        <i class="fas fa-info-circle me-1 text-primary"></i> Öneriniz öğrenciye <strong>sohbet (chat)</strong> mesajı ve <strong>direkt link</strong> olarak iletilecektir.
-                    </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Vazgeç</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow">ÖNERİYİ RESMİ OLARAK İLET</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow">ÖNERİYİ İLET</button>
                 </div>
             </form>
         </div>
@@ -349,7 +401,6 @@
 
 @section Scripts {
     <script>
-        /* 🛡️ SENİN TÜM SCRIPTLERİN (BOZULMADAN KORUNDU) */
         $(document).ready(function () {
             $('#EducationLevelDropdown').change(function () {
                 var selectedLevel = $(this).val();
@@ -366,11 +417,13 @@
                 });
             });
         });
+
         function openRecommendModal(id, name) {
             $('#modalStudentId').val(id);
             $('#modalStudentName').text(name);
             var myModal = new bootstrap.Modal(document.getElementById('recommendModal'));
             myModal.show();
         }
+
     </script>
 }

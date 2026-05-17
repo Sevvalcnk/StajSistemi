@@ -7,14 +7,13 @@
     int totalDays = 30;
     bool isAdvisor = User.IsInRole("Advisor") || User.IsInRole("Admin");
 
-    // 🛡️ 🚀 İL BAZLI SİBER LOGO MOTORU (KORUNDU)
+    // 🛡️ 🚀 LOGO MOTORU (SİNOP ÜNİVERSİTESİ ÖZEL - KORUNDU)
     string uniNameRaw = Model?.UniversityName ?? "";
     string uniNameLower = uniNameRaw.ToLower();
     string logoFileName = "default";
     string[] iller = { "ankara", "antalya", "aydin", "bursa", "eskisehir", "istanbul", "izmir", "kastamonu", "kocaeli", "mugla", "ordu", "sakarya", "samsun", "sinop", "trabzon" };
 
-    if (uniNameLower.Contains("diğer") || uniNameLower.Contains("diger")) { logoFileName = "default"; }
-    else
+    if (!uniNameLower.Contains("diğer") && !uniNameLower.Contains("diger"))
     {
         foreach (var il in iller)
         {
@@ -24,197 +23,95 @@
             }
         }
     }
-    if (uniNameLower.Contains("karadeniz teknik")) { logoFileName = "trabzon"; }
     string logoPath = $"/img/logos/{logoFileName}.png";
     string displayUniName = (uniNameLower.Contains("diğer") || uniNameLower.Contains("diger")) ? "T.C. ÜNİVERSİTESİ" : uniNameRaw.ToUpper();
     string birimAdi = Model?.FacultyName?.ToUpper() ?? "BİRİM BELİRTİLMEMİŞ";
 }
 
-@* 🚀 SİBER GÜNCELLEME: ZENGİN EDİTÖR CSS *@
 <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
 
 <style>
-    /* 🛡️ SENİN TÜM TASARIM KODLARIN (BOZULMADAN KORUNDU) */
+    /* 🛡️ 1. SİBER UI TASARIMI (BÜYÜTÜLMÜŞ VE MODERN) */
     body {
         background-color: #f3f6f9;
         font-family: 'Inter', sans-serif;
         overflow-x: hidden;
+        transition: 0.3s;
     }
 
     html[data-theme="dark"] body {
         background-color: #0f172a !important;
     }
 
-    html[data-theme="dark"] .staj-nav-top, html[data-theme="dark"] .staj-sidebar .card, html[data-theme="dark"] .day-item {
-        background-color: #1e293b !important;
-        color: #f1f5f9 !important;
-        border-color: rgba(255,255,255,0.1) !important;
-    }
-
-    /* 🌑 🚀 SİBER GECE: BELGE ALANINDAKİ BEYAZLIKLARI YOK ET (GÜNCELLENDİ) */
-    html[data-theme="dark"] .official-document,
-    html[data-theme="dark"] .document-content,
-    html[data-theme="dark"] #advisor-readonly-content {
-        background-color: #1e293b !important; /* Beyazlığı yok eden asil lacivert */
-        color: #f1f5f9 !important;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
-        border-color: #334155 !important;
-    }
-
-    html[data-theme="dark"] .official-table,
-    html[data-theme="dark"] .official-table td {
-        border-color: #475569 !important;
-        color: #f1f5f9 !important;
-    }
-
-        html[data-theme="dark"] .official-table td:first-child {
-            background-color: #334155 !important;
-        }
-
-    /* 🔥 🛡️ NEON GÜN BUTONLARI (GÜNCELLENDİ) */
-    html[data-theme="dark"] .day-item {
-        background-color: #0f172a !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-        transition: all 0.3s ease;
-    }
-
-        /* 🟢 DOLU GÜNLER: NEON YEŞİL */
-        html[data-theme="dark"] .day-item.filled {
-            color: #10b981 !important;
-            border: 2px solid #10b981 !important;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.6), inset 0 0 5px rgba(16, 185, 129, 0.3) !important;
-        }
-
-        /* 🔵 SEÇİLİ GÜN: NEON MAVİ (SABİT KALACAK İŞARET) */
-        html[data-theme="dark"] .day-item.active {
-            color: #4cc9f0 !important;
-            background-color: rgba(67, 97, 238, 0.15) !important;
-            border: 2.5px solid #4361ee !important;
-            box-shadow: 0 0 20px rgba(67, 97, 238, 0.8), inset 0 0 10px rgba(67, 97, 238, 0.4) !important;
-            transform: scale(1.1);
-            z-index: 10;
-        }
-
-    /* 🌑 🚀 EDİTÖR TAM KARARTMA */
-    html[data-theme="dark"] .note-editor {
-        background-color: #1e293b !important;
-        border-color: #475569 !important;
-    }
-
-    html[data-theme="dark"] .note-toolbar {
-        background-color: #334155 !important;
-        border-bottom: 1px solid #475569 !important;
-    }
-
-    html[data-theme="dark"] .note-btn {
-        background-color: #1e293b !important;
-        color: #f1f5f9 !important;
-        border: 1px solid #475569 !important;
-    }
-
-    html[data-theme="dark"] .note-editable {
-        background-color: #0f172a !important;
-        color: white !important;
-    }
-
-    /* RENK BUTONLARI FIX */
-    html[data-theme="dark"] .note-color-btn {
-        border: 1px solid rgba(255,255,255,0.4) !important;
-        width: 25px !important;
-        height: 25px !important;
-        display: inline-block !important;
-        padding: 0 !important;
-    }
-
-    /* 📱 🚀 SİBER MOBİL DÜZEN (F12) */
-    @@media (max-width: 991px) {
-        .staj-main-container {
-            flex-direction: column !important;
-            gap: 15px !important;
-        }
-
-        .staj-sidebar {
-            width: 100% !important;
-            order: -1;
-        }
-
-        .day-grid {
-            display: flex !important;
-            overflow-x: auto !important;
-            gap: 10px !important;
-            padding-bottom: 10px !important;
-            grid-template-columns: none !important;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .day-item {
-            flex: 0 0 45px !important;
-            height: 45px !important;
-            min-width: 45px !important;
-        }
-
-        .official-document {
-            width: 100% !important;
-            padding: 10px !important;
-            overflow-x: auto;
-        }
-    }
-
-    .staj-workspace {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 20px;
-        width: 100%;
-        min-height: 100vh;
-    }
-
+    /* 💊 OVAL NAVİGASYON (KAPSÜL GÖRÜNÜMÜ) */
     .staj-nav-top {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 25px;
+        display: inline-flex;
         background: #fff;
-        padding: 10px 25px;
+        padding: 6px;
         border-radius: 50px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
         border: 1px solid #e2e8f0;
+        margin-bottom: 30px;
+    }
+
+    html[data-theme="dark"] .staj-nav-top {
+        background: #1e293b !important;
+        border-color: #334155 !important;
     }
 
     .nav-btn {
         border: none;
-        padding: 10px 30px;
-        border-radius: 30px;
+        padding: 10px 35px;
+        border-radius: 40px;
         font-weight: 700;
-        transition: 0.3s;
-        font-size: 14px;
         color: #64748b;
         background: transparent;
         cursor: pointer;
+        transition: all 0.4s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
     }
 
         .nav-btn.active {
             background-color: #4361ee !important;
             color: white !important;
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
         }
 
-    .staj-main-container {
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        gap: 30px;
-        width: 100%;
-        max-width: 1400px;
+    html[data-theme="dark"] .nav-btn:not(.active) {
+        color: #94a3b8;
     }
 
-    .staj-sidebar {
-        width: 300px;
-        flex-shrink: 0;
+    /* 📄 BELGE ALANI */
+    .official-document {
+        background: white !important;
+        color: black !important;
+        width: 215mm;
+        min-height: 297mm;
+        padding: 15mm 20mm;
+        position: relative;
+        box-sizing: border-box;
+        box-shadow: 0 0 50px rgba(0,0,0,0.15);
+        border-radius: 12px;
+        margin: 0 auto 50px auto;
     }
 
+    html[data-theme="dark"] .official-document {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+    }
+
+        html[data-theme="dark"] .official-document * {
+            color: #f1f5f9 !important;
+        }
+
+    /* 🔵 GÜN SEÇİMİ */
     .day-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 10px;
+        display: grid !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 10px !important;
     }
 
     .day-item {
@@ -226,64 +123,162 @@
         justify-content: center;
         font-weight: 700;
         cursor: pointer;
+        background: #fff;
         color: #64748b;
         text-decoration: none !important;
-        background: #fff;
+        transition: 0.3s;
     }
 
-        .day-item.filled {
-            background-color: #dcfce7 !important;
-            color: #15803d !important;
-        }
-
-        .day-item.active {
-            border: 3px solid #4361ee !important;
-            transform: scale(1.05);
-        }
-
-    .official-document {
-        width: 210mm;
-        background: white;
-        padding: 20mm;
-        position: relative;
-        box-sizing: border-box;
+    html[data-theme="dark"] .day-item {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+        color: #94a3b8 !important;
     }
 
-    .document-content {
-        min-height: 297mm;
-        box-shadow: 0 0 30px rgba(0,0,0,0.1);
-        border-radius: 4px;
-        border: 1px solid #e2e8f0;
+    .day-item.filled {
+        background-color: #dcfce7 !important;
+        color: #15803d !important;
+        border-color: #bbf7d0 !important;
     }
 
+    html[data-theme="dark"] .day-item.filled {
+        color: #10b981 !important;
+        border-color: #10b981 !important;
+    }
+
+    .day-item.active {
+        border: 3px solid #4361ee !important;
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(67, 97, 238, 0.4);
+    }
+
+    /* 📄 RESMİ TABLO STİLİ */
     .official-table {
         width: 100%;
         border-collapse: collapse;
-        border: 1.5px solid #000;
+        border: 2px solid currentColor;
         margin-top: 20px;
-        table-layout: fixed;
     }
 
         .official-table td {
-            border: 1.5px solid #000;
-            padding: 10px;
+            border: 1.5px solid currentColor;
+            padding: 12px;
             font-family: 'Times New Roman', serif;
-            color: #000;
-            font-size: 11pt;
-            word-wrap: break-word;
+            font-size: 11.5pt;
             text-align: left;
         }
 
             .official-table td:first-child {
                 width: 40%;
-                font-weight: 900;
-                background: #fafafa;
+                font-weight: bold;
+                background: rgba(0,0,0,0.03);
             }
+
+    /* 🌑 EDİTÖR KARARTMA */
+    html[data-theme="dark"] .note-editor.note-frame {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    html[data-theme="dark"] .note-toolbar {
+        background-color: #0f172a !important;
+        border-bottom: 1px solid #334155 !important;
+    }
+
+    html[data-theme="dark"] .note-btn {
+        background-color: #1e293b !important;
+        color: white !important;
+        border: 1px solid #334155 !important;
+    }
+
+    html[data-theme="dark"] .note-editable {
+        background-color: #1e293b !important;
+        color: white !important;
+    }
+
+    /* 🖨️ 2. PDF / PRINT AYARLARI */
+    #print-area {
+        display: none;
+    }
+
+    @@media print {
+        @@page {
+            size: A4;
+            margin: 0;
+        }
+
+        header, nav, .navbar, .staj-nav-top, .staj-sidebar, .document-content, .no-print, button, .alert {
+            display: none !important;
+        }
+
+        body, html {
+            background: white !important;
+            width: 100%;
+            height: auto;
+        }
+
+        #print-area {
+            display: block !important;
+            width: 210mm;
+            margin: 0 auto;
+        }
+
+        .print-page {
+            display: block !important;
+            width: 210mm;
+            height: 295mm;
+            padding: 15mm 20mm !important;
+            page-break-after: always !important;
+            background: white !important;
+            color: black !important;
+            position: relative;
+            border: none;
+        }
+
+        .official-table, .official-table td {
+            border: 1.5px solid black !important;
+            color: black !important;
+        }
+
+        .print-page * {
+            color: black !important;
+            background-color: transparent !important;
+        }
+
+        .print-page img {
+            max-width: 48% !important;
+            display: inline-block !important;
+            margin: 1% !important;
+        }
+    }
+
+    .staj-workspace {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 15px;
+        width: 100%;
+        min-height: 100vh;
+    }
+
+    .staj-main-container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 25px;
+        width: 98%;
+        max-width: 1700px;
+    }
+
+    .staj-sidebar {
+        width: 300px;
+        flex-shrink: 0;
+    }
 
     .signature-grid {
         display: flex;
         justify-content: space-between;
-        margin-top: 50px;
+        margin-top: 60px;
         text-align: center;
     }
 
@@ -291,109 +286,28 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 35px;
+        gap: 30px;
         font-family: 'Times New Roman', serif;
         font-size: 11pt;
         font-weight: bold;
     }
 
-    #print-area {
-        display: none;
+    .note-modal-backdrop {
+        display: none !important;
     }
 
-    @@page {
-        size: A4;
-        margin: 0;
-    }
-
-    @@media print {
-        header, nav, .navbar, .staj-nav-top, .staj-sidebar, .document-content, .no-print, button, .final-approval-card, .alert {
-            display: none !important;
-        }
-
-        .staj-workspace, body, html {
-            display: block !important;
-            background: white !important;
-            width: 100% !important;
-            height: auto !important;
-            overflow: visible !important;
-        }
-
-        #print-area {
-            display: block !important;
-            width: 210mm !important;
-            margin: 0 auto !important;
-        }
-
-        .print-page {
-            display: block !important;
-            width: 210mm !important;
-            height: 296mm !important;
-            padding: 20mm !important;
-            page-break-after: always !important;
-            background: white !important;
-            position: relative !important;
-            box-sizing: border-box !important;
-        }
-
-        #print-area * {
-            color: black !important;
-            background-color: transparent !important;
-            box-shadow: none !important;
-        }
-
-        .official-table, .official-table td {
-            border: 1.5px solid black !important;
-        }
+    .note-modal {
+        z-index: 100050 !important;
+        position: fixed !important;
+        top: 10% !important;
     }
 </style>
 
 <div class="staj-workspace">
     <div class="staj-nav-top no-print">
         <button class="nav-btn active" id="btn-tab-kapak" onclick="switchTab('kapak')">📙 Dosya Kapağı</button>
-        <button class="nav-btn inactive" id="btn-tab-raporlar" onclick="switchTab('raporlar')">📝 Günlük Raporlar</button>
+        <button class="nav-btn" id="btn-tab-raporlar" onclick="switchTab('raporlar')">📝 Günlük Raporlar</button>
     </div>
-
-    @if (!isAdvisor && activeApp != null && activeApp.CompletedDate != null)
-    {
-        <div class="container mb-4 no-print animate__animated animate__fadeInDown" style="max-width: 1100px;">
-            <div class="alert alert-success border-0 shadow-lg rounded-4 p-4 text-center border-start border-5 border-success">
-                <div class="d-flex align-items-center justify-content-center gap-3">
-                    <i class="fas fa-check-circle fa-3x text-success"></i>
-                    <div class="text-start">
-                        <h4 class="fw-bold text-dark mb-1">Staj Dosyanız Danışman Tarafından Onaylandı! ✨</h4>
-                        <p class="mb-0 text-muted">Sayın <strong>@Model.Name @Model.Surname</strong>, staj süreciniz başarıyla tescil edilmiştir. ✨🥂</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-
-    @if (isAdvisor)
-    {
-        <div class="container mb-4 no-print animate__animated animate__slideInDown final-approval-card" style="max-width: 1100px;">
-            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="card-body p-4 d-flex justify-content-between align-items-center bg-white text-dark">
-                    <div>
-                        <h5 class="fw-bold mb-0">Staj Defteri Denetim & Tescil</h5>
-                        <p class="text-muted small mb-0">Durum: @(activeApp?.CompletedDate != null ? "Dosya Resmi Olarak Tescillendi ✨" : "30 Raporu İnceleyip Mühürleyebilirsiniz 🛡️")</p>
-                    </div>
-                    @if (activeApp?.CompletedDate != null)
-                    {
-                        <button class="btn btn-outline-success rounded-pill fw-bold" disabled><i class="fas fa-check-circle me-1"></i> RESMİ OLARAK ONAYLANDI</button>
-                    }
-                    else if (ViewBag.CanApproveInternship == true)
-                    {
-                        <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm staj-tamamla-btn" data-id="@Model.Id">STAJ DOSYASINI ONAYLA</button>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning-subtle text-warning p-2 rounded-3">Süreç Devam Ediyor</span>
-                    }
-                </div>
-            </div>
-        </div>
-    }
 
     <div class="staj-main-container no-print">
         <div class="staj-sidebar" id="sidebarSelector" style="display:none;">
@@ -408,38 +322,36 @@
                 </div>
                 @if (isAdvisor)
                 {
-                    <div class="mt-4 pt-3 border-top">
-                        <button class="btn btn-danger w-100 rounded-pill py-2 fw-bold" onclick="window.print()">
-                            <i class="fas fa-file-pdf me-2"></i>PDF ÇIKTISI AL
-                        </button>
-                    </div>
+                    <div class="mt-4 pt-3 border-top"><button class="btn btn-danger w-100 rounded-pill py-2 fw-bold shadow-sm" onclick="window.print()">PDF ÇIKTISI AL (32 Sayfa)</button></div>
                 }
             </div>
         </div>
 
         <div class="document-content official-document animate__animated animate__fadeIn">
             <div id="kapak-view">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <div style="width:80px"></div>
                     <div style="text-align:center; flex:1;">
                         <h5 style="margin:0; font-weight:bold;">T.C.</h5>
                         <h4 style="margin:0; font-weight:bold; text-transform:uppercase;">@displayUniName</h4>
                         <div style="font-weight:bold; font-size:10pt;">@birimAdi</div>
                     </div>
-                    <div style="text-align:right;"><img src="@logoPath" style="width:80px; height:80px; object-fit:contain;" onerror="this.src='/img/logos/default.png';" /></div>
+                    <div style="text-align:right;"><img src="@logoPath" style="width:90px; height:90px; object-fit:contain;" onerror="this.src='/img/logos/sinop.png';" /></div>
                 </div>
-                <h1 style="text-align:center; font-family:'Times New Roman'; font-weight:900; border-top:4px solid #000; border-bottom:4px solid #000; padding:15px 0; letter-spacing:5px; margin: 30px 0; font-size: 22pt;">STAJ DEFTERİ</h1>
+                <h1 style="text-align:center; font-family:'Times New Roman'; font-weight:900; border-top:4px solid currentColor; border-bottom:4px solid currentColor; padding:15px 0; letter-spacing:5px; margin: 30px 0; font-size: 24pt;">STAJ DEFTERİ</h1>
+
                 <table class="official-table">
-                    <tr><td>ÖĞRENCİ ADI SOYADI</td><td style="font-weight:bold; text-transform:uppercase;">@Model.Name @Model.Surname</td></tr>
+                    <tr><td>ÖĞRENCİ ADI SOYADI</td><td style="text-transform:uppercase; font-weight:bold;">@Model.Name @Model.Surname</td></tr>
                     <tr><td>ÖĞRENCİ NUMARASI</td><td>@Model.StudentNo</td></tr>
                     <tr><td>BÖLÜMÜ / PROGRAMI</td><td>@Model.DepartmentName</td></tr>
-                    <tr><td>AKADEMİK YIL / SINIF</td><td>@Model.AcademicYear / @(string.IsNullOrEmpty(Model.Grade) ? "Belirtilmemiş" : Model.Grade + (Model.Grade != "Mezun" ? ". SINIF" : ""))</td></tr>
+                    <tr><td>AKADEMİK YIL / SINIF</td><td>@Model.AcademicYear / @(string.IsNullOrEmpty(Model.Grade) ? "---" : Model.Grade + ". SINIF")</td></tr>
                     <tr><td>STAJ YAPILAN KURUM</td><td>@(activeApp?.Internship?.CompanyName ?? "---")</td></tr>
-                    <tr><td>STAJ KONUSU</td><td>@(activeApp?.Internship?.Name ?? "Staj Konusu Belirtilmemiş")</td></tr>
-                    <tr><td>İŞYERİ STAJ SORUMLUSU</td><td>@(ViewBag.SupervisorName ?? "Kurum Yetkilisi")</td></tr>
-                    <tr><td>STAJ TARİH ARALIĞI</td><td><strong>Başlangıç:</strong> @(activeApp?.Internship?.StartDate.ToString("dd.MM.yyyy") ?? "---") | <strong>Bitiş:</strong> @(activeApp?.Internship?.EndDate.ToString("dd.MM.yyyy") ?? "---")</td></tr>
+                    <tr><td>STAJ KONUSU</td><td>@(activeApp?.Internship?.Name ?? "---")</td></tr>
+                    <tr><td>İŞYERİ STAJ SORUMLUSU</td><td>@(ViewBag.SupervisorName ?? "---")</td></tr>
+                    <tr><td>STAJ TARİH ARALIĞI</td><td>@(activeApp?.Internship?.StartDate.ToString("dd.MM.yyyy") ?? "---") - @(activeApp?.Internship?.EndDate.ToString("dd.MM.yyyy") ?? "---")</td></tr>
                     <tr><td>TOPLAM İŞ GÜNÜ</td><td>@totalDays İŞ GÜNÜ</td></tr>
                 </table>
+
                 <div class="signature-grid">
                     <div class="sig-box"><span>Öğrenci</span><span>İmza</span></div>
                     <div class="sig-box"><span>Kurum Sorumlusu</span><span>Kaşe / İmza</span></div>
@@ -447,96 +359,59 @@
                 </div>
             </div>
 
-            <div id="raporlar-view" style="display:none;" class="no-print">
-                <h3 class="fw-bold mb-4 text-dark border-bottom pb-2"><span id="display-day-number" class="text-primary">1</span>. GÜN FAALİYETİ</h3>
-
+            <div id="raporlar-view" style="display:none;">
+                <h3 class="fw-bold mb-4 text-primary"><span id="display-day-number">1</span>. GÜN FAALİYETİ</h3>
                 <form asp-controller="StudentPanel" asp-action="SaveDailyReport" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="dayNumber" id="input-day-number" value="1" />
-
                     @if (isAdvisor)
                     {
-                        <div id="advisor-readonly-content" class="p-4 border rounded-4 bg-light shadow-inner text-dark" style="min-height: 400px; max-height: 600px; overflow-y: auto; background-color: #f8fafc; font-family: 'Inter', sans-serif;">
-                        </div>
+                        <div id="advisor-readonly-content" class="p-4 border rounded-4 bg-white" style="min-height: 600px; overflow-y: auto;"></div>
                     }
                     else
                     {
                         <textarea name="content" id="report-content" class="form-control"></textarea>
-                    }
-
-                    <div class="text-center mt-3"><img id="display-report-image" src="" style="max-width:100%; display:none; border-radius:10px;" /></div>
-
-                    @if (!isAdvisor)
-                    {
-                        <div class="mt-4 p-3 bg-white border rounded-4 d-flex justify-content-between align-items-center shadow-sm">
-                            <input type="file" name="reportImage" id="imageInput" class="form-control form-control-sm border-0" onchange="handleImagePreview(this)" />
-                            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">KAYDET</button>
-                        </div>
+                        <div class="mt-4 text-end"><button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-lg">KAYDET</button></div>
                     }
                 </form>
             </div>
         </div>
     </div>
 
-    @* PDF ÇIKTISI (KORUNDU) *@
     <div id="print-area">
         <div class="print-page">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="width:100px"></div>
                 <div style="text-align:center; flex:1;">
-                    <h5 style="margin:0; font-weight:bold;">T.C.</h5>
-                    <h4 style="margin:0; font-weight:bold; text-transform:uppercase;">@displayUniName</h4>
-                    <p style="font-weight:bold; font-size:10pt; margin:0;">@birimAdi</p>
+                    <h5 style="margin:0; font-weight:bold;">T.C.</h5><h4 style="text-transform:uppercase;">@displayUniName</h4><p style="font-weight:bold; font-size:10pt;">@birimAdi</p>
                 </div>
-                <div style="text-align:right;"><img src="@logoPath" style="width:100px; height:100px; object-fit:contain;" /></div>
+                <div style="text-align:right;"><img src="@logoPath" style="width:110px; height:110px; object-fit:contain;" onerror="this.src='/img/logos/sinop.png';" /></div>
             </div>
-            <h1 style="text-align:center; font-family:'Times New Roman'; font-weight:900; border-top:4px solid #000; border-bottom:4px solid #000; padding:20px 0; letter-spacing:10px; margin: 40px 0;">STAJ DEFTERİ</h1>
+            <h1 style="text-align:center; font-family:'Times New Roman'; font-weight:900; border-top:4px solid #000; border-bottom:4px solid #000; padding:20px 0; letter-spacing:5px; margin: 30px 0;">STAJ DEFTERİ</h1>
+
             <table class="official-table">
                 <tr><td>ÖĞRENCİ ADI SOYADI</td><td style="text-transform:uppercase; font-weight:bold;">@Model.Name @Model.Surname</td></tr>
                 <tr><td>ÖĞRENCİ NUMARASI</td><td>@Model.StudentNo</td></tr>
                 <tr><td>BÖLÜMÜ / PROGRAMI</td><td>@Model.DepartmentName</td></tr>
-                <tr><td>AKADEMİK YIL / SINIF</td><td>@Model.AcademicYear / @(string.IsNullOrEmpty(Model.Grade) ? "Belirtilmemiş" : Model.Grade + (Model.Grade != "Mezun" ? ". SINIF" : ""))</td></tr>
+                <tr><td>AKADEMİK YIL / SINIF</td><td>@Model.AcademicYear / @(string.IsNullOrEmpty(Model.Grade) ? "Belirtilmemiş" : Model.Grade + ". SINIF")</td></tr>
                 <tr><td>STAJ YAPILAN KURUM</td><td>@(activeApp?.Internship?.CompanyName ?? "---")</td></tr>
-                <tr><td>STAJ KONUSU</td><td>@(activeApp?.Internship?.Name ?? "Staj Konusu Belirtilmemiş")</td></tr>
-                <tr><td>İŞYERİ STAJ SORUMLUSU</td><td>@(ViewBag.SupervisorName ?? "Kurum Yetkilisi")</td></tr>
+                <tr><td>STAJ KONUSU</td><td>@(activeApp?.Internship?.Name ?? "---")</td></tr>
+                <tr><td>İŞYERİ STAJ SORUMLUSU</td><td>@(ViewBag.SupervisorName ?? "---")</td></tr>
                 <tr><td>STAJ TARİH ARALIĞI</td><td>@(activeApp?.Internship?.StartDate.ToString("dd.MM.yyyy") ?? "---") - @(activeApp?.Internship?.EndDate.ToString("dd.MM.yyyy") ?? "---")</td></tr>
                 <tr><td>TOPLAM İŞ GÜNÜ</td><td>@totalDays İŞ GÜNÜ</td></tr>
             </table>
-            <div style="margin-top:80px; width: 100%;">
-                <table style="width: 100%; border: none; text-align: center;">
-                    <tr>
-                        <td style="width: 33%; border:none;"><strong>Öğrenci</strong><br>(İmza)</td>
-                        <td style="width: 33%; border:none;"><strong>Kurum Sorumlusu</strong><br>(Kaşe / İmza)</td>
-                        <td style="width: 33%; border:none;"><strong>Bölüm Danışmanı</strong><br>(Onay / İmza)</td>
-                    </tr>
-                </table>
-            </div>
+            <div class="signature-grid" style="margin-top:80px; font-weight:bold; color:black !important;"><div style="flex:1">Öğrenci</div><div style="flex:1">Kurum Sorumlusu</div><div style="flex:1">Bölüm Danışmanı</div></div>
         </div>
 
         @for (int i = 1; i <= totalDays; i++)
         {
             var r = reports.FirstOrDefault(x => x.DayNumber == i);
             <div class="print-page">
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #000; padding-bottom:5px; margin-bottom:15px;">
-                    <h5 style="margin:0;">@displayUniName</h5>
-                    <span style="font-size:10pt; font-weight:bold;">@i. GÜN FAALİYET RAPORU</span>
+                <div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:5px;">
+                    <strong>@displayUniName</strong><strong>@i. GÜN FAALİYET RAPORU</strong>
                 </div>
-                <p><strong>Tarih:</strong> @(r != null ? r.CreatedDate.ToString("dd.MM.yyyy") : "---")</p>
-                <div style="border: 1.5px solid #000; padding: 20px; min-height: 450px; font-family: 'Times New Roman'; font-size:12pt;">
-                    @Html.Raw(r?.Content ?? "Bu gün için rapor girişi yapılmamıştır.")
-                </div>
-                @if (r != null && !string.IsNullOrEmpty(r.ImagePath))
-                {
-                    <div style="text-align:center; margin-top:20px;"><img src="@(r.ImagePath.StartsWith("/") ? r.ImagePath : "/" + r.ImagePath)" style="max-height: 380px; max-width: 100%;" /></div>
-                }
-                <div style="position:absolute; bottom:15mm; left:20mm; right:20mm;">
-                    <table style="width: 100%; border-top: 1.5px solid #000; text-align: center;">
-                        <tr>
-                            <td style="width: 33%; padding-top: 10px; border:none;"><strong>Öğrenci</strong><br>İmza</td>
-                            <td style="width: 33%; padding-top: 10px; border:none;"><strong>İşyeri Onay</strong><br>Mühür / İmza</td>
-                            <td style="width: 33%; padding-top: 10px; border:none;"><strong>Danışman</strong><br>Onay / İmza</td>
-                        </tr>
-                    </table>
-                </div>
+                <p style="margin-top:10px;"><strong>Tarih:</strong> @(r != null ? r.CreatedDate.ToString("dd.MM.yyyy") : "---")</p>
+                <div style="border: 2px solid #000; padding: 20px; min-height: 190mm; font-family: 'Times New Roman'; font-size:12pt;">@Html.Raw(r?.Content ?? "Bu gün için rapor girişi yapılmamıştır.")</div>
+                <div class="signature-grid" style="margin-top:20px; font-weight:bold; color:black !important;"><div style="flex:1">Öğrenci<br>İmza</div><div style="flex:1">Kurum Onay<br>Mühür / İmza</div><div style="flex:1">Danışman<br>Onay / İmza</div></div>
             </div>
         }
     </div>
@@ -549,95 +424,65 @@
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 
     <script>
-        const rawReports = @Html.Raw(Json.Serialize(reports.Select(r => new { dayNumber = r.DayNumber, content = r.Content, createdDate = r.CreatedDate, imagePath = r.ImagePath })));
+        const rawReports = @Html.Raw(Json.Serialize(reports.Select(r => new { dayNumber = r.DayNumber, content = r.Content })));
 
         $(document).ready(function () {
             if (!@(isAdvisor.ToString().ToLower())) {
                 $('#report-content').summernote({
-                    height: 400,
-                    toolbar: [['style', ['style']], ['font', ['bold', 'underline', 'clear']], ['color', ['color']], ['para', ['ul', 'ol', 'paragraph']], ['table', ['table']], ['view', ['fullscreen', 'codeview']]]
+                    height: 500, dialogsInBody: true, dialogsFade: false,
+                    placeholder: 'Raporunuzu yazın, görseller otomatik kolajlanır... 🖼️',
+                    toolbar: [
+                        ['style', ['style']], ['font', ['bold', 'underline', 'clear']],
+                        ['para', ['ul', 'ol', 'paragraph']], ['insert', ['link', 'picture', 'video']], ['view', ['fullscreen', 'codeview']]
+                    ],
+                    callbacks: { onImageUpload: function(files) { for (let i = 0; i < files.length; i++) { uploadEditorImage(files[i]); } } }
                 });
             }
-
-            switchTab('kapak');
-            loadDay(1);
-
-            $('.staj-tamamla-btn').on('click', function () {
-                const studentId = $(this).data('id');
-                const token = $('input[name="__RequestVerificationToken"]').val();
-
-                Swal.fire({
-                    title: 'Staj Dosyasını Onaylıyor Musunuz?',
-                    text: "Bu işlem geri alınamaz ve staj resmi olarak tescil edilir!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#10b981',
-                    cancelButtonColor: '#ef4444',
-                    confirmButtonText: 'Evet, Onayla!',
-                    cancelButtonText: 'Hayır, Vazgeç'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '/Advisor/ApproveFullInternship',
-                            type: 'POST',
-                            data: { studentId: studentId, __RequestVerificationToken: token },
-                            success: function (response) {
-                                if (response.success) {
-                                    Swal.fire('Onaylandı!', 'Staj dosyası başarıyla mühürlendi. ✨', 'success').then(() => { window.location.reload(); });
-                                } else {
-                                    Swal.fire('Hata!', response.message, 'error');
-                                }
-                            }
-                        });
-                    }
-                });
-            });
+            switchTab('kapak'); loadDay(1);
         });
+
+        function uploadEditorImage(file) {
+            let data = new FormData(); data.append("file", file);
+            $.ajax({
+                url: '/StudentPanel/UploadEditorImage', method: 'POST', data: data, processData: false, contentType: false,
+                success: function(response) {
+                    if(response.url) {
+                        let currentCode = $('#report-content').summernote('code');
+                        let imgHtml = `<img src="${response.url}" style="width:48%; margin:1%;">`;
+                        $('#report-content').summernote('code', currentCode + imgHtml);
+                        $('.note-modal').hide();
+                    }
+                }
+            });
+        }
+
+        function loadDay(day) {
+            $(".day-item").removeClass("active"); $("#btn-day-" + day).addClass("active");
+            $("#display-day-number").text(day); $("#input-day-number").val(day);
+            const r = rawReports.find(x => parseInt(x.dayNumber) === parseInt(day));
+            if (r) {
+                if (@(isAdvisor.ToString().ToLower())) { $('#advisor-readonly-content').html(r.content || "İçerik boş."); }
+                else { $('#report-content').summernote('code', r.content || ""); }
+            } else {
+                if (!@(isAdvisor.ToString().ToLower())) $('#report-content').summernote('code', "");
+                else $('#advisor-readonly-content').html("Rapor girişi yapılmamış.");
+            }
+        }
 
         function switchTab(tab) {
             if (tab === 'kapak') {
                 $('#kapak-view').show(); $('#raporlar-view').hide(); $('#sidebarSelector').fadeOut();
-                $('#btn-tab-kapak').addClass('active'); $('#btn-tab-raporlar').removeClass('active');
+                optionsAtEnd(tab);
             } else {
                 $('#kapak-view').hide(); $('#raporlar-view').show(); $('#sidebarSelector').fadeIn();
-                $('#btn-tab-raporlar').addClass('active'); $('#btn-tab-kapak').removeClass('active');
+                optionsAtEnd(tab);
             }
         }
-
-        function loadDay(day) {
-            $(".day-item").removeClass("active");
-            $("#btn-day-" + day).addClass("active"); // Mavi neon mühürü burada basılır!
-
-            $("#display-day-number").text(day);
-            $("#input-day-number").val(day);
-            const r = rawReports.find(x => parseInt(x.dayNumber) === parseInt(day));
-            $('#display-report-image').hide();
-
-            if (r) {
-                if (@(isAdvisor.ToString().ToLower())) {
-                    $('#advisor-readonly-content').html(r.content || "<p class='text-muted italic'>İçerik boş.</p>");
-                } else {
-                    $('#report-content').summernote('code', r.content || "");
-                }
-
-                if (r.imagePath && r.imagePath.trim() !== "") {
-                    let path = r.imagePath.startsWith('/') ? r.imagePath : '/' + r.imagePath;
-                    $('#display-report-image').attr('src', path).show();
-                }
+        function optionsAtEnd(tab) {
+            if (tab === 'kapak') {
+                $('#btn-tab-kapak').addClass('active'); $('#btn-tab-raporlar').removeClass('active');
             } else {
-                if (@(isAdvisor.ToString().ToLower())) {
-                    $('#advisor-readonly-content').html("<p class='text-muted'>Rapor girişi yapılmamış.</p>");
-                } else {
-                    $('#report-content').summernote('code', "");
-                }
-            }
-        }
-
-        function handleImagePreview(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.onload = function (e) { $('#display-report-image').attr('src', e.target.result).fadeIn(); }
-                reader.readAsDataURL(input.files[0]);
+                $('#btn-tab-raporlar').addClass('active'); $('#btn-tab-kapak').removeClass('active');
             }
         }
     </script>

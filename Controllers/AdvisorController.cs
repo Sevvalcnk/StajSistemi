@@ -70,23 +70,27 @@ namespace StajSistemi.Controllers
                 student.StudentNo = !string.IsNullOrWhiteSpace(originalStudent.StudentNo) ? originalStudent.StudentNo : originalStudent.UserName;
 
                 var lastApp = allApps
-                    .Where(a => a.AppUserId == student.Id && !a.IsDeleted)
-                    .OrderByDescending(a => a.ApplicationDate)
-                    .FirstOrDefault();
+     .Where(a => a.AppUserId == student.Id && !a.IsDeleted)
+     .OrderByDescending(a => a.Id) // 🚀 KRİTİK: Tarih yerine ID ile en yeniyi garantile!
+     .FirstOrDefault();
 
                 if (lastApp != null)
                 {
                     student.InternshipStatus = lastApp.Status switch
                     {
-                        ApplicationStatus.Approved => "Onaylandı",
+                        // ✨ AYRIM: Bitiş tarihi yoksa 'Staj Başladı' de, varsa 'Onaylandı' de.
+                        ApplicationStatus.Approved => lastApp.CompletedDate == null ? "Staj Başladı" : "Onaylandı",
                         ApplicationStatus.Rejected => "Reddedildi",
                         ApplicationStatus.Pending => "Beklemede",
                         _ => "İşlemde"
                     };
 
-                    // 🛡️ SİBER KONTROL (GÜNCELLENDİ): 31/30 hatası için benzersiz günleri sayıyoruz
-                    int reportCount = allDailyReports.Where(r => r.AppUserId == student.Id).Select(r => r.DayNumber).Distinct().Count();
-                    bool needsFinalApproval = reportCount >= 30 && lastApp.CompletedDate == null;
+                    // 🚀 MÜHÜR: Sadece BU başvurunun raporlarını say, eskileri karıştırma!
+                    int reportCount = allDailyReports.Where(r => r.InternshipApplicationId == lastApp.Id).Select(r => r.DayNumber).Distinct().Count();
+
+                    // Lamba sadece 30 gün dolduğunda VE staj henüz bitirilmediyse yanar
+                    bool needsFinalApproval = reportCount >= 30 && lastApp.CompletedDate == null && student.InternshipStatus != "Onaylandı";
+                    
 
                     needsApprovalList.Add(student.Id, needsFinalApproval);
                     reportCounts.Add(student.Id, reportCount);
@@ -241,42 +245,44 @@ namespace StajSistemi.Controllers
 
         public async Task<IActionResult> ViewStudentDashboard(int studentId)
         {
-            var students = await _unitOfWork.Students.GetAllIncludingAsync(s => s.Department, s => s.City);
-            var student = students.FirstOrDefault(s => s.Id == studentId);
+            // 🛡️ 1. ADIM: Önce öğrenciyi veritabanından çekiyoruz (GPA hatasını çözen satır!)
+            var student = await _unitOfWork.Students.GetByIdAsync(studentId);
             if (student == null) return NotFound();
 
+            // 🚀 2. DTO Hazırlığı ve Bölüm Bilgisi
             var studentDto = _mapper.Map<StudentDto>(student);
             studentDto.StudentNo = !string.IsNullOrWhiteSpace(student.StudentNo) ? student.StudentNo : student.UserName;
-            studentDto.DepartmentName = student.Department?.DepartmentName ?? "Bölüm Belirtilmemiş";
 
+            var departments = await _unitOfWork.Departments.GetAllAsync();
+            studentDto.DepartmentName = departments.FirstOrDefault(d => d.Id == student.DepartmentId)?.DepartmentName ?? "Bölüm Belirtilmemiş";
+
+            // 📊 3. Rapor İstatistikleri
             var allDailyReports = await _unitOfWork.DailyReports.GetAllAsync();
             var myReports = allDailyReports.Where(r => r.AppUserId == studentId).ToList();
 
-            // 🛡️ BENZERSİZ GÜN SAYISI (31/30 ÇÖZÜMÜ)
             int totalReportsCount = myReports.Select(r => r.DayNumber).Distinct().Count();
-            int approvedReportsCount = totalReportsCount;
-            int pendingReportsCount = 0;
-
-            int targetDays = 30;
-            double progressPercent = ((double)totalReportsCount / targetDays) * 100;
-
             ViewBag.TotalReportsCount = totalReportsCount;
-            ViewBag.ApprovedReportsCount = approvedReportsCount;
-            ViewBag.PendingReportsCount = pendingReportsCount;
+            ViewBag.ApprovedReportsCount = totalReportsCount;
+            ViewBag.PendingReportsCount = 0;
+            ViewBag.ProgressPercent = Math.Round(Math.Min(((double)totalReportsCount / 30) * 100, 100), 0);
+            ViewBag.RemainingDays = Math.Max(30 - totalReportsCount, 0);
 
-            ViewBag.ProgressPercent = Math.Round(Math.Min(progressPercent, 100), 0);
-            ViewBag.RemainingDays = Math.Max(targetDays - totalReportsCount, 0);
-
+            // 🛡️ 4. Zaman Çizelgesi (Timeline) İçin En Yeni Başvuruyu Çekme
             var allApps = await _unitOfWork.InternshipApplications.GetAllIncludingAsync(a => a.Internship);
+
             var activeAppForTimeline = allApps
-                .Where(a => a.AppUserId == studentId && !a.IsDeleted)
-                .OrderByDescending(a => a.ApplicationDate)
+                .Where(a => a.AppUserId == studentId && !a.IsDeleted &&
+                           (a.Status == ApplicationStatus.Approved ||
+                            a.Status == ApplicationStatus.Rejected ||
+                            a.Status == ApplicationStatus.Pending))
+                .OrderByDescending(a => a.Id)
                 .FirstOrDefault();
 
             ViewBag.ActiveAppForTimeline = activeAppForTimeline;
             ViewBag.AppliedInternshipIds = allApps.Where(a => a.AppUserId == studentId).Select(a => a.InternshipId).ToList();
 
-            ViewBag.TotalScore = (int)(student.GPA * 100);
+            // ✅ SİBER MÜHÜR: GPA boş olsa bile artık çökmez!
+            ViewBag.TotalScore = (int)((student.GPA ?? 0) * 100);
 
             return View("../StudentPanel/Index", studentDto);
         }
@@ -418,22 +424,38 @@ namespace StajSistemi.Controllers
         // --- 🛡️ 🚀 GÜNCELLENDİ: STAJ DEFTERİNİ KOMPLE REDDET ---
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RejectFullInternship(int studentId)
+        public async Task<IActionResult> RejectFullInternship(int studentId, string rejectionReason)
         {
             var apps = await _unitOfWork.InternshipApplications.GetAllAsync();
-            var activeApp = apps.FirstOrDefault(a => a.AppUserId == studentId && !a.IsDeleted);
+            var activeApp = apps.Where(a => a.AppUserId == studentId && !a.IsDeleted)
+                                .OrderByDescending(a => a.Id).FirstOrDefault();
 
             if (activeApp != null)
             {
+                // ✅ 1. MÜHÜR: Gerekçeyi başvuruya kaydediyoruz
                 activeApp.Status = ApplicationStatus.Rejected;
-                activeApp.CompletedDate = null; // Eğer tarih atılmışsa temizliyoruz
-                await _unitOfWork.SaveAsync();
-                TempData["ErrorMessage"] = "Staj dosyası incelendi ve yetersiz bulunduğu için resmi olarak reddedildi. 🚫";
-            }
+                activeApp.RejectionReason = rejectionReason;
+                activeApp.CompletedDate = null;
+                _unitOfWork.InternshipApplications.Update(activeApp);
 
+                // ✅ 2. SİNYAL: Mesaj kutusuna (Chat) bildirim gönderiyoruz
+                var advisorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                int advisorId = int.TryParse(advisorIdStr, out var id) ? id : 0;
+
+                var chatMsg = new ChatMessage
+                {
+                    SenderId = advisorId,
+                    ReceiverId = studentId,
+                    Content = $"🚫 <strong>STAJINIZ REDDEDİLDİ.</strong><br/><strong>Hoca Notu:</strong> {rejectionReason}<br/>Süreci sıfırlayıp yeni bir başlangıç yapabilirsiniz.",
+                    SentDate = DateTime.Now
+                };
+                await _unitOfWork.ChatMessages.AddAsync(chatMsg);
+
+                await _unitOfWork.SaveAsync();
+                TempData["ErrorMessage"] = "Staj reddedildi ve öğrenciye bilgi verildi. 🚫";
+            }
             return RedirectToAction(nameof(Index));
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RecommendInternship(int internshipId, int studentId)

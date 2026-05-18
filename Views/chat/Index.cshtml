@@ -228,6 +228,37 @@
             box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
         }
     }
+    @@media (max-width: 767px) {
+        /* Ana panel yüksekliğini mobilde serbest bırakır, dikey sıkışmayı çözer */
+        .chat-main-wrapper
+
+    {
+        height: auto !important;
+        min-height: 500px !important;
+        flex-direction: column !important;
+    }
+
+    /* 320 piksel kilitli duran sol sidebarı mobilde tam genişliğe esnetir */
+    .chat-sidebar-area {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+
+    /* Dış çerçeveleri ekrana tam yapıştırır */
+    .container, .container-fluid, .main-content, div[class*="-container"] {
+        padding-left: 2px !important;
+        padding-right: 2px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Tüm kart ve arama kutularını satır genişliğine eşitler */
+    .card, .sohbetler-card, .chat-sidebar, .list-group, .form-control, .input-group, .list-group-item {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    }
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
